@@ -39,9 +39,19 @@ const locationId = process.env["SQ_LOCATION_ID"];
  * `serviceVariationVersion` - the version of the service initially selected
  */
 router.post("/create", async (req, res, next) => {
-  // Multi-service support
-  const selectedServices = req.body["services[]"] || req.body.services || [req.query.serviceId];
-  const quantities = req.body.quantities || {};
+    // Debug: print appointmentSegments before booking
+    // console.log('DEBUG: appointmentSegments', JSON.stringify(appointmentSegments, null, 2));
+  // Debug: log session at booking step
+  if (req.session) {
+    console.log('DEBUG: /booking/create session.selectedServices', req.session.selectedServices);
+    console.log('DEBUG: /booking/create session.quantities', req.session.quantities);
+  }
+  // Multi-service support: prefer session if not present in body
+  let selectedServices = req.body["services[]"] || req.body.services;
+  // Fallback to session if not present in body (e.g., user navigates directly to booking)
+  if (!selectedServices) {
+    selectedServices = req.session.selectedServices || [req.query.serviceId];
+  }
   const serviceVariationVersion = req.query.version;
   const staffId = req.query.staffId;
   const startAt = req.query.startAt;
@@ -51,6 +61,8 @@ router.post("/create", async (req, res, next) => {
   const givenName = req.body.givenName;
 
   try {
+    // Debug logs for service selection and quantities
+    console.log('DEBUG: selectedServices', selectedServices);
     // If multiple services, create appointment segments for each
     let appointmentSegments = [];
     const serviceIds = Array.isArray(selectedServices) ? selectedServices : [selectedServices];
@@ -59,16 +71,19 @@ router.post("/create", async (req, res, next) => {
       const { result: { object: catalogItemVariation } } = await catalogApi.retrieveCatalogObject(serviceId);
       const durationMinutes = convertMsToMins(catalogItemVariation.itemVariationData.serviceDuration);
       const version = catalogItemVariation.version; // Use the correct version for this service
-      const qty = quantities[serviceId] ? parseInt(quantities[serviceId], 10) : 1;
-      for (let i = 0; i < qty; i++) {
-        appointmentSegments.push({
-          durationMinutes,
-          serviceVariationId: serviceId,
-          serviceVariationVersion: version,
-          teamMemberId: staffId,
-        });
-      }
+      appointmentSegments.push({
+        durationMinutes,
+        serviceVariationId: serviceId,
+        serviceVariationVersion: version,
+        teamMemberId: staffId,
+      });
     }
+    if (appointmentSegments.length === 0) {
+      // No valid services selected
+      return res.render("pages/formatted-error", { error: "No valid services selected for booking." });
+    }
+    // Debug: print appointmentSegments before booking
+    // console.log('DEBUG: appointmentSegments', JSON.stringify(appointmentSegments, null, 2));
     // Create booking
     const { result: { booking } } = await bookingsApi.createBooking({
       booking: {
@@ -84,10 +99,26 @@ router.post("/create", async (req, res, next) => {
   } catch (error) {
     // Handle invalid email error gracefully
     if (error.errors && error.errors.some(e => e.code === 'INVALID_VALUE' && e.field === 'email')) {
+      // Fetch actual service details for better UX
+      let serviceDetails = [];
+      if (req.session.selectedServices && req.session.selectedServices.length) {
+        for (const sid of req.session.selectedServices) {
+          try {
+            const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
+            const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+            serviceDetails.push({
+              id: sid,
+              name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
+              duration: variation.itemVariationData.serviceDuration
+            });
+          } catch (e) {
+            serviceDetails.push({ id: sid, name: '', duration: 0 });
+          }
+        }
+      }
       return res.render("pages/contact", {
-        serviceDetails: req.session.selectedServices ? req.session.selectedServices.map(sid => ({ id: sid, name: '', duration: 0, quantity: req.session.quantities[sid] || 1 })) : [],
+        serviceDetails,
         selectedServices: req.session.selectedServices || [],
-        quantities: req.session.quantities || {},
         teamMemberBookingProfile: req.session.teamMemberBookingProfile || {},
         serviceVariation: req.session.serviceVariation || {},
         serviceVersion: req.query.version || '',
@@ -159,55 +190,63 @@ router.get("/:bookingId", async (req, res, next) => {
     // Retrieve the booking provided by the bookingId.
     const { result: { booking } } = await bookingsApi.retrieveBooking(bookingId);
 
-    // Build serviceDetails for all appointment segments (group by serviceVariationId)
+    // Gather all unique serviceVariationIds and teamMemberIds
+    const serviceVariationIds = [...new Set(booking.appointmentSegments.map(seg => seg.serviceVariationId))];
+    const teamMemberIds = [...new Set(booking.appointmentSegments.map(seg => seg.teamMemberId))];
+
+    // Fetch all service variations and team member profiles in parallel
+    const servicePromises = serviceVariationIds.map(sid =>
+      catalogApi.retrieveCatalogObject(sid, true)
+        .then(({ result: { object: variation, relatedObjects } }) => {
+          const item = relatedObjects.find(obj => obj.type === "ITEM");
+          return {
+            id: sid,
+            name: item ? item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : "") : '[Unknown Service]',
+            duration: variation.itemVariationData.serviceDuration,
+            priceMoney: variation.itemVariationData.priceMoney || null
+          };
+        })
+        .catch(e => ({
+          id: sid,
+          name: '[Unknown Service]',
+          duration: 0,
+          priceMoney: null
+        }))
+    );
+    const teamMemberPromises = teamMemberIds.map(tid =>
+      bookingsApi.retrieveTeamMemberBookingProfile(tid)
+        .then(({ result: { teamMemberBookingProfile } }) => teamMemberBookingProfile)
+        .catch(() => null)
+    );
+
+    const serviceDetailsArr = await Promise.all(servicePromises);
+    const teamMemberProfiles = (await Promise.all(teamMemberPromises)).filter(Boolean);
+
+    // Aggregate quantities for each service
     const serviceDetailsMap = {};
     for (const segment of booking.appointmentSegments) {
       const sid = segment.serviceVariationId;
       if (!serviceDetailsMap[sid]) {
-        // Fetch name/duration for this service variation
-        const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
-        const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
-        serviceDetailsMap[sid] = {
-          id: sid,
-          name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
-          duration: variation.itemVariationData.serviceDuration,
-          quantity: 0
-        };
+        // Defensive: ensure duration and priceMoney are numbers, not BigInt or string
+        const base = { ...serviceDetailsArr.find(s => s.id === sid), quantity: 0 };
+        if (base.duration && typeof base.duration === 'bigint') base.duration = Number(base.duration);
+        if (base.duration && typeof base.duration === 'string') base.duration = Number(base.duration);
+        if (base.priceMoney && base.priceMoney.amount && typeof base.priceMoney.amount === 'bigint') base.priceMoney.amount = Number(base.priceMoney.amount);
+        if (base.priceMoney && base.priceMoney.amount && typeof base.priceMoney.amount === 'string') base.priceMoney.amount = Number(base.priceMoney.amount);
+        serviceDetailsMap[sid] = base;
       }
       serviceDetailsMap[sid].quantity += 1;
     }
     const serviceDetails = Object.values(serviceDetailsMap);
 
-    const serviceVariationId = booking.appointmentSegments[0].serviceVariationId;
-    const teamMemberId = booking.appointmentSegments[0].teamMemberId;
+    // Defensive location handling
+    let location = req.app.locals.location || { address: {}, timezone: 'UTC' };
+    if (!location.address) location.address = {};
+    if (!location.timezone) location.timezone = 'UTC';
 
-    // Make API call to get service variation details
-    const retrieveServiceVariationPromise = catalogApi.retrieveCatalogObject(serviceVariationId, true);
+   
 
-    // Make API call to get team member details
-    const retrieveTeamMemberPromise = bookingsApi.retrieveTeamMemberBookingProfile(teamMemberId);
-
-    // Wait until all API calls have completed
-    const [ { result: service }, { result: { teamMemberBookingProfile } } ] =
-      await Promise.all([ retrieveServiceVariationPromise, retrieveTeamMemberPromise ]);
-
-    const serviceVariation = service.object;
-    const serviceItem = service.relatedObjects.filter(relatedObject => relatedObject.type === "ITEM")[0];
-
-    // Debug log: print booking object on confirmation page
-    try {
-      console.log('DEBUG: booking (confirmation)', JSON.stringify(booking, (key, value) =>
-        typeof value === 'bigint' ? value.toString() : value, 2));
-    } catch (e) {
-      console.log('DEBUG: booking (confirmation) [BigInt serialization error]', booking);
-    }
-
-    let location = null;
-    try {
-      location = req.app.locals.location;
-    } catch (e) {}
-
-    res.render("pages/confirmation", { booking, serviceItem, serviceVariation, teamMemberBookingProfile, serviceDetails, location });
+    res.render("pages/confirmation", { booking, teamMemberProfiles, serviceDetails, location });
   } catch (error) {
     console.error(error);
     next(error);

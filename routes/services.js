@@ -65,19 +65,29 @@ router.post("/select", async (req, res, next) => {
     }
   }
 
+
   // If only one service is selected, ensure it's an array
   let serviceIds = Array.isArray(selectedServices) ? selectedServices : [selectedServices];
   // Remove any empty/undefined serviceIds (caused by no selection)
   serviceIds = serviceIds.filter(Boolean);
 
-  // Ensure all selected services have a quantity (default 1)
+  // Instead of using quantity, expand serviceIds so each quantity is a separate entry
+  let expandedServiceIds = [];
   serviceIds.forEach(sid => {
-    if (!quantities[sid]) quantities[sid] = 1;
+    let qty = quantities[sid] ? parseInt(quantities[sid], 10) : 1;
+    for (let i = 0; i < qty; i++) {
+      expandedServiceIds.push(sid);
+    }
   });
 
-  // After building serviceIds and quantities, fetch all selected services and check for priceMoney
+  // For downstream compatibility, set all quantities to 1
+  let expandedQuantities = {};
+  expandedServiceIds.forEach(sid => { expandedQuantities[sid] = 1; });
+
+
+  // After building expandedServiceIds, fetch all selected services and check for priceMoney
   const missingPriceIds = [];
-  for (const sid of serviceIds) {
+  for (const sid of expandedServiceIds) {
     try {
       const { result: { object: variation } } = await catalogApi.retrieveCatalogObject(sid);
       if (!variation.itemVariationData.priceMoney) {
@@ -113,10 +123,13 @@ router.post("/select", async (req, res, next) => {
   }
 
   if (!req.session) req.session = {};
-  req.session.selectedServices = serviceIds;
-  req.session.quantities = quantities;
+  req.session.selectedServices = expandedServiceIds;
+  req.session.quantities = expandedQuantities;
+  // Debug: log session after setting
+  console.log('DEBUG: /services/select session.selectedServices', req.session.selectedServices);
+  console.log('DEBUG: /services/select session.quantities', req.session.quantities);
 
-  const firstServiceId = serviceIds[0];
+  const firstServiceId = expandedServiceIds[0];
   const version = req.body.version || '';
   res.redirect(`/staff/${firstServiceId}?version=${version}`);
 });

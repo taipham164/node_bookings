@@ -79,38 +79,49 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
   const serviceVersion = req.query.version;
   const staffId = req.params.staffId;
   const startAt = dateHelpers.getStartAtDate();
+  // Retrieve multi-service selection from session if available
+  const selectedServices = req.session && req.session.selectedServices ? req.session.selectedServices : [serviceId];
+  const quantities = req.session && req.session.quantities ? req.session.quantities : {};
+
+  // Build serviceDetails and segmentFilters for all selected services and their quantities
+  const serviceDetails = [];
+  const segmentFilters = [];
+  for (const sid of selectedServices) {
+    const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
+    const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+    const duration = variation.itemVariationData.serviceDuration;
+    // Get quantity for this service (default 1)
+    const quantity = quantities && quantities[sid] ? parseInt(quantities[sid], 10) : 1;
+    serviceDetails.push({
+      id: sid,
+      name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
+      duration,
+      quantity
+    });
+    // For each quantity, push a segment
+    for (let i = 0; i < quantity; i++) {
+      segmentFilters.push({
+        serviceVariationId: sid,
+        durationMinutes: Math.round(Number(duration) / 1000 / 60)
+      });
+    }
+  }
+
   const searchRequest = {
     query: {
       filter: {
         locationId,
-        segmentFilters: [
-          {
-            serviceVariationId: serviceId,
-          },
-        ],
+        segmentFilters,
         startAtRange: {
           endAt: dateHelpers.getEndAtDate(startAt).toISOString(),
           startAt: startAt.toISOString(),
         },
-      }
+        intervalMinutes: 30 // Show all possible start times at 30-min intervals
+      },
+      limit: 100 // Ensure all possible slots are returned
     }
   };
-  // Retrieve multi-service selection from session if available
-  const selectedServices = req.session && req.session.selectedServices ? req.session.selectedServices : [serviceId];
-  const quantities = req.session && req.session.quantities ? req.session.quantities : {};
   try {
-    // Build serviceDetails for all selected services
-    const serviceDetails = [];
-    for (const sid of selectedServices) {
-      const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
-      const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
-      serviceDetails.push({
-        id: sid,
-        name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
-        duration: variation.itemVariationData.serviceDuration,
-        quantity: quantities[sid] || 1
-      });
-    }
     // get service item - needed to display service details in left pane
     const retrieveServicePromise = catalogApi.retrieveCatalogObject(serviceId, true);
     let availabilities;
@@ -118,10 +129,12 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     let additionalInfo;
     // search availability for the specific staff member if staff id is passed as a param
     if (staffId === ANY_STAFF_PARAMS) {
+      // For "any staff", get all team members who can perform the first service (for left pane info)
       const [ services, teamMembers ] = await searchActiveTeamMembers(serviceId);
-      searchRequest.query.filter.segmentFilters[0].teamMemberIdFilter = {
-        any: teamMembers,
-      };
+      // Set all segmentFilters to allow any of these team members
+      for (const seg of searchRequest.query.filter.segmentFilters) {
+        seg.teamMemberIdFilter = { any: teamMembers };
+      }
       // get availability
       const { result } = await bookingsApi.searchAvailability(searchRequest);
       availabilities = result.availabilities;
@@ -130,11 +143,10 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
         serviceVariation: services.object
       };
     } else {
-      searchRequest.query.filter.segmentFilters[0].teamMemberIdFilter = {
-        any: [
-          staffId
-        ],
-      };
+      // Set all segmentFilters to require the selected staffId
+      for (const seg of searchRequest.query.filter.segmentFilters) {
+        seg.teamMemberIdFilter = { any: [staffId] };
+      }
       // get availability
       const availabilityPromise = bookingsApi.searchAvailability(searchRequest);
       // get team member booking profile - needed to display team member details in left pane

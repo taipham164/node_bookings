@@ -1,4 +1,5 @@
 <% include("../functions") %>
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -79,19 +80,32 @@
               <div class="card__wrapper<%= hasPrice ? '' : ' card__wrapper--disabled' %>">
                 <label class="service-label<%= hasPrice ? '' : ' service-label--disabled' %>">
                   <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin-right: 10px;" <%= hasPrice ? '' : 'disabled' %>>
-                  <div class="card__info" style="flex: 1;">
-                    <h4><%= item.itemData.name %> - <%= variation.itemVariationData.name %></h4>
-                    <h5 class="card__description"><%= item.itemData.description %></h5>
-                    <span class="card__details">
+                  <span class="card__details">
                       <%if (variation.itemVariationData.pricingType === "FIXED_PRICING" && variation.itemVariationData.priceMoney) { %>
                         <%= formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) %>
+                        • <%= formatTime(variation.itemVariationData.serviceDuration) %>
                       <% } else { %>
-                        <span style="color:#d00;font-weight:bold;">Call for Estimate</span>
+                        <span style="color:#d00;font-weight:bold;">Call/Text for Estimate</span>
                       <% } %>
-                      • <%= formatTime(variation.itemVariationData.serviceDuration) %>
+                      
                     </span>
+                  <div class="card__info" style="flex: 1;">
+                    <!-- <h4><%= item.itemData.name %> - <%= variation.itemVariationData.name %></h4> -->
+                     <h4><%= item.itemData.name %></h4>
+                    <h5 class="card__description">
+                      <%= item.itemData.description && item.itemData.description.length > 50 ? item.itemData.description.substring(0, 50) + '...' : item.itemData.description %>
+                      <% if (item.itemData.description && item.itemData.description.length > 50) { %>
+                        <a href="#" class="see-detail-link" data-service='<%- JSON.stringify({
+                          name: item.itemData.name,
+                          description: item.itemData.description,
+                          id: variation.id,
+                          price: variation.itemVariationData.priceMoney ? formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) : null
+                        }) %>'>See detail</a>
+                      <% } %>
+                    </h5>
+                    
                   </div>
-                  <input type="hidden" name="quantities[<%= variation.id %>]" value="1" id="quantity-<%= variation.id %>">
+                  <input type="hidden" name="quantities[<%= variation.id %>]" value="1" id="quantity-<%= variation.id %>" autocomplete="off">
                   <div class="quantity-control" <%= hasPrice ? '' : 'style="pointer-events:none;opacity:0.5;"' %>>
                     <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', -1)" <%= hasPrice ? '' : 'disabled' %>>-</button>
                     <span id="qty-display-<%= variation.id %>">1</span>
@@ -105,7 +119,7 @@
             <div class="card__wrapper disabled"></div>
           <% } %>
         </div>
-        <button class="button btn-primary" type="submit" style="margin-top: 20px;">Continue</button>
+        <button class="button btn-primary continue-fixed-btn" id="continue-btn" type="submit" disabled>Continue</button>
       </form>
     </div>
   </div>
@@ -129,16 +143,110 @@
       </div>
     </div>
   <% } %>
+  <div id="service-detail-modal" class="service-detail-modal" style="display:none;">
+    <div class="service-detail-dialog">
+      <span class="service-detail-close" onclick="closeServiceDetail()">&times;</span>
+      <h3 id="modal-service-name"></h3>
+      <div id="modal-service-description"></div>
+      <div id="modal-service-price" style="margin: 10px 0;"></div>
+      <div style="margin-top: 20px;">
+        <button class="button btn-primary" id="modal-add-service-btn">Add Service</button>
+      </div>
+    </div>
+  </div>
+  <div id="service-error" class="service-error-message" style="display:none;">Please select at least one service to continue.</div>
   <script>
-  function changeQty(id, delta) {
-    var input = document.getElementById('quantity-' + id);
-    var display = document.getElementById('qty-display-' + id);
-    var val = parseInt(input.value, 10) || 1;
-    val += delta;
-    if (val < 1) val = 1;
-    input.value = val;
-    display.textContent = val;
+
+function changeQty(id, delta) {
+  var input = document.getElementById('quantity-' + id);
+  var display = document.getElementById('qty-display-' + id);
+  var checkbox = document.querySelector('input[type="checkbox"][value="' + id + '"]');
+  var val = parseInt(input.value, 10) || 1;
+  val += delta;
+  if (val < 1) val = 1;
+  input.value = val;
+  display.textContent = val;
+  // If user increases quantity, auto-check the box
+  if (checkbox && !checkbox.checked && !checkbox.disabled) {
+    checkbox.checked = true;
+    // Trigger change event so listeners update the continue button
+    var event = new Event('change', { bubbles: true });
+    checkbox.dispatchEvent(event);
+  } else if (checkbox && checkbox.checked && typeof updateContinueBtnState === 'function') {
+    // If already checked, still update button state
+    updateContinueBtnState();
   }
+}
+
+  function closeServiceDetail() {
+    document.getElementById('service-detail-modal').style.display = 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.see-detail-link').forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        var data = JSON.parse(this.getAttribute('data-service'));
+        document.getElementById('modal-service-name').textContent = data.name;
+        document.getElementById('modal-service-description').textContent = data.description;
+        document.getElementById('modal-service-price').textContent = data.price ? 'Price: ' + data.price : '';
+        document.getElementById('service-detail-modal').style.display = 'flex';
+        // Set up add service button
+        var addBtn = document.getElementById('modal-add-service-btn');
+        addBtn.onclick = function() {
+          var checkbox = document.querySelector('input[type="checkbox"][value="' + data.id + '"]');
+          if (checkbox && !checkbox.checked && !checkbox.disabled) {
+            checkbox.checked = true;
+          }
+          closeServiceDetail();
+        };
+      });
+    });
+
+    // Prevent submit if no service is selected and update button style
+    var form = document.querySelector('form[action="/services/select"]');
+    var continueBtn = document.getElementById('continue-btn');
+    var errorMsg = document.getElementById('service-error');
+    var checkboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
+    function updateContinueBtnState() {
+      var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
+      if (checked.length) {
+        continueBtn.disabled = false;
+        continueBtn.classList.add('continue-fixed-btn-active');
+      } else {
+        continueBtn.disabled = true;
+        continueBtn.classList.remove('continue-fixed-btn-active');
+      }
+    }
+    checkboxes.forEach(function(cb) {
+      cb.addEventListener('change', updateContinueBtnState);
+    });
+    updateContinueBtnState();
+    if (form && continueBtn) {
+      form.addEventListener('submit', function(e) {
+        var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
+        var allCheckboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
+        // Enable quantity input for checked, disable for unchecked
+        allCheckboxes.forEach(function(cb) {
+          var qtyInput = document.getElementById('quantity-' + cb.value);
+          if (qtyInput) {
+            if (cb.checked) {
+              qtyInput.disabled = false;
+            } else {
+              qtyInput.disabled = true;
+            }
+          }
+        });
+        if (!checked.length) {
+          e.preventDefault();
+          errorMsg.style.display = 'block';
+          setTimeout(function() { errorMsg.style.display = 'none'; }, 2500);
+          // Optionally scroll to error
+          errorMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+      });
+    }
+  });
   </script>
 </body>
 
