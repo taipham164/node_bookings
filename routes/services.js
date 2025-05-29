@@ -37,11 +37,34 @@ router.get("/", async (req, res, next) => {
     }
 
     // Separate items and categories
-    const items = objects.filter(obj => obj.type === "ITEM" && obj.itemData && obj.itemData.productType === "APPOINTMENTS_SERVICE" && !obj.isDeleted && !obj.is_deleted);
+    // Only include items that are bookable online by customer
+    // Try to debug and print itemData keys for inspection
+    // Only show items where at least one variation has availableForBooking true
+    const items = objects.filter(obj => {
+      if (obj.type !== "ITEM" || !obj.itemData || obj.itemData.productType !== "APPOINTMENTS_SERVICE" || obj.isDeleted || obj.is_deleted) {
+        return false;
+      }
+      if (!Array.isArray(obj.itemData.variations)) {
+        return false;
+      }
+      // At least one variation must have availableForBooking true
+      return obj.itemData.variations.some(variation => {
+        return variation.itemVariationData && variation.itemVariationData.availableForBooking === true;
+      });
+    });
 
+    // Collect all image IDs for all items
     const uniqueImageIds = new Set();
+    // Map of itemId -> array of secondary imageIds (exclude primary)
+    const itemSecondaryImages = {};
     items.forEach(item => {
       const imageIds = item.itemData.imageIds || [];
+      // By convention, the first image is primary
+      if (imageIds.length > 1) {
+        itemSecondaryImages[item.id] = imageIds.slice(1);
+      } else {
+        itemSecondaryImages[item.id] = [];
+      }
       imageIds.forEach(id => uniqueImageIds.add(id));
     });
 
@@ -118,14 +141,39 @@ router.get("/", async (req, res, next) => {
     });
 
     // Only include categories that have at least one service
+    // Sort categories: most booked DESC only (no fallback to name)
     let allCategories = Object.values(categoryMap)
       .filter(cat => categorized[cat.id] && categorized[cat.id].length > 0)
       .sort((a, b) => {
-        // Sort ONLY by booking count DESC
         const countA = categoryBookingCounts[a.id] || 0;
         const countB = categoryBookingCounts[b.id] || 0;
         return countB - countA;
       });
+
+    // For each category, sort its service items: most recently added first, then most booked
+    Object.keys(categorized).forEach(catId => {
+      categorized[catId].sort((a, b) => {
+        // Sort by created_at DESC (most recent first), then by booking count DESC
+        const dateA = new Date(a.itemData.created_at || a.created_at || 0);
+        const dateB = new Date(b.itemData.created_at || b.created_at || 0);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime();
+        }
+        // Fallback: most booked service first
+        let countA = 0, countB = 0;
+        if (a.itemData.variations) {
+          a.itemData.variations.forEach(variation => {
+            countA += serviceBookingCounts[variation.id] || 0;
+          });
+        }
+        if (b.itemData.variations) {
+          b.itemData.variations.forEach(variation => {
+            countB += serviceBookingCounts[variation.id] || 0;
+          });
+        }
+        return countB - countA;
+      });
+    });
 
     const imageMap = {};
     if (uniqueImageIds.size > 0) {
@@ -141,7 +189,7 @@ router.get("/", async (req, res, next) => {
       }
     }
 
-    res.render("pages/select-service", { cancel, items, allCategories, categorized, location: req.app.locals.location, imageMap });
+    res.render("pages/select-service", { cancel, items, allCategories, categorized, location: req.app.locals.location, imageMap, itemSecondaryImages });
   } catch (error) {
     console.error(error);
     next(error);

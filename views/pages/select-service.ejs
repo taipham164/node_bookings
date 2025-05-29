@@ -148,11 +148,21 @@
                             <% } %>
                           </div>
                           <div style="margin-top:2px;">
+                            <% 
+                              // Gather secondary image URLs for this item
+                              var secondaryImageUrls = [];
+                              if (itemSecondaryImages && itemSecondaryImages[item.id] && itemSecondaryImages[item.id].length > 0) {
+                                itemSecondaryImages[item.id].forEach(function(imgId) {
+                                  if (imageMap[imgId]) secondaryImageUrls.push(imageMap[imgId]);
+                                });
+                              }
+                            %>
                             <a href="#" class="see-detail-link" data-service='<%- JSON.stringify({
                               name: item.itemData.name,
                               description: item.itemData.description || "No description available.",
                               id: variation.id,
-                              price: variation.itemVariationData.priceMoney ? formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) : null
+                              price: variation.itemVariationData.priceMoney ? formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) : null,
+                              secondaryImages: secondaryImageUrls
                             }) %>' style="font-size:0.98em; color:#0070f3; text-decoration:underline;">See detail</a>
                           </div>
                           <div class="quantity-control" style="margin-top:8px;" <%= hasPrice ? '' : 'style=\"pointer-events:none;opacity:0.5;\"' %>>
@@ -228,6 +238,7 @@
       <h3 id="modal-service-name"></h3>
       <div id="modal-service-description"></div>
       <div id="modal-service-price" style="margin: 10px 0;"></div>
+      <div id="modal-service-secondary-images" style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px 0;"></div>
       <div style="margin-top: 20px;">
         <button class="button btn-primary" id="modal-add-service-btn">Add Service</button>
       </div>
@@ -303,6 +314,56 @@ function changeQty(id, delta) {
         document.getElementById('modal-service-name').textContent = data.name;
         document.getElementById('modal-service-description').textContent = data.description;
         document.getElementById('modal-service-price').textContent = data.price ? 'Price: ' + data.price : '';
+        // Render secondary images
+        var secImgDiv = document.getElementById('modal-service-secondary-images');
+        secImgDiv.innerHTML = '';
+        if (data.secondaryImages && data.secondaryImages.length > 0) {
+          data.secondaryImages.forEach(function(url) {
+            var img = document.createElement('img');
+            img.src = url;
+            img.alt = data.name + ' photo';
+            img.style.width = '70px';
+            img.style.height = '70px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '8px';
+            img.style.border = '1.5px solid #eee';
+            img.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)';
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', function(e) {
+              e.stopPropagation();
+              showBigImage(url, data.name);
+            });
+            secImgDiv.appendChild(img);
+          });
+        }
+        secImgDiv.style.display = (data.secondaryImages && data.secondaryImages.length > 0) ? 'flex' : 'none';
+
+        // Helper to show a big image overlay
+        window.showBigImage = function(url, name) {
+          var overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0';
+          overlay.style.left = '0';
+          overlay.style.width = '100vw';
+          overlay.style.height = '100vh';
+          overlay.style.background = 'rgba(0,0,0,0.7)';
+          overlay.style.display = 'flex';
+          overlay.style.alignItems = 'center';
+          overlay.style.justifyContent = 'center';
+          overlay.style.zIndex = '9999';
+          overlay.addEventListener('click', function() { document.body.removeChild(overlay); });
+          var img = document.createElement('img');
+          img.src = url;
+          img.alt = name + ' large photo';
+          img.style.maxWidth = '90vw';
+          img.style.maxHeight = '90vh';
+          img.style.borderRadius = '12px';
+          img.style.boxShadow = '0 4px 32px rgba(0,0,0,0.25)';
+          img.style.background = '#fff';
+          img.style.display = 'block';
+          overlay.appendChild(img);
+          document.body.appendChild(overlay);
+        };
         document.getElementById('service-detail-modal').style.display = 'flex';
         // Set up add service button
         var addBtn = document.getElementById('modal-add-service-btn');
