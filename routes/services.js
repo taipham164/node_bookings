@@ -29,16 +29,51 @@ const {
 router.get("/", async (req, res, next) => {
   const cancel = req.query.cancel;
   try {
-    let { result: { items } } = await catalogApi.searchCatalogItems({
-      enabledLocationIds: [ locationId ],
-      productTypes: [ "APPOINTMENTS_SERVICE" ]
-    });
-
-    if (!items) {
-      items = [];
+    // Fetch all catalog objects (items and categories)
+    const { result: { objects } } = await catalogApi.listCatalog(undefined, undefined);
+    if (!objects) {
+      return res.render("pages/select-service", { cancel, items: [], allCategories: [] });
     }
 
-    res.render("pages/select-service", { cancel, items });
+    // Separate items and categories
+    const items = objects.filter(obj => obj.type === "ITEM" && obj.itemData && obj.itemData.productType === "APPOINTMENTS_SERVICE" && !obj.isDeleted && !obj.is_deleted);
+    const categories = objects.filter(obj => obj.type === "CATEGORY" && obj.categoryData && !obj.isDeleted && !obj.is_deleted);
+
+    // Build a map of categoryId -> category { id, name, ordinal }
+    const categoryMap = {};
+    categories.forEach(cat => {
+      categoryMap[cat.id] = {
+        id: cat.id,
+        name: cat.categoryData.name,
+        ordinal: typeof cat.categoryData.ordinal === 'number' ? cat.categoryData.ordinal : (cat.categoryData.locationOverrides && cat.categoryData.locationOverrides[0] && typeof cat.categoryData.locationOverrides[0].ordinal === 'number' ? cat.categoryData.locationOverrides[0].ordinal : 0)
+      };
+    });
+
+    // Group items by category id for frontend convenience
+    let categorized = {};
+    items.forEach(item => {
+      let catIds = [];
+      if (item.itemData.categories && Array.isArray(item.itemData.categories)) {
+        catIds = item.itemData.categories.map(catObj => catObj.id);
+      } else if (item.itemData.category && item.itemData.category.id) {
+        catIds = [item.itemData.category.id];
+      } else if (item.itemData.categoryId) {
+        catIds = [item.itemData.categoryId];
+      }
+      catIds.forEach(catId => {
+        if (!categorized[catId]) categorized[catId] = [];
+        categorized[catId].push(item);
+      });
+    });
+    // Only include categories that have at least one service
+    let allCategories = Object.values(categoryMap)
+      .filter(cat => categorized[cat.id] && categorized[cat.id].length > 0)
+      .sort((a, b) => {
+        if (a.ordinal !== b.ordinal) return a.ordinal - b.ordinal;
+        return a.name.localeCompare(b.name);
+      });
+
+    res.render("pages/select-service", { cancel, items, allCategories, categorized, location: req.app.locals.location });
   } catch (error) {
     console.error(error);
     next(error);
@@ -109,15 +144,53 @@ router.post("/select", async (req, res, next) => {
         missingNames.push(sid);
       }
     }
-    // Fetch all items for the service selection page so user can adjust selection
-    let { result: { items } } = await catalogApi.searchCatalogItems({
-      enabledLocationIds: [ locationId ],
-      productTypes: [ "APPOINTMENTS_SERVICE" ]
-    });
-    if (!items) items = [];
+    // Fetch all catalog objects (items and categories) for the service selection page so user can adjust selection
+    const { result: { objects } } = await catalogApi.listCatalog(undefined, undefined);
+    let items = [];
+    let allCategories = [];
+    let categorized = {};
+    if (objects) {
+      items = objects.filter(obj => obj.type === "ITEM" && obj.itemData && obj.itemData.productType === "APPOINTMENTS_SERVICE" && !obj.is_deleted && !obj.isDeleted);
+      const categories = objects.filter(obj => obj.type === "CATEGORY" && obj.categoryData && !obj.is_deleted && !obj.isDeleted);
+      // Build a map of categoryId -> category { id, name, ordinal }
+      const categoryMap = {};
+      categories.forEach(cat => {
+        categoryMap[cat.id] = {
+          id: cat.id,
+          name: cat.categoryData.name,
+          ordinal: typeof cat.categoryData.ordinal === 'number' ? cat.categoryData.ordinal : (cat.categoryData.locationOverrides && cat.categoryData.locationOverrides[0] && typeof cat.categoryData.locationOverrides[0].ordinal === 'number' ? cat.categoryData.locationOverrides[0].ordinal : 0)
+        };
+      });
+      // Group items by category id for frontend convenience
+      categorized = {};
+      items.forEach(item => {
+        let catIds = [];
+        if (item.itemData.categories && Array.isArray(item.itemData.categories)) {
+          catIds = item.itemData.categories.map(catObj => catObj.id);
+        } else if (item.itemData.category && item.itemData.category.id) {
+          catIds = [item.itemData.category.id];
+        } else if (item.itemData.categoryId) {
+          catIds = [item.itemData.categoryId];
+        }
+        catIds.forEach(catId => {
+          if (!categorized[catId]) categorized[catId] = [];
+          categorized[catId].push(item);
+        });
+      });
+      // Only include categories that have at least one service
+      allCategories = Object.values(categoryMap)
+        .filter(cat => categorized[cat.id] && categorized[cat.id].length > 0)
+        .sort((a, b) => {
+          if (a.ordinal !== b.ordinal) return a.ordinal - b.ordinal;
+          return a.name.localeCompare(b.name);
+        });
+    }
     return res.render("pages/select-service", {
       cancel: null,
       items,
+      allCategories,
+      categorized,
+      location: req.app.locals.location,
       error: `The following services require an estimate: ${missingNames.join(", ")}. Please call us for a quote before booking.`
     });
   }
