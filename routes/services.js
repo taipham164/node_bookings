@@ -29,6 +29,7 @@ const {
 router.get("/", async (req, res, next) => {
   const cancel = req.query.cancel;
   try {
+
     // Fetch all catalog objects (items and categories)
     const { result: { objects } } = await catalogApi.listCatalog(undefined, undefined);
     if (!objects) {
@@ -37,6 +38,13 @@ router.get("/", async (req, res, next) => {
 
     // Separate items and categories
     const items = objects.filter(obj => obj.type === "ITEM" && obj.itemData && obj.itemData.productType === "APPOINTMENTS_SERVICE" && !obj.isDeleted && !obj.is_deleted);
+
+    const uniqueImageIds = new Set();
+    items.forEach(item => {
+      const imageIds = item.itemData.imageIds || [];
+      imageIds.forEach(id => uniqueImageIds.add(id));
+    });
+
     const categories = objects.filter(obj => obj.type === "CATEGORY" && obj.categoryData && !obj.isDeleted && !obj.is_deleted);
 
     // Build a map of categoryId -> category { id, name, ordinal }
@@ -65,15 +73,77 @@ router.get("/", async (req, res, next) => {
         categorized[catId].push(item);
       });
     });
+
+    // --- BEGIN: Fetch booking counts for each service and category ---
+    let serviceBookingCounts = {};
+    let categoryBookingCounts = {};
+    try {
+      const { bookingsApi } = require("../util/square-client");
+      let cursor = undefined;
+      do {
+        const { result } = await bookingsApi.searchBookings({
+          query: {
+            filter: {
+              locationId: locationId
+            }
+          },
+          cursor
+        });
+        const bookings = result.bookings || [];
+        bookings.forEach(booking => {
+          if (booking.appointmentSegments) {
+            booking.appointmentSegments.forEach(segment => {
+              const serviceId = segment.serviceVariationId;
+              serviceBookingCounts[serviceId] = (serviceBookingCounts[serviceId] || 0) + 1;
+            });
+          }
+        });
+        cursor = result.cursor;
+      } while (cursor);
+    } catch (err) {
+      console.warn("Could not fetch booking counts for services:", err);
+    }
+
+    // Sum booking counts for each category
+    Object.keys(categorized).forEach(catId => {
+      let count = 0;
+      categorized[catId].forEach(item => {
+        if (item.itemData.variations) {
+          item.itemData.variations.forEach(variation => {
+            count += serviceBookingCounts[variation.id] || 0;
+          });
+        }
+      });
+      categoryBookingCounts[catId] = count;
+    });
+
     // Only include categories that have at least one service
     let allCategories = Object.values(categoryMap)
       .filter(cat => categorized[cat.id] && categorized[cat.id].length > 0)
       .sort((a, b) => {
+        // Sort by booking count DESC, then ordinal, then name
+        const countA = categoryBookingCounts[a.id] || 0;
+        const countB = categoryBookingCounts[b.id] || 0;
+        if (countA !== countB) return countB - countA;
         if (a.ordinal !== b.ordinal) return a.ordinal - b.ordinal;
         return a.name.localeCompare(b.name);
       });
 
-    res.render("pages/select-service", { cancel, items, allCategories, categorized, location: req.app.locals.location });
+    const imageMap = {};
+    if (uniqueImageIds.size > 0) {
+      for (const imageId of uniqueImageIds) {
+        try {
+          const { result: { object } } = await catalogApi.retrieveCatalogObject(imageId);
+          if (object && object.imageData && object.imageData.url) {
+            imageMap[imageId] = object.imageData.url;
+          }
+        } catch (err) {
+          console.warn(`Could not retrieve image ${imageId}:`, err);
+        }
+      }
+    }
+
+    res.render("pages/select-service", { cancel, items, allCategories, categorized, location: req.app.locals.location, imageMap });
   } catch (error) {
     console.error(error);
     next(error);

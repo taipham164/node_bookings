@@ -4,6 +4,44 @@
 
 <head>
   <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
+  <style>
+    .card__wrapper {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      margin-bottom: 1.2em;
+      padding: 18px 18px 18px 12px;
+      display: flex;
+      align-items: center;
+      transition: box-shadow 0.2s, transform 0.2s;
+      border: 1px solid #f0f0f0;
+    }
+    .card__wrapper:hover {
+      box-shadow: 0 4px 16px rgba(0,112,243,0.13);
+      transform: translateY(-2px) scale(1.01);
+      border: 1px solid #0070f3;
+    }
+    .service-label {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      cursor: pointer;
+    }
+    .card__image img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-right: 18px;
+      border: 2px solid #f0f0f0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      opacity: 0;
+      animation: fadeinimg 0.5s forwards;
+    }
+    @keyframes fadeinimg {
+      to { opacity: 1; }
+    }
+  </style>
 </head>
 
 <body>
@@ -87,35 +125,42 @@
                   <% item.itemData.variations.forEach(function(variation) { %>
                     <% var hasPrice = variation.itemVariationData.priceMoney; %>
                     <div class="card__wrapper<%= hasPrice ? '' : ' card__wrapper--disabled' %>">
-                      <label class="service-label<%= hasPrice ? '' : ' service-label--disabled' %>">
-                        <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin-right: 10px;" <%= hasPrice ? '' : 'disabled' %>>
-                        <span class="card__details">
+                      <label class="service-label<%= hasPrice ? '' : ' service-label--disabled' %>" style="width:100%;align-items:flex-start;gap:18px;">
+                        <div class="card__image">
+                          <% let imgUrl = null;
+                             if (item.itemData.imageIds && item.itemData.imageIds.length > 0) {
+                               imgUrl = imageMap[item.itemData.imageIds[0]];
+                             }
+                          %>
+                          <img src="<%= imgUrl ? imgUrl : '/images/blank-logo-sm.svg' %>" alt="<%= item.itemData.name %>" loading="lazy">
+                        </div>
+                        <div class="card__info" style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                          <div style="display:flex;align-items:center;gap:10px;">
+                            <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin:0 8px 0 0;transform:scale(1.2);" <%= hasPrice ? '' : 'disabled' %>>
+                            <h4 style="margin:0;font-size:1.15em;font-weight:600;line-height:1.2;"><%= item.itemData.name %></h4>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
                             <%if (variation.itemVariationData.pricingType === "FIXED_PRICING" && variation.itemVariationData.priceMoney) { %>
-                              <%= formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) %>
-                              • <%= formatTime(variation.itemVariationData.serviceDuration) %>
+                              <span style="font-weight:500;color:#0070f3;font-size:1.05em;"><%= formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) %></span>
+                              <span style="color:#888;font-size:0.98em;">• <%= formatTime(variation.itemVariationData.serviceDuration) %></span>
                             <% } else { %>
                               <span style="color:#d00;font-weight:bold;">Call/Text for Estimate</span>
                             <% } %>
-                          </span>
-                        <div class="card__info" style="flex: 1;">
-                          <h4><%= item.itemData.name %></h4>
-                          <h5 class="card__description">
-                            <%= item.itemData.description && item.itemData.description.length > 50 ? item.itemData.description.substring(0, 50) + '...' : item.itemData.description %>
-                            <% if (item.itemData.description && item.itemData.description.length > 50) { %>
-                              <a href="#" class="see-detail-link" data-service='<%- JSON.stringify({
-                                name: item.itemData.name,
-                                description: item.itemData.description,
-                                id: variation.id,
-                                price: variation.itemVariationData.priceMoney ? formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) : null
-                              }) %>'>See detail</a>
-                            <% } %>
-                          </h5>
-                        </div>
-                        <input type="hidden" name="quantities[<%= variation.id %>]" value="1" id="quantity-<%= variation.id %>" autocomplete="off">
-                        <div class="quantity-control" <%= hasPrice ? '' : 'style=\"pointer-events:none;opacity:0.5;\"' %>>
-                          <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', -1)" <%= hasPrice ? '' : 'disabled' %>>-</button>
-                          <span id="qty-display-<%= variation.id %>">1</span>
-                          <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', 1)" <%= hasPrice ? '' : 'disabled' %>>+</button>
+                          </div>
+                          <div style="margin-top:2px;">
+                            <a href="#" class="see-detail-link" data-service='<%- JSON.stringify({
+                              name: item.itemData.name,
+                              description: item.itemData.description || "No description available.",
+                              id: variation.id,
+                              price: variation.itemVariationData.priceMoney ? formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) : null
+                            }) %>' style="font-size:0.98em; color:#0070f3; text-decoration:underline;">See detail</a>
+                          </div>
+                          <div class="quantity-control" style="margin-top:8px;" <%= hasPrice ? '' : 'style=\"pointer-events:none;opacity:0.5;\"' %>>
+                            <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', -1)" <%= hasPrice ? '' : 'disabled' %>>-</button>
+                            <span id="qty-display-<%= variation.id %>">1</span>
+                            <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', 1)" <%= hasPrice ? '' : 'disabled' %>>+</button>
+                            <input type="hidden" name="quantities[<%= variation.id %>]" value="1" id="quantity-<%= variation.id %>" autocomplete="off">
+                          </div>
                         </div>
                       </label>
                     </div>
