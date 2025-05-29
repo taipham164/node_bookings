@@ -172,7 +172,33 @@
             </div>
           <% }); %>
         </div>
-        <button class="button btn-primary continue-fixed-btn" id="continue-btn" type="submit" disabled>Continue</button>
+        <button class="button btn-primary continue-fixed-btn" id="continue-btn" type="submit" disabled>
+          <span class="continue-btn-label">Continue</span>
+        </button>
+  <style>
+    .continue-fixed-btn {
+      transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
+    }
+    .continue-fixed-btn:not(:disabled):hover {
+      background: #005fe6 !important;
+      box-shadow: 0 4px 24px rgba(0,106,255,0.18);
+      opacity: 1 !important;
+      transition: background 0.18s, box-shadow 0.18s, opacity 0.13s;
+    }
+    .continue-fixed-btn:not(:disabled):active {
+      background: #003e99 !important;
+      box-shadow: 0 2px 8px rgba(0,106,255,0.10);
+      opacity: 0.93 !important;
+      transition: background 0.13s, box-shadow 0.13s, opacity 0.13s;
+    }
+    .continue-btn-label {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      font-size: 1.1em;
+      display: inline-block;
+      padding: 0 8px;
+    }
+  </style>
       </form>
     </div>
   </div>
