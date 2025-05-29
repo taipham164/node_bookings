@@ -185,6 +185,7 @@
         <button class="button btn-primary continue-fixed-btn" id="continue-btn" type="submit" disabled>
           <span class="continue-btn-label">Continue</span>
         </button>
+        <button id="call-us-message" type="button" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);cursor:not-allowed;opacity:0.97;">Online booking is not available for this combination. Please contact us to request your appointment.</button>
   <style>
     .continue-fixed-btn {
       transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
@@ -301,6 +302,90 @@ function changeQty(id, delta) {
     updateContinueBtnState();
   }
 }
+
+  // --- LIMITS ---
+  var MAX_PER_SERVICE = 3;
+  var MAX_TOTAL = 4;
+
+  function enforceLimits() {
+    var form = document.querySelector('form[action="/services/select"]');
+    var checkboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
+    var continueBtn = document.getElementById('continue-btn');
+    var callUsMsg = document.getElementById('call-us-message');
+    var total = 0;
+    var overPerService = false;
+    checkboxes.forEach(function(cb) {
+      if (!cb.checked) return; // Only count checked (selected) services
+      var qtyInput = document.getElementById('quantity-' + cb.value);
+      var qty = (qtyInput && !qtyInput.disabled) ? parseInt(qtyInput.value, 10) || 0 : 0;
+      if (qty > MAX_PER_SERVICE) overPerService = true;
+      total += qty;
+    });
+    if (overPerService || total > MAX_TOTAL) {
+      continueBtn.style.display = 'none';
+      callUsMsg.style.display = 'block';
+    } else {
+      continueBtn.style.display = '';
+      callUsMsg.style.display = 'none';
+    }
+  }
+
+  // Patch changeQty to enforce limits
+  var origChangeQty = changeQty;
+  changeQty = function(id, delta) {
+    origChangeQty(id, delta);
+    var input = document.getElementById('quantity-' + id);
+    if (input) {
+      var val = parseInt(input.value, 10) || 1;
+      if (val > MAX_PER_SERVICE) {
+        input.value = MAX_PER_SERVICE;
+        document.getElementById('qty-display-' + id).textContent = MAX_PER_SERVICE;
+      }
+    }
+    enforceLimits();
+    if (typeof updateContinueBtnState === 'function') updateContinueBtnState();
+  };
+
+  // Patch updateContinueBtnState to enforce limits
+  var origUpdateContinueBtnState = updateContinueBtnState;
+  updateContinueBtnState = function() {
+    if (typeof origUpdateContinueBtnState === 'function') origUpdateContinueBtnState();
+    enforceLimits();
+  };
+
+  // Also enforce on manual edits
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('form[action="/services/select"]');
+    if (form) {
+      form.querySelectorAll('input[type="number"], input[type="text"]').forEach(function(input) {
+        input.addEventListener('input', enforceLimits);
+      });
+    }
+    enforceLimits();
+  });
+
+  // Prevent submit if over limit
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('form[action="/services/select"]');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        var checkboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
+        var total = 0;
+        var overPerService = false;
+        checkboxes.forEach(function(cb) {
+          if (!cb.checked) return;
+          var qtyInput = document.getElementById('quantity-' + cb.value);
+          var qty = (qtyInput && !qtyInput.disabled) ? parseInt(qtyInput.value, 10) || 0 : 0;
+          if (qty > MAX_PER_SERVICE) overPerService = true;
+          total += qty;
+        });
+        if (overPerService || total > MAX_TOTAL) {
+          e.preventDefault();
+          enforceLimits();
+        }
+      });
+    }
+  });
 
   function closeServiceDetail() {
     document.getElementById('service-detail-modal').style.display = 'none';
