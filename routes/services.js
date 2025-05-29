@@ -121,12 +121,10 @@ router.get("/", async (req, res, next) => {
     let allCategories = Object.values(categoryMap)
       .filter(cat => categorized[cat.id] && categorized[cat.id].length > 0)
       .sort((a, b) => {
-        // Sort by booking count DESC, then ordinal, then name
+        // Sort ONLY by booking count DESC
         const countA = categoryBookingCounts[a.id] || 0;
         const countB = categoryBookingCounts[b.id] || 0;
-        if (countA !== countB) return countB - countA;
-        if (a.ordinal !== b.ordinal) return a.ordinal - b.ordinal;
-        return a.name.localeCompare(b.name);
+        return countB - countA;
       });
 
     const imageMap = {};
