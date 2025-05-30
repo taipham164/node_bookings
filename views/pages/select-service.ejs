@@ -133,63 +133,64 @@
   <header>
     <%- include("../partials/header") %>
   </header>
-  <div class="content">
-    <!-- <div class="content-left business">
-      <div class="business__logo">
-        <%if (location.logoUrl) { %>
-          <img src="<%= location.logoUrl %>">
-        <% } else { %>
-          <img src="/images/blank-logo.svg">
-        <% } %>
-      </div>
-      <h3>
-        <%= location.businessName || location.name %>
-      </h3>
-      <%if (location.description) { %>
-        <h5> <%= location.description %> </h5>
-      <% } %>
-      <div class="business__location">
-        <h4>Location</h4>
-        <div>
-          <%if (location.address) { %>
-            <%if (location.address.addressLine1) { %>
-              <span><%= location.address.addressLine1 %>, </span> <br>
-            <% } %>
-            <%if (location.address.addressLine2) { %>
-              <span><%= location.address.addressLine2 %>, </span>
-            <% } %>
-            <span>
-              <%= location.address.locality %>,
-              <%= location.address.administrativeDistrictLevel1 %>,
-              <%= location.address.postalCode %>
-            </span>
+  <div class="content" style="display: flex; flex-direction: row; gap: 2.5em;">
+    <!-- Main service list -->
+    <div class="content-main services" style="flex: 2 1 0;">
+      <!-- <div class="content-left business">
+        <div class="business__logo">
+          <%if (location.logoUrl) { %>
+            <img src="<%= location.logoUrl %>">
           <% } else { %>
-            <span>No location information</span>
+            <img src="/images/blank-logo.svg">
           <% } %>
         </div>
-      </div>
-      <div class="business__contact">
-      <h4>Contact</h4>
-      <%if (location.phoneNumber || location.businessEmail) { %>
-        <%if (location.businessEmail) { %>
-          Email: <span> <%= location.businessEmail %> </span>
-          <br>
+        <h3>
+          <%= location.businessName || location.name %>
+        </h3>
+        <%if (location.description) { %>
+          <h5> <%= location.description %> </h5>
         <% } %>
-        <%if (location.phoneNumber) { %>
-          Phone:
-          <span> <%= location.phoneNumber %> </span>
-        <% } %>
-      <% } else { %>
-          <span>No contact information</span>
-      <% } %>
-      </div>
-      <%if (cancel === "success") { %>
-        <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);opacity:0.97;display:flex;align-items:center;gap:10px;">
-          <img src="/images/success.svg" style="height:24px;width:24px;vertical-align:middle;margin-right:8px;">Your booking was cancelled successfully!
+        <div class="business__location">
+          <h4>Location</h4>
+          <div>
+            <%if (location.address) { %>
+              <%if (location.address.addressLine1) { %>
+                <span><%= location.address.addressLine1 %>, </span> <br>
+              <% } %>
+              <%if (location.address.addressLine2) { %>
+                <span><%= location.address.addressLine2 %>, </span>
+              <% } %>
+              <span>
+                <%= location.address.locality %>,
+                <%= location.address.administrativeDistrictLevel1 %>,
+                <%= location.address.postalCode %>
+              </span>
+            <% } else { %>
+              <span>No location information</span>
+            <% } %>
+          </div>
         </div>
-      <% } %>
-    </div> -->
-    <div class="content-main services">
+        <div class="business__contact">
+        <h4>Contact</h4>
+        <%if (location.phoneNumber || location.businessEmail) { %>
+          <%if (location.businessEmail) { %>
+            Email: <span> <%= location.businessEmail %> </span>
+            <br>
+          <% } %>
+          <%if (location.phoneNumber) { %>
+            Phone:
+            <span> <%= location.phoneNumber %> </span>
+          <% } %>
+        <% } else { %>
+            <span>No contact information</span>
+        <% } %>
+        </div>
+        <%if (cancel === "success") { %>
+          <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);opacity:0.97;display:flex;align-items:center;gap:10px;">
+            <img src="/images/success.svg" style="height:24px;width:24px;vertical-align:middle;margin-right:8px;">Your booking was cancelled successfully!
+          </div>
+        <% } %>
+      </div> -->
       <!-- <h4> Book an appointment </h4>
       <h4 class="title">Services</h4>
       <h4 class="underline"></h4> -->
@@ -298,42 +299,117 @@
         You can select up to 3 different services and a total of 3 items only.
       </div>
     </div>
+    <!-- Appointment summary sidebar -->
+    <aside id="appointment-summary" style="flex: 1 1 320px; max-width: 340px; min-width: 260px; margin-top: 0;">
+      <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);padding:24px 18px 18px 18px;margin-bottom:1.2em;">
+        <h3 style="margin:0 0 18px 0;font-size:1.18em;font-weight:700;">Appointment summary</h3>
+        <div id="summary-list">
+          <div id="summary-empty" style="color:#888;text-align:center;padding:18px 0;">No services added yet</div>
+          <ul id="summary-items" style="list-style:none;padding:0;margin:0;display:none;"></ul>
+        </div>
+      </div>
+      <button id="summary-close-btn" style="display:none;position:absolute;top:12px;right:18px;background:none;border:none;font-size:2em;color:#888;z-index:2110;cursor:pointer;">&times;</button>
+    </aside>
   </div>
-  <% if (!items.length) {%>
-    <div class="developer-note">
-      <div>
-        <h5>Developer note</h5>
-        <span>Looks like you don’t have any services setup yet. Run the seeding script or use the 
-          <a href="https://developer.squareup.com/explorer/square/catalog-api/upsert-catalog-object" target="_blank">API Explorer</a> or the Seller Dashboard for your environment
-          to create your first service. For more information, check our README file.
-        </span>
+  <style>
+    @media (max-width: 900px) {
+      .content {
+        flex-direction: column;
+      }
+      #appointment-summary {
+        max-width: 100%;
+        min-width: 0;
+        margin-top: 32px;
+      }
+      /* Mobile summary as slide-up panel */
+      #appointment-summary {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: -100vh;
+        top: auto;
+        width: 100vw;
+        max-width: 100vw;
+        min-width: 0;
+        margin: 0;
+        z-index: 2101;
+        box-shadow: 0 -2px 24px rgba(0,0,0,0.13);
+        border-radius: 18px 18px 0 0;
+        transition: bottom 0.28s cubic-bezier(.4,1.2,.4,1);
+        background: none;
+      }
+      #appointment-summary.mobile-open {
+        bottom: 0;
+      }
+      #summary-close-btn {
+        display: block !important;
+      }
+      #summary-toggle-btn {
+        display: flex !important;
+      }
+    }
+    @media (min-width: 901px) {
+      #summary-toggle-btn, #summary-mobile-overlay, #summary-close-btn {
+        display: none !important;
+      }
+      #appointment-summary {
+        position: static !important;
+        width: auto !important;
+        max-width: 340px !important;
+        min-width: 260px !important;
+        margin-top: 0 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
+        border-radius: 12px !important;
+        transition: none !important;
+      }
+    }
+  </style>
+  <!-- Mobile summary bar and sheet -->
+  <div id="summary-bottom-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;width:100vw;max-width:100vw;z-index:2200;background:#fff;box-shadow:0 -2px 16px rgba(0,0,0,0.10);padding:0;border-top:1px solid #eee;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:12px 10px 12px 16px;width:100%;box-sizing:border-box;">
+      <div style="flex:1;min-width:0;">
+        <span id="summary-bar-count" style="font-weight:600;font-size:1.08em;"></span>
+        <span id="summary-bar-total" style="margin-left:10px;font-weight:500;color:#0070f3;"></span>
+        <span id="summary-bar-duration" style="margin-left:10px;color:#888;font-size:0.98em;"></span>
       </div>
-    </div>
-  <% } %>
-  <% if (typeof error !== 'undefined' && error) { %>
-    <div id="popup-error" class="popup-error-overlay">
-      <div class="popup-error-dialog">
-        <span class="popup-error-close" onclick="document.getElementById('popup-error').style.display='none'">&times;</span>
-        <h5>Notice</h5>
-        <span><%= error %></span>
-      </div>
-    </div>
-  <% } %>
-  <div id="service-detail-modal" class="service-detail-modal" style="display:none;">
-    <div class="service-detail-dialog">
-      <span class="service-detail-close" onclick="closeServiceDetail()">&times;</span>
-      <h3 id="modal-service-name"></h3>
-      <div id="modal-service-description"></div>
-      <div id="modal-service-price" style="margin: 10px 0;"></div>
-      <div id="modal-service-secondary-images" style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px 0;"></div>
-      <div style="margin-top: 20px;">
-        <button class="button btn-primary" id="modal-add-service-btn">Add Service</button>
-      </div>
+      <button id="summary-bar-expand" style="background:none;border:none;padding:0 8px;font-size:1.5em;color:#222;cursor:pointer;line-height:1;">&#9650;</button>
+      <button id="summary-bar-next" class="button btn-primary" style="margin-left:8px;">Next</button>
     </div>
   </div>
-  <div id="service-error" class="service-error-message" style="display:none;">Please select at least one service to continue.</div>
+  <div id="summary-bottom-sheet" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:2201;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,0.18);padding:24px 18px 18px 18px;max-height:80vh;overflow-y:auto;transition:transform 0.25s;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <span style="font-weight:700;font-size:1.13em;">Appointment summary</span>
+      <button id="summary-sheet-close" style="background:none;border:none;font-size:2em;color:#888;cursor:pointer;">&times;</button>
+    </div>
+    <div id="summary-sheet-list">
+      <div id="summary-sheet-empty" style="color:#888;text-align:center;padding:18px 0;">No services added yet</div>
+      <ul id="summary-sheet-items" style="list-style:none;padding:0;margin:0;display:none;"></ul>
+    </div>
+    <button id="summary-sheet-next" class="button btn-primary" style="width:100%;margin-top:18px;">Next</button>
+  </div>
+  <style>
+    @media (max-width: 900px) {
+      #appointment-summary {
+        display: none !important;
+      }
+      #summary-bottom-bar {
+        display: flex !important;
+      }
+      #summary-bottom-sheet {
+        display: block;
+        transform: translateY(100%);
+      }
+      #summary-bottom-sheet.open {
+        transform: translateY(0);
+      }
+    }
+    @media (min-width: 901px) {
+      #summary-bottom-bar, #summary-bottom-sheet {
+        display: none !important;
+      }
+    }
+  </style>
   <script>
-
   // Category tab switching logic
   document.addEventListener('DOMContentLoaded', function() {
     var tabs = document.querySelectorAll('.category-tab');
@@ -364,8 +440,6 @@
         });
       });
     });
-    // Debug: print allCategories to console
-    console.log('Categories:', <%- JSON.stringify(allCategories) %>);
   });
 
 function changeQty(id, delta) {
@@ -387,6 +461,11 @@ function changeQty(id, delta) {
   // Always update limits and continue button
   enforceLimits();
   if (typeof updateContinueBtnState === 'function') updateContinueBtnState();
+
+  // Update appointment summary if function exists
+  if (typeof window.updateAppointmentSummary === 'function') {
+    window.updateAppointmentSummary();
+  }
 }
 
 
@@ -643,7 +722,259 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 100); // Prevent immediate hide on page load
     }
   });
-  </script>
-</body>
+  // Appointment summary logic
+  document.addEventListener('DOMContentLoaded', function() {
+    var summaryList = document.getElementById('summary-list');
+    var summaryItems = document.getElementById('summary-items');
+    var summaryEmpty = document.getElementById('summary-empty');
+    // var nextBtn = document.getElementById('summary-next-btn');
+    var form = document.querySelector('form[action="/services/select"]');
+    if (!form || !summaryList || !summaryItems || !summaryEmpty) return;
 
+    function updateSummary() {
+      var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
+      summaryItems.innerHTML = '';
+      let hasItems = false;
+      checked.forEach(function(cb) {
+        var label = cb.closest('.service-label');
+        var name = label ? label.querySelector('h4')?.textContent?.trim() : '';
+        var qtyInput = document.getElementById('quantity-' + cb.value);
+        var qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 1 : 1;
+        var priceSpan = label ? label.querySelector('span[style*="color:#0070f3"]') : null;
+        var price = priceSpan ? priceSpan.textContent.trim() : '';
+        var durationSpan = label ? label.querySelector('span[style*="color:#888"]') : null;
+        var duration = durationSpan ? durationSpan.textContent.trim().replace(/^•\s*/, '') : '';
+        var li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.alignItems = 'center';
+        li.style.justifyContent = 'space-between';
+        li.style.padding = '8px 0';
+        li.innerHTML =
+          '<div>' +
+            '<div style="font-weight:600;">' + name + (qty > 1 ? ' <span style="color:#0070f3;font-weight:500;">x' + qty + '</span>' : '') + '</div>' +
+            '<div style="font-size:0.97em;color:#666;">' +
+              (price ? '<span>' + price + '</span>' : '') +
+              (duration ? '<span style="margin-left:8px;">' + duration + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<button type="button" class="remove-summary-item" data-id="' + cb.value + '" style="background:none;border:none;color:#d00;font-size:1.2em;cursor:pointer;padding:0 8px;">&times;</button>';
+        summaryItems.appendChild(li);
+        hasItems = true;
+      });
+      summaryItems.style.display = hasItems ? 'block' : 'none';
+      summaryEmpty.style.display = hasItems ? 'none' : 'block';
+      // nextBtn.disabled = !hasItems;
+    }
+
+    // Expose updateSummary globally for changeQty
+    window.updateAppointmentSummary = updateSummary;
+
+    // Remove item from summary and uncheck
+    summaryItems.addEventListener('click', function(e) {
+      if (e.target.classList.contains('remove-summary-item')) {
+        var id = e.target.getAttribute('data-id');
+        var cb = form.querySelector('input[type="checkbox"][name="services[]"][value="' + id + '"]');
+        if (cb) {
+          cb.checked = false;
+          cb.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+
+    // Update summary on checkbox/qty change
+    form.addEventListener('change', updateSummary);
+    form.addEventListener('input', updateSummary);
+    updateSummary();
+
+    // // Next button submits the form
+    // nextBtn.addEventListener('click', function() {
+    //   if (!nextBtn.disabled) form.submit();
+    // });
+  });
+  // Mobile appointment summary toggle logic
+  document.addEventListener('DOMContentLoaded', function() {
+    var summary = document.getElementById('appointment-summary');
+    var toggleBtn = document.getElementById('summary-toggle-btn');
+    var overlay = document.getElementById('summary-mobile-overlay');
+    var closeBtn = document.getElementById('summary-close-btn');
+    function openSummary() {
+      summary.classList.add('mobile-open');
+      overlay.style.display = 'block';
+      closeBtn.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSummary() {
+      summary.classList.remove('mobile-open');
+      overlay.style.display = 'none';
+      closeBtn.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+    if (toggleBtn && summary && overlay && closeBtn) {
+      toggleBtn.addEventListener('click', openSummary);
+      closeBtn.addEventListener('click', closeSummary);
+      overlay.addEventListener('click', closeSummary);
+    }
+    // Hide summary on desktop
+    function handleResize() {
+      if (window.innerWidth <= 900) {
+        toggleBtn.style.display = 'flex';
+        summary.classList.remove('mobile-open');
+        overlay.style.display = 'none';
+        closeBtn.style.display = 'none';
+      } else {
+        toggleBtn.style.display = 'none';
+        summary.classList.remove('mobile-open');
+        overlay.style.display = 'none';
+        closeBtn.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+    window.addEventListener('resize', handleResize);
+    handleResize();
+  });
+  // Mobile summary bar and sheet logic
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('form[action="/services/select"]');
+    var bar = document.getElementById('summary-bottom-bar');
+    var barCount = document.getElementById('summary-bar-count');
+    var barTotal = document.getElementById('summary-bar-total');
+    var barDuration = document.getElementById('summary-bar-duration');
+    var barExpand = document.getElementById('summary-bar-expand');
+    var barNext = document.getElementById('summary-bar-next');
+    var sheet = document.getElementById('summary-bottom-sheet');
+    var sheetClose = document.getElementById('summary-sheet-close');
+    var sheetList = document.getElementById('summary-sheet-list');
+    var sheetItems = document.getElementById('summary-sheet-items');
+    var sheetEmpty = document.getElementById('summary-sheet-empty');
+    var sheetNext = document.getElementById('summary-sheet-next');
+    var serviceLimitNotice = document.getElementById('service-limit-notice');
+    function formatDuration(mins) {
+      if (!mins) return '';
+      var h = Math.floor(mins/60), m = mins%60;
+      return (h ? h+' hr ' : '') + (m ? m+' min' : (h ? '' : '0 min'));
+    }
+    function parseDuration(str) {
+      // e.g. "30 min", "1 hr 15 min"
+      var m = 0;
+      if (!str) return 0;
+      var hr = str.match(/(\d+)\s*hr/);
+      var min = str.match(/(\d+)\s*min/);
+      if (hr) m += parseInt(hr[1],10)*60;
+      if (min) m += parseInt(min[1],10);
+      return m;
+    }
+    function updateBarAndSheet() {
+      // Hide bar if service-limit-notice is visible
+      if (serviceLimitNotice && serviceLimitNotice.style.display !== 'none') {
+        bar.style.display = 'none';
+        sheet.classList.remove('open');
+        return;
+      }
+      // Only show bar on mobile
+      if (window.innerWidth <= 900) {
+        bar.style.display = 'flex';
+      } else {
+        bar.style.display = 'none';
+      }
+      var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
+      var count = checked.length;
+      var total = 0;
+      var totalMins = 0;
+      var items = [];
+      checked.forEach(function(cb) {
+        var label = cb.closest('.service-label');
+        var name = label ? label.querySelector('h4')?.textContent?.trim() : '';
+        var qtyInput = document.getElementById('quantity-' + cb.value);
+        var qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 1 : 1;
+        var priceSpan = label ? label.querySelector('span[style*="color:#0070f3"]') : null;
+        var price = priceSpan ? priceSpan.textContent.replace(/[^\d.]/g,'') : '';
+        var priceNum = parseFloat(price) || 0;
+        var durationSpan = label ? label.querySelector('span[style*="color:#888"]') : null;
+        var duration = durationSpan ? durationSpan.textContent.trim().replace(/^•\s*/, '') : '';
+        var mins = parseDuration(duration);
+        total += priceNum * qty;
+        totalMins += mins * qty;
+        items.push({name, qty, price: priceNum, duration, id: cb.value});
+      });
+      // Bar
+      bar.style.display = 'flex';
+      barCount.textContent = count ? (count + (count === 1 ? ' service' : ' services')) : 'No services';
+      barTotal.textContent = total ? ('$' + total.toFixed(2)) : '';
+      barDuration.textContent = totalMins ? formatDuration(totalMins) : '';
+      // Sheet
+      sheetItems.innerHTML = '';
+      if (items.length) {
+        items.forEach(function(item) {
+          var li = document.createElement('li');
+          li.style.display = 'flex';
+          li.style.alignItems = 'center';
+          li.style.justifyContent = 'space-between';
+          li.style.padding = '8px 0';
+          li.innerHTML =
+            '<div>' +
+              '<div style="font-weight:600;">' + item.name + (item.qty > 1 ? ' <span style="color:#0070f3;font-weight:500;">x' + item.qty + '</span>' : '') + '</div>' +
+              '<div style="font-size:0.97em;color:#666;">' +
+                (item.price ? '<span>$' + (item.price*item.qty).toFixed(2) + '</span>' : '') +
+                (item.duration ? '<span style="margin-left:8px;">' + item.duration + (item.qty > 1 ? ' x' + item.qty : '') + '</span>' : '') +
+              '</div>' +
+            '</div>' +
+            '<button type="button" class="remove-sheet-item" data-id="' + item.id + '" style="background:none;border:none;color:#d00;font-size:1.2em;cursor:pointer;padding:0 8px;">&times;</button>';
+          sheetItems.appendChild(li);
+        });
+        sheetItems.style.display = 'block';
+        sheetEmpty.style.display = 'none';
+      } else {
+        sheetItems.style.display = 'none';
+        sheetEmpty.style.display = 'block';
+      }
+      // Enable/disable Next
+      barNext.disabled = !items.length;
+      sheetNext.disabled = !items.length;
+    }
+    // Remove item from sheet
+    sheetItems.addEventListener('click', function(e) {
+      if (e.target.classList.contains('remove-sheet-item')) {
+        var id = e.target.getAttribute('data-id');
+        var cb = form.querySelector('input[type="checkbox"][name="services[]"][value="' + id + '"]');
+        if (cb) {
+          cb.checked = false;
+          cb.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+    // Expand/collapse sheet
+    barExpand.addEventListener('click', function() {
+      sheet.classList.add('open');
+    });
+    sheetClose.addEventListener('click', function() {
+      sheet.classList.remove('open');
+    });
+    // Next button submits form
+    barNext.addEventListener('click', function() {
+      if (!barNext.disabled) form.submit();
+    });
+    sheetNext.addEventListener('click', function() {
+      if (!sheetNext.disabled) form.submit();
+    });
+    // Update on change
+    form.addEventListener('change', updateBarAndSheet);
+    form.addEventListener('input', updateBarAndSheet);
+    updateBarAndSheet();
+    // Hide/show bar/sheet on resize
+    function handleMobileBar() {
+      if (window.innerWidth <= 900 && (!serviceLimitNotice || serviceLimitNotice.style.display === 'none')) {
+        bar.style.display = 'flex';
+        sheet.classList.remove('open');
+      } else {
+        bar.style.display = 'none';
+        sheet.classList.remove('open');
+      }
+    }
+    window.addEventListener('resize', handleMobileBar);
+    handleMobileBar();
+  });
+  // ...existing code...
+  </script>
+<!-- ...existing code... -->
+</body>
 </html>
