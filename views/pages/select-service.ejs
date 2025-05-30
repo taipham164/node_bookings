@@ -45,6 +45,84 @@
 </head>
 
 <body>
+  <!-- Sidebar Toggle Button (moved to right) -->
+  <button id="sidebar-toggle-btn" style="position:fixed;top:24px;right:24px;z-index:2000;background:#fff;border:none;border-radius:50%;width:44px;height:44px;box-shadow:0 2px 8px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+    <!-- Hamburger Icon SVG -->
+    <svg width="24" height="24" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="4" y1="7" x2="20" y2="7"/>
+      <line x1="4" y1="12" x2="20" y2="12"/>
+      <line x1="4" y1="17" x2="20" y2="17"/>
+    </svg>
+  </button>
+  <!-- Sidebar (slide from right) -->
+  <aside id="sidebar-info" style="position:fixed;top:0;right:-400px;width:320px;height:100vh;background:#fff;box-shadow:-2px 0 16px rgba(0,0,0,0.10);z-index:1999;transition:right 0.25s;overflow-y:auto;padding:32px 24px 24px 24px;">
+    <button id="sidebar-close-btn" style="position:absolute;top:18px;left:18px;background:none;border:none;font-size:1.8em;cursor:pointer;color:#888;">&times;</button>
+    <div style="text-align:center;">
+      <% if (location.logoUrl) { %>
+        <img src="<%= location.logoUrl %>" alt="Logo" style="width:80px;height:80px;border-radius:12px;margin-bottom:12px;">
+      <% } else { %>
+        <img src="/images/blank-logo.svg" alt="Logo" style="width:80px;height:80px;border-radius:12px;margin-bottom:12px;">
+      <% } %>
+      <h2 style="margin:0 0 10px 0;"><%= location.businessName || location.name %></h2>
+      <% if (location.description) { %>
+        <div style="color:#666;font-size:1em;margin-bottom:18px;"><%= location.description %></div>
+      <% } %>
+    </div>
+    <div style="margin-bottom:18px;">
+      <strong>Address</strong><br>
+      <% if (location.address) { %>
+        <span>
+          <% if (location.address.addressLine1) { %>
+            <%= location.address.addressLine1 %><br>
+          <% } %>
+          <% if (location.address.addressLine2) { %>
+            <%= location.address.addressLine2 %><br>
+          <% } %>
+          <%= location.address.locality %>, <%= location.address.administrativeDistrictLevel1 %> <%= location.address.postalCode %>
+        </span>
+      <% } else { %>
+        <span>No address info</span>
+      <% } %>
+    </div>
+    <div style="margin-bottom:18px;">
+      <strong>Phone</strong><br>
+      <% if (location.phoneNumber) { %>
+        <a href="tel:<%= location.phoneNumber %>" style="color:#0070f3;text-decoration:none;"><%= location.phoneNumber %></a>
+      <% } else { %>
+        <span>No phone info</span>
+      <% } %>
+    </div>
+    <div style="margin-bottom:18px;">
+      <strong>Email</strong><br>
+      <% if (location.businessEmail) { %>
+        <a href="mailto:<%= location.businessEmail %>" style="color:#0070f3;text-decoration:none;"><%= location.businessEmail %></a>
+      <% } else { %>
+        <span>No email info</span>
+      <% } %>
+    </div>
+    <div style="margin-bottom:18px;">
+      <strong>Hours</strong><br>
+      <% if (location.businessHours) { %>
+        <span><%= location.businessHours %></span>
+      <% } else { %>
+        <span>See website or call for hours</span>
+      <% } %>
+    </div>
+    <div style="margin-bottom:18px;">
+      <strong>Follow</strong><br>
+      <% if (location.websiteUrl) { %>
+        <a href="<%= location.websiteUrl %>" target="_blank" style="margin-right:8px;"><img src="/images/web-icon.svg" alt="Website" style="width:24px;height:24px;vertical-align:middle;"></a>
+      <% } %>
+      <% if (location.instagramUrl) { %>
+        <a href="<%= location.instagramUrl %>" target="_blank" style="margin-right:8px;"><img src="/images/instagram-icon.svg" alt="Instagram" style="width:24px;height:24px;vertical-align:middle;"></a>
+      <% } %>
+      <% if (location.facebookUrl) { %>
+        <a href="<%= location.facebookUrl %>" target="_blank"><img src="/images/facebook-icon.svg" alt="Facebook" style="width:24px;height:24px;vertical-align:middle;"></a>
+      <% } %>
+    </div>
+  </aside>
+  <div id="sidebar-overlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:1998;"></div>
+
   <header>
     <%- include("../partials/header") %>
   </header>
@@ -107,9 +185,9 @@
       <% } %>
     </div>
     <div class="content-main services">
-      <h4> Book an appointment </h4>
+      <!-- <h4> Book an appointment </h4>
       <h4 class="title">Services</h4>
-      <h4 class="underline"></h4>
+      <h4 class="underline"></h4> -->
       <% /* Use categorized from backend, do not regroup here! */ %>
       <div class="category-tabs" style="display: flex; gap: 1em; margin-bottom: 1.5em; border-bottom: 1px solid #eee;">
         <% allCategories.forEach(function(cat, idx) { %>
@@ -523,6 +601,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
     }
+  });
+  // Sidebar toggle logic (right side, fully hidden, hide toggle icon when open)
+  document.addEventListener('DOMContentLoaded', function() {
+    var sidebar = document.getElementById('sidebar-info');
+    var overlay = document.getElementById('sidebar-overlay');
+    var openBtn = document.getElementById('sidebar-toggle-btn');
+    var closeBtn = document.getElementById('sidebar-close-btn');
+    function openSidebar() {
+      sidebar.style.right = '0';
+      overlay.style.display = 'block';
+      openBtn.style.display = 'none';
+    }
+    function closeSidebar() {
+      sidebar.style.right = '-400px';
+      overlay.style.display = 'none';
+      openBtn.style.display = 'flex';
+    }
+    closeSidebar(); // Ensure sidebar is hidden on load
+    openBtn.addEventListener('click', openSidebar);
+    closeBtn.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
   });
   </script>
 </body>
