@@ -123,11 +123,18 @@
   </aside>
   <div id="sidebar-overlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:1998;"></div>
 
+  <!-- Cancel Success Notice (fixed at bottom, outside content-left) -->
+  <% if (cancel === "success") { %>
+    <div id="cancel-success-notice" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);opacity:0.97;display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <img src="/images/success.svg" style="height:24px;width:24px;vertical-align:middle;margin-right:8px;">Your booking was cancelled successfully!
+    </div>
+  <% } %>
+
   <header>
     <%- include("../partials/header") %>
   </header>
   <div class="content">
-    <div class="content-left business">
+    <!-- <div class="content-left business">
       <div class="business__logo">
         <%if (location.logoUrl) { %>
           <img src="<%= location.logoUrl %>">
@@ -177,13 +184,11 @@
       <% } %>
       </div>
       <%if (cancel === "success") { %>
-        <div class="success-toast">
-          <div>
-            <img src="/images/success.svg">Your booking was cancelled successfully!
-          </div>
+        <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);opacity:0.97;display:flex;align-items:center;gap:10px;">
+          <img src="/images/success.svg" style="height:24px;width:24px;vertical-align:middle;margin-right:8px;">Your booking was cancelled successfully!
         </div>
       <% } %>
-    </div>
+    </div> -->
     <div class="content-main services">
       <!-- <h4> Book an appointment </h4>
       <h4 class="title">Services</h4>
@@ -195,68 +200,71 @@
         <% }); %>
       </div>
       <form action="/services/select" method="POST">
-        <div class="cards">
+        <div class="cards two-col-cards">
           <% allCategories.forEach(function(cat, idx) { %>
-            <div class="service-category" data-category-panel="<%= cat.id %>" style="display:<%= idx === 0 ? 'block' : 'none' %>;">
-              <% if (categorized[cat.id] && categorized[cat.id].length > 0) { %>
-                <% categorized[cat.id].forEach(function(item) { %>
-                  <% item.itemData.variations.forEach(function(variation) { %>
-                    <% var hasPrice = variation.itemVariationData.priceMoney; %>
-                    <div class="card__wrapper<%= hasPrice ? '' : ' card__wrapper--disabled' %>">
-                      <label class="service-label<%= hasPrice ? '' : ' service-label--disabled' %>" style="width:100%;align-items:flex-start;gap:18px;">
-                        <div class="card__image">
-                          <% let imgUrl = null;
-                             if (item.itemData.imageIds && item.itemData.imageIds.length > 0) {
-                               imgUrl = imageMap[item.itemData.imageIds[0]];
-                             }
-                          %>
-                          <img src="<%= imgUrl ? imgUrl : '/images/blank-logo-sm.svg' %>" alt="<%= item.itemData.name %>" loading="lazy">
-                        </div>
-                        <div class="card__info" style="flex:1;display:flex;flex-direction:column;gap:6px;">
-                          <div style="display:flex;align-items:center;gap:10px;">
-                            <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin:0 8px 0 0;transform:scale(1.2);" <%= hasPrice ? '' : 'disabled' %>>
-                            <h4 style="margin:0;font-size:1.15em;font-weight:600;line-height:1.2;"><%= item.itemData.name %></h4>
-                          </div>
-                          <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
-                            <%if (variation.itemVariationData.pricingType === "FIXED_PRICING" && variation.itemVariationData.priceMoney) { %>
-                              <span style="font-weight:500;color:#0070f3;font-size:1.05em;"><%= formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) %></span>
-                              <span style="color:#888;font-size:0.98em;">• <%= formatTime(variation.itemVariationData.serviceDuration) %></span>
-                            <% } else { %>
-                              <span style="color:#d00;font-weight:bold;">Call/Text for Estimate</span>
-                            <% } %>
-                          </div>
-                          <div style="margin-top:2px;">
-                            <% 
-                              // Gather secondary image URLs for this item
-                              var secondaryImageUrls = [];
-                              if (itemSecondaryImages && itemSecondaryImages[item.id] && itemSecondaryImages[item.id].length > 0) {
-                                itemSecondaryImages[item.id].forEach(function(imgId) {
-                                  if (imageMap[imgId]) secondaryImageUrls.push(imageMap[imgId]);
-                                });
-                              }
+            <div class="service-category" data-category-panel="<%= cat.id %>" style="display:<%= idx === 0 ? 'block' : 'none' %>;grid-column: 1 / -1;">
+              <div class="two-col-inner">
+                <% if (categorized[cat.id] && categorized[cat.id].length > 0) { %>
+                  <% categorized[cat.id].forEach(function(item, itemIdx) { %>
+                    <% item.itemData.variations.forEach(function(variation) { %>
+                      <% var hasPrice = variation.itemVariationData.priceMoney; %>
+                      <div class="card__wrapper<%= hasPrice ? '' : ' card__wrapper--disabled' %>">
+                        <!-- ...existing code for label, image, info, etc... -->
+                        <label class="service-label<%= hasPrice ? '' : ' service-label--disabled' %>" style="width:100%;align-items:flex-start;gap:18px;">
+                          <div class="card__image">
+                            <% let imgUrl = null;
+                               if (item.itemData.imageIds && item.itemData.imageIds.length > 0) {
+                                 imgUrl = imageMap[item.itemData.imageIds[0]];
+                               }
                             %>
-                            <a href="#" class="see-detail-link" data-service='<%- JSON.stringify({
-                              name: item.itemData.name,
-                              description: item.itemData.description || "No description available.",
-                              id: variation.id,
-                              price: variation.itemVariationData.priceMoney ? formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) : null,
-                              secondaryImages: secondaryImageUrls
-                            }) %>' style="font-size:0.98em; color:#0070f3; text-decoration:underline;">See detail</a>
+                            <img src="<%= imgUrl ? imgUrl : '/images/blank-logo-sm.svg' %>" alt="<%= item.itemData.name %>" loading="lazy">
                           </div>
-                          <div class="quantity-control" style="margin-top:8px;" <%= hasPrice ? '' : 'style=\"pointer-events:none;opacity:0.5;\"' %>>
-                            <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', -1)" <%= hasPrice ? '' : 'disabled' %>>-</button>
-                            <span id="qty-display-<%= variation.id %>">1</span>
-                            <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', 1)" <%= hasPrice ? '' : 'disabled' %>>+</button>
-                            <input type="hidden" name="quantities[<%= variation.id %>]" value="1" id="quantity-<%= variation.id %>" autocomplete="off">
+                          <div class="card__info" style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                              <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin:0 8px 0 0;transform:scale(1.2);" <%= hasPrice ? '' : 'disabled' %>>
+                              <h4 style="margin:0;font-size:1.15em;font-weight:600;line-height:1.2;"><%= item.itemData.name %></h4>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
+                              <%if (variation.itemVariationData.pricingType === "FIXED_PRICING" && variation.itemVariationData.priceMoney) { %>
+                                <span style="font-weight:500;color:#0070f3;font-size:1.05em;"><%= formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) %></span>
+                                <span style="color:#888;font-size:0.98em;">• <%= formatTime(variation.itemVariationData.serviceDuration) %></span>
+                              <% } else { %>
+                                <span style="color:#d00;font-weight:bold;">Call/Text for Estimate</span>
+                              <% } %>
+                            </div>
+                            <div style="margin-top:2px;">
+                              <% 
+                                // Gather secondary image URLs for this item
+                                var secondaryImageUrls = [];
+                                if (itemSecondaryImages && itemSecondaryImages[item.id] && itemSecondaryImages[item.id].length > 0) {
+                                  itemSecondaryImages[item.id].forEach(function(imgId) {
+                                    if (imageMap[imgId]) secondaryImageUrls.push(imageMap[imgId]);
+                                  });
+                                }
+                              %>
+                              <a href="#" class="see-detail-link" data-service='<%- JSON.stringify({
+                                name: item.itemData.name,
+                                description: item.itemData.description || "No description available.",
+                                id: variation.id,
+                                price: variation.itemVariationData.priceMoney ? formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) : null,
+                                secondaryImages: secondaryImageUrls
+                              }) %>' style="font-size:0.98em; color:#0070f3; text-decoration:underline;">See detail</a>
+                            </div>
+                            <div class="quantity-control" style="margin-top:8px;" <%= hasPrice ? '' : 'style=\"pointer-events:none;opacity:0.5;\"' %>>
+                              <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', -1)" <%= hasPrice ? '' : 'disabled' %>>-</button>
+                              <span id="qty-display-<%= variation.id %>">1</span>
+                              <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', 1)" <%= hasPrice ? '' : 'disabled' %>>+</button>
+                              <input type="hidden" name="quantities[<%= variation.id %>]" value="1" id="quantity-<%= variation.id %>" autocomplete="off">
+                            </div>
                           </div>
-                        </div>
-                      </label>
-                    </div>
+                        </label>
+                      </div>
+                    <% }); %>
                   <% }); %>
-                <% }); %>
-              <% } else { %>
-                <div class="card__wrapper disabled" style="justify-content:center;text-align:center;padding:2em 0;">No services in this category.</div>
-              <% } %>
+                <% } else { %>
+                  <div class="card__wrapper disabled" style="justify-content:center;text-align:center;padding:2em 0;grid-column: 1 / -1;">No services in this category.</div>
+                <% } %>
+              </div>
             </div>
           <% }); %>
         </div>
@@ -264,31 +272,27 @@
           <span class="continue-btn-label">Continue</span>
         </button>
         <button id="call-us-message" type="button" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);cursor:not-allowed;opacity:0.97;">Online booking is not available for this combination. Please contact us to request your appointment.</button>
-  <style>
-    .continue-fixed-btn {
-      transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
-    }
-    .continue-fixed-btn:not(:disabled):hover {
-      background: #005fe6 !important;
-      box-shadow: 0 4px 24px rgba(0,106,255,0.18);
-      opacity: 1 !important;
-      transition: background 0.18s, box-shadow 0.18s, opacity 0.13s;
-    }
-    .continue-fixed-btn:not(:disabled):active {
-      background: #003e99 !important;
-      box-shadow: 0 2px 8px rgba(0,106,255,0.10);
-      opacity: 0.93 !important;
-      transition: background 0.13s, box-shadow 0.13s, opacity 0.13s;
-    }
-    .continue-btn-label {
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      font-size: 1.1em;
-      display: inline-block;
-      padding: 0 8px;
-    }
-  </style>
       </form>
+      <style>
+        .two-col-cards {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1.2em;
+        }
+        .two-col-inner {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1.2em;
+        }
+        @media (min-width: 700px) {
+          .two-col-cards {
+            grid-template-columns: 1fr;
+          }
+          .two-col-inner {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+      </style>
       <!-- Add this notice somewhere visible, e.g. after the form buttons -->
       <div id="service-limit-notice" style="display:none;color:#d00;font-weight:bold;text-align:center;margin:1em 0;">
         You can select up to 3 different services and a total of 3 items only.
@@ -622,6 +626,22 @@ document.addEventListener('DOMContentLoaded', function() {
     openBtn.addEventListener('click', openSidebar);
     closeBtn.addEventListener('click', closeSidebar);
     overlay.addEventListener('click', closeSidebar);
+  });
+  // Hide cancel success notice on any click/tap
+  document.addEventListener('DOMContentLoaded', function() {
+    var cancelNotice = document.getElementById('cancel-success-notice');
+    if (cancelNotice) {
+      function hideNotice() {
+        cancelNotice.style.display = 'none';
+        document.removeEventListener('click', hideNotice, true);
+        document.removeEventListener('touchstart', hideNotice, true);
+      }
+      cancelNotice.addEventListener('click', hideNotice);
+      setTimeout(function() {
+        document.addEventListener('click', hideNotice, true);
+        document.addEventListener('touchstart', hideNotice, true);
+      }, 100); // Prevent immediate hide on page load
+    }
   });
   </script>
 </body>

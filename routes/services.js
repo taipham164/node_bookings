@@ -98,33 +98,25 @@ router.get("/", async (req, res, next) => {
     });
 
     // --- BEGIN: Fetch booking counts for each service and category ---
+    // Replace searchBookings with retrieveBooking for a specific booking_id
     let serviceBookingCounts = {};
     let categoryBookingCounts = {};
     try {
       const { bookingsApi } = require("../util/square-client");
-      let cursor = undefined;
-      do {
-        const { result } = await bookingsApi.searchBookings({
-          query: {
-            filter: {
-              locationId: locationId
-            }
-          },
-          cursor
-        });
-        const bookings = result.bookings || [];
-        bookings.forEach(booking => {
-          if (booking.appointmentSegments) {
-            booking.appointmentSegments.forEach(segment => {
-              const serviceId = segment.serviceVariationId;
-              serviceBookingCounts[serviceId] = (serviceBookingCounts[serviceId] || 0) + 1;
-            });
-          }
-        });
-        cursor = result.cursor;
-      } while (cursor);
+      // Example: retrieve a specific booking by ID (replace with actual booking_id)
+      const bookingId = req.query.booking_id || ""; // You must provide booking_id via query or other means
+      if (bookingId) {
+        const { result } = await bookingsApi.retrieveBooking(bookingId);
+        const booking = result.booking;
+        if (booking && booking.appointmentSegments) {
+          booking.appointmentSegments.forEach(segment => {
+            const serviceId = segment.serviceVariationId;
+            serviceBookingCounts[serviceId] = (serviceBookingCounts[serviceId] || 0) + 1;
+          });
+        }
+      }
     } catch (err) {
-      console.warn("Could not fetch booking counts for services:", err);
+      console.warn("Could not fetch booking info for services:", err);
     }
 
     // Sum booking counts for each category
