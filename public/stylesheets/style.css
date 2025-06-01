@@ -908,3 +908,90 @@ a:visited {
 .service-label--disabled {
   cursor: not-allowed !important;
 }
+
+/* Button animations */
+.btn-primary {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 112, 243, 0.25);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(0, 112, 243, 0.15);
+}
+
+.btn-primary .next-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 6px;
+  position: relative;
+  top: 1px;
+}
+
+.btn-primary:hover .next-icon {
+  transform: translateX(4px);
+  animation: iconPulse 1s ease-in-out infinite;
+}
+
+.btn-primary:active .next-icon {
+  transform: translateX(2px);
+}
+
+@keyframes iconPulse {
+  0% { transform: translateX(4px); }
+  50% { transform: translateX(6px); }
+  100% { transform: translateX(4px); }
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-primary:disabled .next-icon {
+  transform: none;
+  animation: none;
+}
+
+/* Full-width and centered button styles */
+.summary-card .btn-primary,
+.summary-bottom-sheet .btn-primary,
+#summary-sheet-next {
+  width: 100%;
+  margin: 12px auto 0;
+  justify-content: center;
+}
+
+.btn-primary span {
+  flex: 0 0 auto;
+}
+
+.btn-primary .next-icon {
+  position: relative;
+  top: 1px;
+  margin-left: 8px;
+}
+
+@media (max-width: 900px) {
+  #summary-bar-next {
+    min-width: 120px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 900px) {
+  .btn-primary {
+    padding: 14px 28px;
+    font-size: 1em;
+  }
+  .btn-primary .next-icon {
+    margin-left: 4px;
+  }
+}

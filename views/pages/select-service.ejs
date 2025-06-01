@@ -40,6 +40,8 @@
     @keyframes fadeinimg {
       to { opacity: 1; }
     }
+
+
   </style>
 </head>
 
@@ -229,9 +231,16 @@
             <!-- Items will be dynamically inserted here -->
           </ul>
         </div>
-        <button form="services-form" class="button btn-primary" id="continue-btn" type="submit" style="width:100%;margin-top:24px;display:none;" disabled>
-          <span>Next</span>
-        </button>
+        <!-- Update the continue button -->
+        <div style="width:100%;padding:0 0 12px">
+          <button form="services-form" class="button btn-primary" id="continue-btn" type="submit" disabled>
+            <span>Next</span>
+            <svg class="next-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
         <!-- Continue button moved to appointment summary -->
         <button id="call-us-message" type="button" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);cursor:not-allowed;opacity:0.97;">Online booking is not available for this combination. Please contact us to request your appointment.</button>
 <style>
@@ -356,7 +365,12 @@
             <polyline points="18 15 12 9 6 15"></polyline>
           </svg>
         </button>
-        <button form="services-form" id="summary-bar-next" type="submit" class="button btn-primary" style="min-width:110px;height:42px;margin:0;font-weight:600;font-size:1.05em;letter-spacing:0.2px;" disabled>Next</button>
+        <button form="services-form" id="summary-bar-next" type="submit" class="button btn-primary" disabled>
+          <span>Next</span>
+          <svg class="next-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -369,7 +383,12 @@
       <div id="summary-sheet-empty" style="color:#888;text-align:center;padding:18px 0;">No services added yet</div>
       <ul id="summary-sheet-items" style="list-style:none;padding:0;margin:0;display:none;"></ul>
     </div>
-    <button form="services-form" id="summary-sheet-next" type="submit" class="button btn-primary" style="width:100%;margin-top:18px;">Next</button>
+    <button form="services-form" id="summary-sheet-next" type="submit" class="button btn-primary" style="width:100%;margin-top:18px;">
+      <span>Next</span>
+      <svg class="next-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </button>
   </div>
 
   <!-- Sheet overlay -->
