@@ -124,9 +124,11 @@ class DatePickerHandler {
   formatToAmPm(date) {
     let hours = date.getHours();
     let minutes = date.getMinutes();
-    hours = hours % 12 ? hours % 12 : 12;
-    minutes = minutes < 10 ? "0" + minutes : minutes;
-    return `${hours}:${minutes} ${date.getHours() >= 12 ? "pm" : "am"}`;
+    let ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // Handle midnight (0 hours)
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    return `${hours}:${minutes} ${ampm}`;
   }
 
   /**

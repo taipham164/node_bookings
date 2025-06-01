@@ -1,10 +1,14 @@
 /* Overrides some of the styling for JQuery datepicker */
 .ui-datepicker {
   width: 672px;
-  padding: .2em .2em 0;
+  padding: 16px;
   display: none;
   margin-bottom: 40px;
   font-family: var(--square-sans-display);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.08);
 }
 
 .ui-widget-header {

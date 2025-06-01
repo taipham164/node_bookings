@@ -107,12 +107,13 @@ convertTimeToText = function(dateStr, businessTimeZone) {
   const d = new Date(date.toLocaleString("en-US", { timeZone: businessTimeZone }));
 
   let hours = d.getHours();
+  let ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // Handle midnight (0 hours)
   let minutes = d.getMinutes();
-
-  hours = hours % 12 ? hours % 12 : 12;
   minutes = minutes < 10 ? "0" + minutes : minutes;
 
-  return `${hours}:${minutes} ${d.getHours() >= 12 ? "pm" : "am"}`;
+  return `${hours}:${minutes} ${ampm}`;
 }
 
 /**

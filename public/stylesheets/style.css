@@ -499,25 +499,39 @@ a:visited {
 
 .availability button.available-time {
   background: white;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
   box-sizing: border-box;
   color: #1a1a1a;
   cursor: pointer;
   float: left;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.01em;
   list-style-type: none;
-  margin: 7px;
+  margin: 8px;
   text-align: center;
   text-decoration: none;
-  padding: 15px 10px;
-  width: 120px;
+  padding: 16px 20px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  width: 130px;
   font-family: var(--square-sans-display);
+  position: relative;
+  overflow: hidden;
 }
 
 .availability button.available-time:hover {
-  border-color: #007fff;
+  border-color: #0070f3;
+  background: #f8fbff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,112,243,0.1);
+}
+
+.availability button.available-time:active {
+  transform: translateY(0);
+  background: #f0f7ff;
+  border-color: #0059cc;
+  transition-duration: 0.1s;
 }
 
 .availability p {

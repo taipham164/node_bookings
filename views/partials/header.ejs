@@ -1,3 +1,9 @@
+<!-- Add this at the very top of header.ejs -->
+<% /* Global Styles and Scripts */ %>
+<link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
+<link href="/stylesheets/sidebar.css" rel="stylesheet" type="text/css">
+<script src="/js/global-sidebar.js"></script>
+
 <div class="top-nav">
     <div class="top-nav__logo">
       <a href="/services">
@@ -7,10 +13,113 @@
           <img src="/images/blank-logo-sm.svg">
         <% } %>
       </a>
-  </div>
-  <div class="top-nav__name">
-    <a href="/services">
-      <%= location.businessName || location.name %>
-    </a>
-  </div>
+    </div>
+    <div class="top-nav__name">
+      <a href="/services">
+        <%= location.businessName || location.name %>
+      </a>
+    </div>
+    <button id="sidebar-toggle-btn" class="header-menu-btn" aria-label="Menu">
+      <svg width="24" height="24" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="7" x2="20" y2="7"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="17" x2="20" y2="17"/>
+      </svg>
+    </button>
 </div>
+
+<!-- Sidebar Overlay -->
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<!-- Global Sidebar -->
+<aside id="sidebar-info" class="global-sidebar">
+  <button id="sidebar-close-btn" class="sidebar-close-btn" aria-label="Close menu">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </button>
+  <div class="sidebar-header">
+    <% if (location.logoUrl) { %>
+      <img src="<%= location.logoUrl %>" alt="Logo" class="sidebar-logo">
+    <% } else { %>
+      <img src="/images/blank-logo.svg" alt="Logo" class="sidebar-logo">
+    <% } %>
+    <h2><%= location.businessName || location.name %></h2>
+    <% if (location.description) { %>
+      <div class="sidebar-description"><%= location.description %></div>
+    <% } %>
+  </div>
+  <div class="sidebar-content">
+    <!-- Address Section -->
+    <div class="sidebar-section">
+      <strong>Address</strong><br>
+      <% if (location.address) { %>
+        <span>
+          <% if (location.address.addressLine1) { %>
+            <%= location.address.addressLine1 %><br>
+          <% } %>
+          <% if (location.address.addressLine2) { %>
+            <%= location.address.addressLine2 %><br>
+          <% } %>
+          <%= location.address.locality %>, <%= location.address.administrativeDistrictLevel1 %> <%= location.address.postalCode %>
+        </span>
+      <% } else { %>
+        <span>No address info</span>
+      <% } %>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="sidebar-section">
+      <strong>Contact</strong><br>
+      <% if (location.phoneNumber) { %>
+        <a href="tel:<%= location.phoneNumber %>" class="sidebar-link"><%= location.phoneNumber %></a><br>
+      <% } %>
+      <% if (location.emailAddress) { %>
+        <a href="mailto:<%= location.emailAddress %>" class="sidebar-link"><%= location.emailAddress %></a>
+      <% } %>
+      <% if (!location.phoneNumber && !location.emailAddress) { %>
+        <span>No contact information</span>
+      <% } %>
+    </div>
+
+    <!-- Business Hours Section -->
+    <div class="sidebar-section">
+      <strong>Business Hours</strong><br>
+      <% if (location.businessHours) { %>
+        <div class="business-hours">
+          <% Object.entries(location.businessHours).forEach(([day, hours]) => { %>
+            <div class="business-hours-row">
+              <span class="day"><%= day %></span>
+              <span class="hours"><%= hours %></span>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <span>See website or call for hours</span>
+      <% } %>
+    </div>
+
+    <!-- Social Links Section -->
+    <div class="sidebar-section">
+      <strong>Follow</strong><br>
+      <div class="social-links">
+        <% if (location.websiteUrl) { %>
+          <a href="<%= location.websiteUrl %>" target="_blank" class="social-link">
+            <img src="/images/web-icon.svg" alt="Website">
+          </a>
+        <% } %>
+        <% if (location.instagramUrl) { %>
+          <a href="<%= location.instagramUrl %>" target="_blank" class="social-link">
+            <img src="/images/instagram-icon.svg" alt="Instagram">
+          </a>
+        <% } %>
+        <% if (location.facebookUrl) { %>
+          <a href="<%= location.facebookUrl %>" target="_blank" class="social-link">
+            <img src="/images/facebook-icon.svg" alt="Facebook">
+          </a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</aside>
