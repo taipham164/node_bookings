@@ -33,22 +33,6 @@
 
 <!-- Global Sidebar -->
 <aside id="sidebar-info" class="global-sidebar">
-  <!-- Debug Information -->
-  <% if (process.env.NODE_ENV !== 'production') { %>
-    <div style="font-size: 11px; padding: 10px; background: #f5f5f5; margin-bottom: 20px; display: none;">
-      <strong>Debug: Square Location Data</strong>
-      <pre style="white-space: pre-wrap; word-break: break-word;">
-Location ID: <%= location.id %>
-Name: <%= location.businessName || location.name %>
-Business Hours: <%= JSON.stringify(location.business_hours, null, 2) %>
-Raw Business Hours: <%= JSON.stringify(location.businessHours, null, 2) %>
-Address: <%= JSON.stringify(location.address, null, 2) %>
-Phone: <%= location.phoneNumber %>
-Email: <%= location.emailAddress %>
-Status: <%= location.status %>
-      </pre>
-    </div>
-  <% } %>
   <button id="sidebar-close-btn" class="sidebar-close-btn" aria-label="Close menu">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -103,10 +87,10 @@ Status: <%= location.status %>
       <% if (location.phoneNumber) { %>
         <a href="tel:<%= location.phoneNumber %>" class="sidebar-link"><%= location.phoneNumber %></a><br>
       <% } %>
-      <% if (location.emailAddress) { %>
-        <a href="mailto:<%= location.emailAddress %>" class="sidebar-link"><%= location.emailAddress %></a>
+      <% if (location.businessEmail) { %>
+        <a href="mailto:<%= location.businessEmail %>" class="sidebar-link"><%= location.businessEmail %></a>
       <% } %>
-      <% if (!location.phoneNumber && !location.emailAddress) { %>
+      <% if (!location.phoneNumber && !location.businessEmail) { %>
         <span>No contact information</span>
       <% } %>
     </div>
@@ -192,22 +176,39 @@ Status: <%= location.status %>
     </div>
 
     <!-- Social Links Section -->
-    <div class="sidebar-section">
-      <strong>Follow</strong><br>
+    <div class="sidebar-section social-section">
+      <strong>Follow Us</strong>
       <div class="social-links">
         <% if (location.websiteUrl) { %>
-          <a href="<%= location.websiteUrl %>" target="_blank" class="social-link">
-            <img src="/images/web-icon.svg" alt="Website">
+          <a href="<%= location.websiteUrl %>" target="_blank" class="social-link" aria-label="Visit our website">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            <span>Website</span>
           </a>
         <% } %>
-        <% if (location.instagramUrl) { %>
-          <a href="<%= location.instagramUrl %>" target="_blank" class="social-link">
-            <img src="/images/instagram-icon.svg" alt="Instagram">
+        <% if (location.instagramUsername) { %>
+          <% 
+            const username = location.instagramUsername.replace('@', '');
+            const instagramUrl = `https://www.instagram.com/${username}`;
+          %>
+          <a href="<%= instagramUrl %>" target="_blank" class="social-link" aria-label="Follow us on Instagram">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+            </svg>
+            <span>@<%= username %></span>
           </a>
         <% } %>
         <% if (location.facebookUrl) { %>
-          <a href="<%= location.facebookUrl %>" target="_blank" class="social-link">
-            <img src="/images/facebook-icon.svg" alt="Facebook">
+          <a href="<%= location.facebookUrl %>" target="_blank" class="social-link" aria-label="Follow us on Facebook">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+            </svg>
+            <span>Facebook</span>
           </a>
         <% } %>
       </div>

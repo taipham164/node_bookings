@@ -267,6 +267,45 @@
   opacity: 0.8;
 }
 
+/* Social Links Styling */
+.social-section {
+  margin-top: 20px;
+}
+
+.social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #333;
+  transition: all 0.2s ease-in-out;
+}
+
+.social-link:hover {
+  background-color: #e5e5e5;
+  transform: translateY(-1px);
+}
+
+.social-link svg {
+  width: 20px;
+  height: 20px;
+}
+
+.social-link span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* Address Section */
 .address-container {
   display: flex;
