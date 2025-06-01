@@ -200,7 +200,7 @@
           <button type="button" class="category-tab" data-category="<%= cat.id %>" aria-selected="<%= idx === 0 ? 'true' : 'false' %>" style="background:#f8f8f8;border:2px solid #0070f3;border-bottom:3px solid <%= idx === 0 ? '#0070f3' : 'transparent' %>;padding:10px 18px;font-size:1em;cursor:pointer;font-weight:<%= idx === 0 ? 'bold' : 'normal' %>;color:<%= idx === 0 ? '#0070f3' : '#222' %>;border-radius:6px 6px 0 0;margin-bottom:-2px;min-width:100px;"> <%= cat.name %> </button>
         <% }); %>
       </div>
-      <form action="/services/select" method="POST">
+      <form id="services-form" action="/services/select" method="POST">
         <div class="cards two-col-cards">
           <% allCategories.forEach(function(cat, idx) { %>
             <div class="service-category" data-category-panel="<%= cat.id %>" style="display:<%= idx === 0 ? 'block' : 'none' %>;grid-column: 1 / -1;">
@@ -269,10 +269,7 @@
             </div>
           <% }); %>
         </div>
-        <button class="button btn-primary continue-fixed-btn" id="continue-btn" type="submit" disabled>
-          <span class="continue-btn-label">Continue</span>
-        </button>
-        <button id="call-us-message" type="button" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);cursor:not-allowed;opacity:0.97;">Online booking is not available for this combination. Please contact us to request your appointment.</button>
+        
       </form>
       <style>
         .two-col-cards {
@@ -308,7 +305,23 @@
           <ul id="summary-items" style="list-style:none;padding:0;margin:0;display:none;">
             <!-- Items will be dynamically inserted here -->
           </ul>
-       
+        </div>
+        <button form="services-form" class="button btn-primary" id="continue-btn" type="submit" style="width:100%;margin-top:24px;display:none;" disabled>
+          <span>Next</span>
+        </button>
+        <!-- Continue button moved to appointment summary -->
+        <button id="call-us-message" type="button" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);cursor:not-allowed;opacity:0.97;">Online booking is not available for this combination. Please contact us to request your appointment.</button>
+<style>
+  @media (max-width: 900px) {
+    #call-us-message {
+      bottom: 120px !important; /* Higher position on mobile to avoid bottom bar */
+      max-width: calc(100% - 32px); /* Prevent horizontal overflow */
+      margin: 0 16px; /* Add some side margins */
+      width: auto; /* Allow natural width */
+      white-space: normal; /* Allow text wrapping */
+    }
+  }
+</style>
       </div>
       <button id="summary-close-btn" style="display:none;position:absolute;top:12px;right:18px;background:none;border:none;font-size:2em;color:#888;z-index:2110;cursor:pointer;">&times;</button>
     </aside>
@@ -343,39 +356,80 @@
       #appointment-summary.mobile-open {
         bottom: 0;
       }
+      /* Mobile bottom bar visibility */
+      #summary-bottom-bar.show {
+        display: flex !important;
+      }
       #summary-close-btn {
         display: block !important;
       }
       #summary-toggle-btn {
         display: flex !important;
       }
+      /* New styles for enhanced mobile interactions */
+      #summary-bar-expand:hover {
+        background: rgba(0,0,0,0.04);
+        border-color: rgba(0,0,0,0.15);
+      }
+      #summary-bar-expand:active {
+        background: rgba(0,0,0,0.08);
+        transform: scale(0.96);
+      }
+      #summary-bar-expand.sheet-open {
+        transform: rotate(180deg);
+        background: rgba(0,0,0,0.04);
+        border-color: rgba(0,0,0,0.15);
+      }
+      #summary-sheet-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        opacity: 0;
+        transition: opacity 0.25s;
+        pointer-events: none;
+        z-index: 2200;
+      }
+      #summary-sheet-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      /* Safe area padding for modern mobile devices */
+      @supports (padding: env(safe-area-inset-bottom)) {
+        #summary-bottom-bar {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+        #summary-bottom-sheet {
+          padding-bottom: calc(env(safe-area-inset-bottom) + 18px);
+        }
+      }
     }
     @media (min-width: 901px) {
-      #summary-toggle-btn, #summary-mobile-overlay, #summary-close-btn {
+      #summary-bottom-bar, #summary-bottom-sheet, #summary-sheet-overlay {
         display: none !important;
-      }
-      #appointment-summary {
-        position: static !important;
-        width: auto !important;
-        max-width: 340px !important;
-        min-width: 260px !important;
-        margin-top: 52px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
-        border-radius: 12px !important;
-        transition: none !important;
       }
     }
   </style>
   <!-- Mobile summary bar and sheet -->
-  <div id="summary-bottom-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;width:100vw;max-width:100vw;z-index:2200;background:#fff;box-shadow:0 -2px 16px rgba(0,0,0,0.10);padding:0;border-top:1px solid #eee;">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:12px 10px 12px 16px;width:100%;box-sizing:border-box;">
-      <div style="flex:1;min-width:0;">
-        <span id="summary-bar-count" style="font-weight:600;font-size:1.08em;"></span>
-        <span id="summary-bar-total" style="margin-left:10px;font-weight:500;color:#0070f3;"></span>
-        <span id="summary-bar-duration" style="margin-left:10px;color:#888;font-size:0.98em;"></span>
+  <div id="summary-bottom-bar" style="position:fixed;bottom:0;left:0;right:0;width:100vw;max-width:100vw;z-index:2200;background:#fff;box-shadow:0 -1px 20px rgba(0,0,0,0.12);padding:0;display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:72px;padding:12px 16px;width:100%;box-sizing:border-box;border-top:1px solid rgba(0,0,0,0.08);">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span id="summary-bar-count" style="font-weight:600;font-size:1.1em;color:#222;"></span>
+          <span id="summary-bar-total" style="font-weight:500;color:#0070f3;font-size:1.05em;"></span>
+        </div>
+        <span id="summary-bar-duration" style="color:#666;font-size:0.92em;"></span>
       </div>
-      <button id="summary-bar-expand" style="background:none;border:none;padding:0 8px;font-size:1.5em;color:#222;cursor:pointer;line-height:1;">&#9650;</button>
-      <button id="summary-bar-next" class="button btn-primary" style="margin-left:8px;">Next</button>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button id="summary-bar-expand" style="background:none;border:none;width:42px;height:42px;display:flex;align-items:center;justify-content:center;color:#222;cursor:pointer;border-radius:50%;transition:all 0.2s;border:1px solid rgba(0,0,0,0.1);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+        </button>
+        <button form="services-form" id="summary-bar-next" type="submit" class="button btn-primary" style="min-width:110px;height:42px;margin:0;font-weight:600;font-size:1.05em;letter-spacing:0.2px;" disabled>Next</button>
+      </div>
     </div>
   </div>
   <div id="summary-bottom-sheet" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:2201;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,0.18);padding:24px 18px 18px 18px;max-height:80vh;overflow-y:auto;transition:transform 0.25s;">
@@ -387,30 +441,12 @@
       <div id="summary-sheet-empty" style="color:#888;text-align:center;padding:18px 0;">No services added yet</div>
       <ul id="summary-sheet-items" style="list-style:none;padding:0;margin:0;display:none;"></ul>
     </div>
-    <button id="summary-sheet-next" class="button btn-primary" style="width:100%;margin-top:18px;">Next</button>
+    <button form="services-form" id="summary-sheet-next" type="submit" class="button btn-primary" style="width:100%;margin-top:18px;">Next</button>
   </div>
-  <style>
-    @media (max-width: 900px) {
-      #appointment-summary {
-        display: none !important;
-      }
-      #summary-bottom-bar {
-        display: flex !important;
-      }
-      #summary-bottom-sheet {
-        display: block;
-        transform: translateY(100%);
-      }
-      #summary-bottom-sheet.open {
-        transform: translateY(0);
-      }
-    }
-    @media (min-width: 901px) {
-      #summary-bottom-bar, #summary-bottom-sheet {
-        display: none !important;
-      }
-    }
-  </style>
+
+  <!-- Sheet overlay -->
+  <div id="summary-sheet-overlay"></div>
+
   <script>
   // Category tab switching logic
   document.addEventListener('DOMContentLoaded', function() {
@@ -476,63 +512,89 @@ function changeQty(id, delta) {
 
 function enforceLimits() {
   const form = document.querySelector('form[action="/services/select"]');
-  const checkboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
-  const continueBtn = document.getElementById('continue-btn');
-  const callUsMsg = document.getElementById('call-us-message');
-  const notice = document.getElementById('service-limit-notice');
+  if (!form) return;
 
-  let checkedCount = 0;
-  let totalQty = 0;
-  let overService = false;
-  let overAmount = false;
+  const elements = {
+    checkboxes: form.querySelectorAll('input[type="checkbox"][name="services[]"]'),
+    continueBtn: document.getElementById('continue-btn'),
+    bottomBar: document.getElementById('summary-bottom-bar'),
+    callUsMsg: document.getElementById('call-us-message'),
+    notice: document.getElementById('service-limit-notice'),
+    summaryBarNext: document.getElementById('summary-bar-next'),
+    summarySheetNext: document.getElementById('summary-sheet-next')
+  };
 
-  checkboxes.forEach(cb => {
+  let state = {
+    checkedCount: 0,
+    totalQty: 0
+  };
+
+  // Calculate totals and update quantities
+  elements.checkboxes.forEach(cb => {
     const qtyInput = document.getElementById('quantity-' + cb.value);
+    const qtyDisplay = document.getElementById('qty-display-' + cb.value);
+    
     if (cb.checked) {
-      checkedCount++;
+      state.checkedCount++;
       if (qtyInput) {
         qtyInput.disabled = false;
-        let val = parseInt(qtyInput.value, 10) || 1;
-        if (val < 1) val = 1;
-        if (val > MAX_TOTAL_AMOUNT) val = MAX_TOTAL_AMOUNT;
+        let val = Math.max(1, Math.min(MAX_TOTAL_AMOUNT, parseInt(qtyInput.value, 10) || 1));
         qtyInput.value = val;
-        var display = document.getElementById('qty-display-' + cb.value);
-        if (display) display.textContent = val;
-        totalQty += val;
+        if (qtyDisplay) qtyDisplay.textContent = val;
+        state.totalQty += val;
       }
     } else {
       if (qtyInput) {
         qtyInput.disabled = true;
+        qtyInput.value = 1;
+        if (qtyDisplay) qtyDisplay.textContent = 1;
       }
     }
   });
 
-  if (checkedCount > MAX_DIFFERENT_SERVICES) overService = true;
-  if (totalQty > MAX_TOTAL_AMOUNT) overAmount = true;
+  // Determine states
+  const hasSelections = state.checkedCount > 0;
+  const overLimits = state.checkedCount > MAX_DIFFERENT_SERVICES || state.totalQty > MAX_TOTAL_AMOUNT;
 
-  // Disable unchecked checkboxes if 3 are checked, enable otherwise
-  checkboxes.forEach(cb => {
+  // Update checkboxes state
+  elements.checkboxes.forEach(cb => {
     if (!cb.checked) {
-      cb.disabled = (checkedCount >= MAX_DIFFERENT_SERVICES);
-    } else {
-      cb.disabled = false;
+      cb.disabled = state.checkedCount >= MAX_DIFFERENT_SERVICES;
     }
   });
 
-  // Show notice if any limit exceeded
-  if (overService || overAmount) {
-    if (notice) notice.style.display = 'block';
-    if (continueBtn) continueBtn.style.display = 'none';
-    if (callUsMsg) callUsMsg.style.display = 'block';
-  } else {
-    if (notice) notice.style.display = 'none';
-    if (checkedCount === 0 || totalQty === 0) {
-      if (continueBtn) continueBtn.style.display = 'none';
-      if (callUsMsg) callUsMsg.style.display = 'none';
-    } else {
-      if (continueBtn) continueBtn.style.display = '';
-      if (callUsMsg) callUsMsg.style.display = 'none';
+  // Update UI visibility
+  if (elements.notice) {
+    elements.notice.style.display = overLimits ? 'block' : 'none';
+  }
+
+  // Update continue button and mobile bar button states
+  [elements.continueBtn, elements.summaryBarNext, elements.summarySheetNext].forEach(btn => {
+    if (btn) {
+      if (hasSelections) {
+        // Show buttons when services are selected
+        btn.style.display = '';
+        btn.disabled = overLimits; // Disable if over limits
+        if (btn === elements.continueBtn) {
+          btn.classList.toggle('continue-fixed-btn-active', !overLimits);
+        }
+      } else {
+        // Hide buttons when no services selected
+        btn.style.display = 'none';
+      }
     }
+  });
+
+  // Update call us message
+  if (elements.callUsMsg) {
+    elements.callUsMsg.style.display = overLimits ? 'block' : 'none';
+  }
+
+  // Update mobile bottom bar visibility
+  if (elements.bottomBar && hasSelections) {
+    elements.bottomBar.classList.add('show');
+  } else if (elements.bottomBar) {
+    elements.bottomBar.classList.remove('show');
   }
 }
 
@@ -540,12 +602,33 @@ function enforceLimits() {
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.querySelector('form[action="/services/select"]');
   if (!form) return;
+  
   const checkboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
   checkboxes.forEach(cb => {
-    cb.addEventListener('change', enforceLimits);
+    cb.addEventListener('change', function() {
+      enforceLimits();
+      if (typeof updateAppointmentSummary === 'function') {
+        updateAppointmentSummary();
+      }
+      if (typeof updateBarAndSheet === 'function') {
+        updateBarAndSheet();
+      }
+    });
+    
     const qtyInput = document.getElementById('quantity-' + cb.value);
-    if (qtyInput) qtyInput.addEventListener('input', enforceLimits);
+    if (qtyInput) {
+      qtyInput.addEventListener('input', function() {
+        enforceLimits();
+        if (typeof updateAppointmentSummary === 'function') {
+          updateAppointmentSummary();
+        }
+        if (typeof updateBarAndSheet === 'function') {
+          updateBarAndSheet();
+        }
+      });
+    }
   });
+  
   enforceLimits();
 
   // Prevent submit if limits violated
@@ -649,14 +732,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var errorMsg = document.getElementById('service-error');
     var checkboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
     function updateContinueBtnState() {
-      var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
-      if (checked.length) {
-        continueBtn.disabled = false;
-        continueBtn.classList.add('continue-fixed-btn-active');
-      } else {
-        continueBtn.disabled = true;
-        continueBtn.classList.remove('continue-fixed-btn-active');
-      }
+      // This function is now handled by enforceLimits()
+      enforceLimits();
     }
     checkboxes.forEach(function(cb) {
       cb.addEventListener('change', updateContinueBtnState);
@@ -735,8 +812,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateSummary() {
       var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
+      var continueBtn = document.getElementById('continue-btn');
+      var summaryBarNext = document.getElementById('summary-bar-next');
+      var summarySheetNext = document.getElementById('summary-sheet-next');
+      
       summaryItems.innerHTML = '';
       let hasItems = false;
+      
       checked.forEach(function(cb) {
         var label = cb.closest('.service-label');
         var name = label ? label.querySelector('h4')?.textContent?.trim() : '';
@@ -763,9 +845,28 @@ document.addEventListener('DOMContentLoaded', function() {
         summaryItems.appendChild(li);
         hasItems = true;
       });
+      
+      // Update summary visibility
       summaryItems.style.display = hasItems ? 'block' : 'none';
       summaryEmpty.style.display = hasItems ? 'none' : 'block';
-      // nextBtn.disabled = !hasItems;
+      
+      // Update all next buttons
+      const nextButtons = [continueBtn, summaryBarNext, summarySheetNext];
+      nextButtons.forEach(btn => {
+        if (btn) {
+          if (hasItems) {
+            btn.style.display = btn === continueBtn ? 'block' : '';
+            btn.disabled = false;
+          } else {
+            btn.style.display = 'none'; // Hide the button completely when no items
+          }
+        }
+      });
+      
+      // Update mobile bar
+      if (window.updateBarAndSheet) {
+        window.updateBarAndSheet();
+      }
     }
 
     // Expose updateSummary globally for changeQty
@@ -845,138 +946,160 @@ document.addEventListener('DOMContentLoaded', function() {
     var barNext = document.getElementById('summary-bar-next');
     var sheet = document.getElementById('summary-bottom-sheet');
     var sheetClose = document.getElementById('summary-sheet-close');
-    var sheetList = document.getElementById('summary-sheet-list');
+    var overlay = document.getElementById('summary-sheet-overlay');
     var sheetItems = document.getElementById('summary-sheet-items');
     var sheetEmpty = document.getElementById('summary-sheet-empty');
-    var sheetNext = document.getElementById('summary-sheet-next');
-    var serviceLimitNotice = document.getElementById('service-limit-notice');
-    function formatDuration(mins) {
-      if (!mins) return '';
-      var h = Math.floor(mins/60), m = mins%60;
-      return (h ? h+' hr ' : '') + (m ? m+' min' : (h ? '' : '0 min'));
+
+    // Bottom sheet toggle functions
+    function openBottomSheet() {
+      sheet.style.display = 'block';
+      overlay.classList.add('open');
+      barExpand.classList.add('sheet-open');
+      document.body.style.overflow = 'hidden';
     }
-    function parseDuration(str) {
-      // e.g. "30 min", "1 hr 15 min"
-      var m = 0;
-      if (!str) return 0;
-      var hr = str.match(/(\d+)\s*hr/);
-      var min = str.match(/(\d+)\s*min/);
-      if (hr) m += parseInt(hr[1],10)*60;
-      if (min) m += parseInt(min[1],10);
-      return m;
+
+    function closeBottomSheet() {
+      sheet.style.display = 'none';
+      overlay.classList.remove('open');
+      barExpand.classList.remove('sheet-open');
+      document.body.style.overflow = '';
     }
-    function updateBarAndSheet() {
-      // Hide bar if service-limit-notice is visible
-      if (serviceLimitNotice && serviceLimitNotice.style.display !== 'none') {
-        bar.style.display = 'none';
-        sheet.classList.remove('open');
-        return;
-      }
-      // Only show bar on mobile
-      if (window.innerWidth <= 900) {
-        bar.style.display = 'flex';
-      } else {
-        bar.style.display = 'none';
-      }
+
+    // Event listeners for bottom sheet
+    if (barExpand) barExpand.addEventListener('click', openBottomSheet);
+    if (sheetClose) sheetClose.addEventListener('click', closeBottomSheet);
+    if (overlay) overlay.addEventListener('click', closeBottomSheet);
+
+    function updateMobileBar() {
+      if (!form) return;
       var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
-      var count = checked.length;
-      var total = 0;
-      var totalMins = 0;
-      var items = [];
+      var totalItems = 0;
+      var serviceCount = 0;
+      var totalDuration = 0;
+      var totalPrice = 0;
+
+      // Clear sheet items
+      if (sheetItems) sheetItems.innerHTML = '';
+
       checked.forEach(function(cb) {
         var label = cb.closest('.service-label');
-        var name = label ? label.querySelector('h4')?.textContent?.trim() : '';
+        if (!label) return;
+
         var qtyInput = document.getElementById('quantity-' + cb.value);
         var qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 1 : 1;
-        var priceSpan = label ? label.querySelector('span[style*="color:#0070f3"]') : null;
-        var price = priceSpan ? priceSpan.textContent.replace(/[^\d.]/g,'') : '';
-        var priceNum = parseFloat(price) || 0;
-        var durationSpan = label ? label.querySelector('span[style*="color:#888"]') : null;
-        var duration = durationSpan ? durationSpan.textContent.trim().replace(/^•\s*/, '') : '';
-        var mins = parseDuration(duration);
-        total += priceNum * qty;
-        totalMins += mins * qty;
-        items.push({name, qty, price: priceNum, duration, id: cb.value});
-      });
-      // Bar
-      bar.style.display = 'flex';
-      barCount.textContent = count ? (count + (count === 1 ? ' service' : ' services')) : 'No services';
-      barTotal.textContent = total ? ('$' + total.toFixed(2)) : '';
-      barDuration.textContent = totalMins ? formatDuration(totalMins) : '';
-      // Sheet
-      sheetItems.innerHTML = '';
-      if (items.length) {
-        items.forEach(function(item) {
-          var li = document.createElement('li');
-          li.style.display = 'flex';
-          li.style.alignItems = 'center';
-          li.style.justifyContent = 'space-between';
-          li.style.padding = '8px 0';
-          li.innerHTML =
-            '<div>' +
-              '<div style="font-weight:600;">' + item.name + (item.qty > 1 ? ' <span style="color:#0070f3;font-weight:500;">x' + item.qty + '</span>' : '') + '</div>' +
-              '<div style="font-size:0.97em;color:#666;">' +
-                (item.price ? '<span>$' + (item.price*item.qty).toFixed(2) + '</span>' : '') +
-                (item.duration ? '<span style="margin-left:8px;">' + item.duration + (item.qty > 1 ? ' x' + item.qty : '') + '</span>' : '') +
-              '</div>' +
-            '</div>' +
-            '<button type="button" class="remove-sheet-item" data-id="' + item.id + '" style="background:none;border:none;color:#d00;font-size:1.2em;cursor:pointer;padding:0 8px;">&times;</button>';
-          sheetItems.appendChild(li);
-        });
-        sheetItems.style.display = 'block';
-        sheetEmpty.style.display = 'none';
-      } else {
-        sheetItems.style.display = 'none';
-        sheetEmpty.style.display = 'block';
-      }
-      // Enable/disable Next
-      barNext.disabled = !items.length;
-      sheetNext.disabled = !items.length;
-    }
-    // Remove item from sheet
-    sheetItems.addEventListener('click', function(e) {
-      if (e.target.classList.contains('remove-sheet-item')) {
-        var id = e.target.getAttribute('data-id');
-        var cb = form.querySelector('input[type="checkbox"][name="services[]"][value="' + id + '"]');
-        if (cb) {
-          cb.checked = false;
-          cb.dispatchEvent(new Event('change', { bubbles: true }));
+        totalItems += qty;
+        serviceCount++;
+
+        // Get name, price and duration
+        var name = label.querySelector('h4')?.textContent?.trim() || '';
+        var priceSpan = label.querySelector('span[style*="color:#0070f3"]');
+        var durationSpan = label.querySelector('span[style*="color:#888"]');
+        
+        // Calculate duration
+        if (durationSpan) {
+          var durationText = durationSpan.textContent.trim().replace(/^•\s*/, '');
+          var minutes = 0;
+          if (durationText.includes('hr')) {
+            var parts = durationText.split('hr');
+            minutes = parseInt(parts[0].trim()) * 60;
+            if (parts[1] && parts[1].includes('min')) {
+              minutes += parseInt(parts[1].replace(/[^0-9]/g, ''));
+            }
+          } else if (durationText.includes('min')) {
+            minutes = parseInt(durationText);
+          }
+          totalDuration += minutes * qty;
         }
+
+        // Calculate price
+        if (priceSpan) {
+          var price = parseFloat(priceSpan.textContent.replace(/[^0-9.]/g, ''));
+          if (!isNaN(price)) {
+            totalPrice += price * qty;
+          }
+        }
+
+        // Add to sheet items
+        if (sheetItems) {
+          var li = document.createElement('li');
+          li.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;';
+          li.innerHTML = `
+            <div>
+              <div style="font-weight:600;">${name}${qty > 1 ? ` <span style="color:#0070f3;font-weight:500;">x${qty}</span>` : ''}</div>
+              <div style="font-size:0.92em;color:#666;margin-top:4px;">
+                ${durationSpan ? `<span>${durationText}</span>` : ''}
+                ${priceSpan ? `<span style="margin-left:8px;color:#0070f3;">${priceSpan.textContent.trim()}</span>` : ''}
+              </div>
+            </div>
+            <button type="button" data-id="${cb.value}" 
+              style="background:none;border:none;color:#d00;font-size:1.2em;cursor:pointer;padding:0 8px;">&times;</button>
+          `;
+          sheetItems.appendChild(li);
+        }
+      });
+
+      // Update bottom sheet visibility
+      if (sheetItems && sheetEmpty) {
+        sheetItems.style.display = totalItems > 0 ? 'block' : 'none';
+        sheetEmpty.style.display = totalItems > 0 ? 'none' : 'block';
       }
-    });
-    // Expand/collapse sheet
-    barExpand.addEventListener('click', function() {
-      sheet.classList.add('open');
-    });
-    sheetClose.addEventListener('click', function() {
-      sheet.classList.remove('open');
-    });
-    // Next button submits form
-    barNext.addEventListener('click', function() {
-      if (!barNext.disabled) form.submit();
-    });
-    sheetNext.addEventListener('click', function() {
-      if (!sheetNext.disabled) form.submit();
-    });
-    // Update on change
-    form.addEventListener('change', updateBarAndSheet);
-    form.addEventListener('input', updateBarAndSheet);
-    updateBarAndSheet();
-    // Hide/show bar/sheet on resize
-    function handleMobileBar() {
-      if (window.innerWidth <= 900 && (!serviceLimitNotice || serviceLimitNotice.style.display === 'none')) {
-        bar.style.display = 'flex';
-        sheet.classList.remove('open');
+
+      // Update bar display
+      if (totalItems > 0) {
+        var description = totalItems === 1 ? '1 service selected' : totalItems + ' services selected';
+        barCount.textContent = description;
+        barTotal.textContent = totalPrice > 0 ? '$' + totalPrice.toFixed(2) : '';
+        
+        // Format duration
+        var hours = Math.floor(totalDuration / 60);
+        var mins = totalDuration % 60;
+        var durationText = '';
+        if (hours > 0) {
+          durationText += hours + (hours === 1 ? ' hr ' : ' hrs ');
+        }
+        if (mins > 0 || hours === 0) {
+          durationText += mins + ' min';
+        }
+        barDuration.textContent = durationText;
+        
+        bar.classList.add('show');
+        if (barNext) barNext.disabled = false;
       } else {
-        bar.style.display = 'none';
-        sheet.classList.remove('open');
+        bar.classList.remove('show');
+        if (barNext) barNext.disabled = true;
       }
     }
-    window.addEventListener('resize', handleMobileBar);
-    handleMobileBar();
+
+    // Update when checkbox/quantity changes
+    form.addEventListener('change', updateMobileBar);
+    form.addEventListener('input', function(e) {
+      if (e.target.type === 'number' || e.target.classList.contains('qty-btn')) {
+        updateMobileBar();
+      }
+    });
+
+    // Remove items from sheet
+    if (sheetItems) {
+      sheetItems.addEventListener('click', function(e) {
+        var removeBtn = e.target.closest('button');
+        if (removeBtn) {
+          var id = removeBtn.getAttribute('data-id');
+          var checkbox = form.querySelector(`input[type="checkbox"][value="${id}"]`);
+          if (checkbox) {
+            checkbox.checked = false;
+            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            updateMobileBar();
+          }
+        }
+      });
+    }
+
+    // Initialize
+    updateMobileBar();
+
+    // Expose for use by quantity changes
+    window.updateBarAndSheet = updateMobileBar;
   });
-  // ...existing code...
   </script>
-<!-- ...existing code... -->
 </body>
 </html>
