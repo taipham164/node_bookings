@@ -394,6 +394,30 @@
   <!-- Sheet overlay -->
   <div id="summary-sheet-overlay"></div>
 
+  <!-- Service Detail Modal -->
+  <div id="service-detail-modal" class="service-detail-modal" style="display: none;">
+    <div class="service-detail-dialog">
+      <span class="service-detail-close" onclick="closeServiceDetail()">&times;</span>
+      <h3 id="modal-service-name" style="margin: 0 0 16px 0; font-size: 1.4em; font-weight: 700;"></h3>
+      <p id="modal-service-description" style="margin: 0 0 12px 0; color: #666; line-height: 1.5;"></p>
+      <p id="modal-service-price" style="margin: 0 0 16px 0; font-weight: 600; color: #0070f3; font-size: 1.1em;"></p>
+      
+      <!-- Secondary Images -->
+      <div id="modal-service-secondary-images" style="display: none; flex-wrap: wrap; gap: 8px; margin: 16px 0;">
+        <!-- Images will be dynamically inserted here -->
+      </div>
+      
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <!-- <button id="modal-add-service-btn" class="button btn-primary" style="flex: 1;">
+          Add to Selection
+        </button> -->
+        <button onclick="closeServiceDetail()" class="button" style="background: #f5f5f5; color: #333; border: 1px solid #ddd;">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
   // Category tab switching logic
   document.addEventListener('DOMContentLoaded', function() {
@@ -661,15 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
           document.body.appendChild(overlay);
         };
         document.getElementById('service-detail-modal').style.display = 'flex';
-        // Set up add service button
-        var addBtn = document.getElementById('modal-add-service-btn');
-        addBtn.onclick = function() {
-          var checkbox = document.querySelector('input[type="checkbox"][value="' + data.id + '"]');
-          if (checkbox && !checkbox.checked && !checkbox.disabled) {
-            checkbox.checked = true;
-          }
-          closeServiceDetail();
-        };
+        
       });
     });
 
