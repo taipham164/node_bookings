@@ -300,13 +300,15 @@
       </div>
     </div>
     <!-- Appointment summary sidebar -->
-    <aside id="appointment-summary" style="flex: 1 1 320px; max-width: 340px; min-width: 260px; margin-top: 0;">
-      <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);padding:24px 18px 18px 18px;margin-bottom:1.2em;">
+    <aside id="appointment-summary" style="flex: 1 1 320px; max-width: 340px; min-width: 260px;">
+      <div class="summary-card" style="background:#fff;padding:24px 18px 18px 18px;margin-top:52px;position:relative;">
         <h3 style="margin:0 0 18px 0;font-size:1.18em;font-weight:700;">Appointment summary</h3>
         <div id="summary-list">
           <div id="summary-empty" style="color:#888;text-align:center;padding:18px 0;">No services added yet</div>
-          <ul id="summary-items" style="list-style:none;padding:0;margin:0;display:none;"></ul>
-        </div>
+          <ul id="summary-items" style="list-style:none;padding:0;margin:0;display:none;">
+            <!-- Items will be dynamically inserted here -->
+          </ul>
+       
       </div>
       <button id="summary-close-btn" style="display:none;position:absolute;top:12px;right:18px;background:none;border:none;font-size:2em;color:#888;z-index:2110;cursor:pointer;">&times;</button>
     </aside>
@@ -357,7 +359,7 @@
         width: auto !important;
         max-width: 340px !important;
         min-width: 260px !important;
-        margin-top: 0 !important;
+        margin-top: 52px !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
         border-radius: 12px !important;
         transition: none !important;
