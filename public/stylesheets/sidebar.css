@@ -97,21 +97,44 @@
 
 .business-hours {
   font-size: 0.9rem;
+  margin-top: 8px;
 }
 
 .business-hours-row {
   display: flex;
   justify-content: space-between;
-  margin: 4px 0;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.95rem;
+}
+
+.business-hours-row.today {
+  background: #f0f7ff;
+  margin: 0 -16px;
+  padding: 8px 16px;
+  font-weight: 500;
 }
 
 .business-hours-row .day {
-  color: #444;
+  color: #333;
+  font-weight: 500;
   min-width: 100px;
 }
 
 .business-hours-row .hours {
   color: #666;
+}
+
+.business-hours-row .hours.closed {
+  color: #d00;
+}
+
+.business-hours-row.today .hours {
+  color: #0070f3;
+}
+
+.business-hours-row.today .hours.closed {
+  color: #d00;
 }
 
 .sidebar-close-btn {
@@ -244,6 +267,37 @@
   opacity: 0.8;
 }
 
+/* Address Section */
+.address-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.direction-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5f5f5;
+  color: #0070f3;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  border: 1px solid #eaeaea;
+}
+
+.direction-btn:hover {
+  background: #f0f7ff;
+  border-color: #0070f3;
+  transform: translateY(-1px);
+}
+
+.direction-btn svg {
+  stroke: #0070f3;
+}
+
 /* Original Summary Styles */
 #appointment-summary {
   background: #fff;
@@ -350,4 +404,34 @@
 
 .remove-summary-item:hover {
   opacity: 1;
+}
+
+/* Business Hours Styling */
+.business-hours {
+  margin-top: 10px;
+}
+
+.business-hours-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.business-hours-row.today {
+  font-weight: 600;
+  color: #000;
+}
+
+.business-hours-row .day {
+  flex: 1;
+}
+
+.business-hours-row .hours {
+  text-align: right;
+}
+
+.business-hours-row .hours.closed {
+  color: #666;
 }

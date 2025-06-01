@@ -33,6 +33,22 @@
 
 <!-- Global Sidebar -->
 <aside id="sidebar-info" class="global-sidebar">
+  <!-- Debug Information -->
+  <% if (process.env.NODE_ENV !== 'production') { %>
+    <div style="font-size: 11px; padding: 10px; background: #f5f5f5; margin-bottom: 20px; display: none;">
+      <strong>Debug: Square Location Data</strong>
+      <pre style="white-space: pre-wrap; word-break: break-word;">
+Location ID: <%= location.id %>
+Name: <%= location.businessName || location.name %>
+Business Hours: <%= JSON.stringify(location.business_hours, null, 2) %>
+Raw Business Hours: <%= JSON.stringify(location.businessHours, null, 2) %>
+Address: <%= JSON.stringify(location.address, null, 2) %>
+Phone: <%= location.phoneNumber %>
+Email: <%= location.emailAddress %>
+Status: <%= location.status %>
+      </pre>
+    </div>
+  <% } %>
   <button id="sidebar-close-btn" class="sidebar-close-btn" aria-label="Close menu">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -55,15 +71,27 @@
     <div class="sidebar-section">
       <strong>Address</strong><br>
       <% if (location.address) { %>
-        <span>
-          <% if (location.address.addressLine1) { %>
-            <%= location.address.addressLine1 %><br>
-          <% } %>
-          <% if (location.address.addressLine2) { %>
-            <%= location.address.addressLine2 %><br>
-          <% } %>
-          <%= location.address.locality %>, <%= location.address.administrativeDistrictLevel1 %> <%= location.address.postalCode %>
-        </span>
+        <div class="address-container">
+          <span>
+            <% if (location.address.addressLine1) { %>
+              <%= location.address.addressLine1 %><br>
+            <% } %>
+            <% if (location.address.addressLine2) { %>
+              <%= location.address.addressLine2 %><br>
+            <% } %>
+            <%= location.address.locality %>, <%= location.address.administrativeDistrictLevel1 %> <%= location.address.postalCode %>
+          </span>
+          <% 
+            const address = `${location.address.addressLine1 || ''} ${location.address.addressLine2 || ''} ${location.address.locality}, ${location.address.administrativeDistrictLevel1} ${location.address.postalCode}`;
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+          %>
+          <a href="<%= mapsUrl %>" target="_blank" class="direction-btn" aria-label="Get directions">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+            </svg>
+            <span>Directions</span>
+          </a>
+        </div>
       <% } else { %>
         <span>No address info</span>
       <% } %>
@@ -86,17 +114,80 @@
     <!-- Business Hours Section -->
     <div class="sidebar-section">
       <strong>Business Hours</strong><br>
-      <% if (location.businessHours) { %>
+      <% 
+        const businessHours = location.businessHours;
+        if (businessHours?.periods) { 
+      %>
         <div class="business-hours">
-          <% Object.entries(location.businessHours).forEach(([day, hours]) => { %>
-            <div class="business-hours-row">
-              <span class="day"><%= day %></span>
-              <span class="hours"><%= hours %></span>
+          <% 
+            const daysMap = {
+              'MON': 'Monday',
+              'TUE': 'Tuesday',
+              'WED': 'Wednesday',
+              'THU': 'Thursday',
+              'FRI': 'Friday',
+              'SAT': 'Saturday',
+              'SUN': 'Sunday'
+            };
+            
+            // Get current day
+            const today = new Date().toLocaleString('en-US', {weekday: 'short'}).toUpperCase();
+            
+            // Create a full week schedule with default closed status
+            const fullSchedule = Object.keys(daysMap).map(day => ({
+              day,
+              isClosed: true,
+              start: null,
+              end: null
+            }));
+            
+            // Update schedule with actual business hours
+            if (businessHours.periods && Array.isArray(businessHours.periods)) {
+              businessHours.periods.forEach(period => {
+                // Convert the day to uppercase for consistent comparison
+                const periodDay = typeof period.dayOfWeek === 'string' ? 
+                  period.dayOfWeek.toUpperCase() : period.dayOfWeek;
+                const dayIndex = fullSchedule.findIndex(d => d.day === periodDay);
+                if (dayIndex !== -1) {
+                  fullSchedule[dayIndex] = {
+                    day: periodDay,
+                    isClosed: false,
+                    start: period.startLocalTime,
+                    end: period.endLocalTime
+                  };
+                }
+              });
+            }
+
+            // Function to format time from 24h to 12h
+            function formatTime(timeStr) {
+              if (!timeStr) return '';
+              const [hours, minutes] = timeStr.split(':');
+              const hour = parseInt(hours);
+              const ampm = hour >= 12 ? 'PM' : 'AM';
+              const hour12 = hour % 12 || 12;
+              return `${hour12}${minutes !== '00' ? ':' + minutes : ''} ${ampm}`;
+            }
+          %>
+          
+          <% fullSchedule.forEach(schedule => { %>
+            <div class="business-hours-row <%= schedule.day === today ? 'today' : '' %>">
+              <span class="day">
+                <%= daysMap[schedule.day] %>
+                <%= schedule.day === today ? ' (Today)' : '' %>
+              </span>
+              <span class="hours <%= schedule.isClosed ? 'closed' : '' %>">
+                <% if (schedule.isClosed) { %>
+                  Closed
+                <% } else { %>
+                  <%= formatTime(schedule.start) %> - <%= formatTime(schedule.end) %>
+                <% } %>
+              </span>
             </div>
-          <% }) %>
+          <% }); %>
         </div>
       <% } else { %>
-        <span>See website or call for hours</span>
+        <span>Business hours not available</span>
       <% } %>
     </div>
 
