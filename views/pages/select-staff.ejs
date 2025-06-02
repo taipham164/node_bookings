@@ -83,6 +83,8 @@
         <% } %>
       </div>
     </div>
+    <!-- Include the appointment summary partial -->
+    <%- include("../partials/appointment-summary") %>
   </div>
   <% if (!bookableStaff.length) {%>
     <div class="developer-note">
