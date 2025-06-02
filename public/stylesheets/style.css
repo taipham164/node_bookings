@@ -1242,3 +1242,132 @@ aside#appointment-summary {
   width: 100%;
   margin-top: 18px;
 }
+
+/* Mobile Summary Bar Styles */
+#summary-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  z-index: 2000;
+  padding: 12px 16px;
+  display: none;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+#summary-bottom-bar.show {
+  display: block;
+}
+
+#summary-bottom-bar > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#summary-bottom-bar > div > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#summary-bottom-bar > div > div:first-child > div {
+  display: flex;
+  align-items: baseline;
+}
+
+#summary-bar-count {
+  font-weight: 600;
+  font-size: 1.05em;
+  color: #333;
+}
+
+#summary-bar-total {
+  color: #0070f3;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+#summary-bar-duration {
+  color: #666;
+  font-size: 0.9em;
+}
+
+#summary-bottom-bar > div > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#summary-bar-expand {
+  background: #f5f5f5;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#summary-bar-expand.sheet-open {
+  transform: rotate(180deg);
+}
+
+#summary-sheet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2100;
+  display: none;
+}
+
+#summary-sheet-overlay.open {
+  display: block;
+}
+
+/* Mobile Bottom Sheet Improvements */
+#summary-bottom-sheet {
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#summary-bottom-sheet.open {
+  transform: translateY(0);
+}
+
+#summary-sheet-items {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Make the bottom bar more visible */
+@media (max-width: 900px) {
+  #summary-bottom-bar {
+    padding: 14px 18px;
+  }
+  
+  #summary-bar-next {
+    min-width: 90px;
+    padding: 10px 14px;
+    font-size: 0.95em;
+    border-radius: 6px;
+  }
+  
+  #summary-bar-expand {
+    width: 36px;
+    height: 36px;
+  }
+  
+  /* Ensure content doesn't get hidden behind the bottom bar */
+  .content-main {
+    padding-bottom: 80px;
+  }
+}
