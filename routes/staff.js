@@ -39,17 +39,36 @@ router.get("/:serviceId", async (req, res, next) => {
   const selectedServices = req.session && req.session.selectedServices ? req.session.selectedServices : [req.params.serviceId];
   const quantities = req.session && req.session.quantities ? req.session.quantities : {};
   const serviceVersion = req.query.version;
+  
+  // Get total price and duration from the session
+  const totalPrice = req.session && req.session.totalPrice ? req.session.totalPrice : 0;
+  const totalDuration = req.session && req.session.totalDuration ? req.session.totalDuration : 0;
+  const serviceSessionDetails = req.session && req.session.serviceDetails ? req.session.serviceDetails : {};
+  
   try {
     // Fetch all selected service variations for display
     const serviceDetails = [];
     for (const sid of selectedServices) {
       const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
       const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+      
+      // Get price from session details or from the fetched variation
+      let price = null;
+      if (serviceSessionDetails[sid] && serviceSessionDetails[sid].price) {
+        price = serviceSessionDetails[sid].price;
+      } else if (variation.itemVariationData.priceMoney) {
+        price = {
+          amount: variation.itemVariationData.priceMoney.amount,
+          currency: variation.itemVariationData.priceMoney.currency
+        };
+      }
+      
       serviceDetails.push({
         id: sid,
         name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
         duration: variation.itemVariationData.serviceDuration,
-        quantity: quantities[sid] ? parseInt(quantities[sid], 10) : 1
+        quantity: quantities[sid] ? parseInt(quantities[sid], 10) : 1,
+        price: price
       });
     }
 
@@ -83,10 +102,67 @@ router.get("/:serviceId", async (req, res, next) => {
     const bookableStaff = teamMemberBookingProfiles
       .filter(profile => serviceTeamMembers.includes(profile.teamMemberId) && activeTeamMembers.includes(profile.teamMemberId));
 
-    // Pass all selectedServices, quantities, and serviceDetails to the view
-    res.render("pages/select-staff", { bookableStaff, serviceItem, serviceVariation, serviceVersion, selectedServices, quantities, serviceDetails });
+    // Pass all selectedServices, quantities, serviceDetails, and total price/duration to the view
+    res.render("pages/select-staff", { 
+      bookableStaff, 
+      serviceItem, 
+      serviceVariation, 
+      serviceVersion, 
+      selectedServices, 
+      quantities, 
+      serviceDetails, 
+      totalPrice,
+      totalDuration
+    });
   } catch (error) {
     console.error(error);
+    next(error);
+  }
+});
+
+/**
+ * POST /staff/select
+ * 
+ * Handles staff member selection before proceeding to the next step.
+ * This mimics how service selection works - select first, then submit form.
+ */
+router.post("/select", async (req, res, next) => {
+  try {
+    // Get the selected staff member ID from the form
+    const selectedStaffId = req.body.staffId;
+    
+    // Validate that a staff member was selected
+    if (!selectedStaffId) {
+      return res.status(400).send("Please select a staff member to continue.");
+    }
+    
+    // Store the selected staff in the session
+    if (!req.session) req.session = {};
+    req.session.selectedStaffId = selectedStaffId;
+    
+    // Get staff profile details to store in session
+    const { result: { teamMemberBookingProfile } } = await bookingsApi.retrieveTeamMemberBookingProfile(selectedStaffId);
+    
+    // Store the staff profile info in the session
+    req.session.staffProfile = {
+      id: teamMemberBookingProfile.teamMemberId,
+      displayName: teamMemberBookingProfile.displayName,
+      description: teamMemberBookingProfile.description || "",
+      profileImageUrl: teamMemberBookingProfile.profileImageUrl || ""
+    };
+    
+    // Debug: Log the selected staff info
+    console.log('DEBUG: /staff/select session.selectedStaffId', req.session.selectedStaffId);
+    console.log('DEBUG: /staff/select session.staffProfile', req.session.staffProfile);
+    
+    // Get services from session to pass to availability page
+    const selectedServices = req.session.selectedServices || [];
+    const firstServiceId = selectedServices[0] || null;
+    
+    // Redirect to the availability (date/time selection) page
+    res.redirect(`/availability/${firstServiceId}?staff=${selectedStaffId}`);
+  } catch (error) {
+    console.error("Error in staff selection:", error);
     next(error);
   }
 });

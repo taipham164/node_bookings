@@ -230,16 +230,40 @@ router.post("/select", async (req, res, next) => {
 
   // After building expandedServiceIds, fetch all selected services and check for priceMoney
   const missingPriceIds = [];
+  let totalDuration = 0;
+  let totalPrice = 0;
+  const serviceDetails = {};
+  
   for (const sid of expandedServiceIds) {
     try {
       const { result: { object: variation } } = await catalogApi.retrieveCatalogObject(sid);
       if (!variation.itemVariationData.priceMoney) {
         missingPriceIds.push(sid);
+      } else {
+        // Calculate duration in minutes
+        const serviceDuration = variation.itemVariationData.serviceDuration || 0;
+        totalDuration += serviceDuration;
+        
+        // Calculate price (amount is in cents)
+        const amount = variation.itemVariationData.priceMoney.amount || 0;
+        const currency = variation.itemVariationData.priceMoney.currency;
+        totalPrice += amount;
+        
+        // Store details for each service
+        serviceDetails[sid] = {
+          duration: serviceDuration,
+          price: {
+            amount,
+            currency
+          }
+        };
       }
     } catch (e) {
       missingPriceIds.push(sid); // If fetch fails, treat as missing price
+      console.error(`Error fetching service details for ${sid}:`, e);
     }
   }
+  
   if (missingPriceIds.length > 0) {
     // Fetch names for missing price services
     const missingNames = [];
@@ -306,9 +330,15 @@ router.post("/select", async (req, res, next) => {
   if (!req.session) req.session = {};
   req.session.selectedServices = expandedServiceIds;
   req.session.quantities = expandedQuantities;
+  req.session.serviceDetails = serviceDetails;
+  req.session.totalDuration = totalDuration;
+  req.session.totalPrice = totalPrice;
+  
   // Debug: log session after setting
   console.log('DEBUG: /services/select session.selectedServices', req.session.selectedServices);
   console.log('DEBUG: /services/select session.quantities', req.session.quantities);
+  console.log('DEBUG: /services/select session.totalDuration', req.session.totalDuration);
+  console.log('DEBUG: /services/select session.totalPrice', req.session.totalPrice);
 
   const firstServiceId = expandedServiceIds[0];
   const version = req.body.version || '';
