@@ -11,52 +11,7 @@
   </header>
 
   <div class="content">
-    <div class="content-left">
-      <a class="button" href="/services"><span class="icon back-arrow"></span> Back</a>
-      <div class="steps">
-        <div class="steps__step">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Services</span>
-              <a href="/services">Edit</a>
-            </div>
-            <div class="steps__step-body">
-              <% if (serviceDetails && serviceDetails.length > 0) { %>
-                <ul>
-                  <% serviceDetails.forEach(function(s) { %>
-                    <li>
-                      <%= s.name %><% if (s.quantity > 1) { %> (x<%= s.quantity %>)<% } %> - <%= formatTime(s.duration) %>
-                    </li>
-                  <% }); %>
-                </ul>
-              <% } %>
-            </div>
-          </div>
-        </div>
-        <div class="steps__step selected">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Select staff</span>
-              <span class="icon side-caret-selected"></span>
-            </div>
-          </div>
-        </div>
-        <div class="steps__step">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Appointment time</span>
-            </div>
-          </div>
-        </div>
-        <div class="steps__step">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Enter your details</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    
     <div class="content-main">
       <h4>Select a staff member</h4>
       <div class="staff">
