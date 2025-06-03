@@ -159,8 +159,6 @@ function initMobileBottomBar() {
 // Bottom sheet functionality
 function initBottomSheet() {
   var form = document.querySelector('form[id="services-form"]');
-
-  var staff = document.querySelector('form[id="staff-form"]');
   var bar = document.getElementById('summary-bottom-bar');
   var sheet = document.getElementById('summary-bottom-sheet');
   var barExpand = document.getElementById('summary-bar-expand');

@@ -188,6 +188,14 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// Helper function to safely handle BigInt values
+function safeNumberConversion(value) {
+  if (typeof value === 'bigint') {
+    return Number(value);
+  }
+  return value;
+}
+
 /**
  * POST /services/select
  * Handles selection of multiple services and their quantities.
@@ -240,12 +248,12 @@ router.post("/select", async (req, res, next) => {
       if (!variation.itemVariationData.priceMoney) {
         missingPriceIds.push(sid);
       } else {
-        // Calculate duration in minutes
-        const serviceDuration = variation.itemVariationData.serviceDuration || 0;
+        // Calculate duration in minutes - ensure numeric type
+        const serviceDuration = safeNumberConversion(variation.itemVariationData.serviceDuration) || 0;
         totalDuration += serviceDuration;
         
-        // Calculate price (amount is in cents)
-        const amount = variation.itemVariationData.priceMoney.amount || 0;
+        // Calculate price (amount is in cents) - handle possible BigInt
+        const amount = safeNumberConversion(variation.itemVariationData.priceMoney.amount) || 0;
         const currency = variation.itemVariationData.priceMoney.currency;
         totalPrice += amount;
         
@@ -253,10 +261,12 @@ router.post("/select", async (req, res, next) => {
         serviceDetails[sid] = {
           duration: serviceDuration,
           price: {
-            amount,
+            amount, // Store as regular number
             currency
           }
         };
+        
+        console.log(`DEBUG: Service ${sid} details: duration=${serviceDuration}, amount=${amount} (${typeof amount}), totalPrice=${totalPrice} (${typeof totalPrice})`);
       }
     } catch (e) {
       missingPriceIds.push(sid); // If fetch fails, treat as missing price
@@ -337,8 +347,8 @@ router.post("/select", async (req, res, next) => {
   // Debug: log session after setting
   console.log('DEBUG: /services/select session.selectedServices', req.session.selectedServices);
   console.log('DEBUG: /services/select session.quantities', req.session.quantities);
-  console.log('DEBUG: /services/select session.totalDuration', req.session.totalDuration);
-  console.log('DEBUG: /services/select session.totalPrice', req.session.totalPrice);
+  console.log('DEBUG: /services/select session.totalDuration', req.session.totalDuration, typeof req.session.totalDuration);
+  console.log('DEBUG: /services/select session.totalPrice', req.session.totalPrice, typeof req.session.totalPrice);
 
   const firstServiceId = expandedServiceIds[0];
   const version = req.body.version || '';
