@@ -3,6 +3,68 @@
  * Handles the appointment summary sidebar, mobile summary bar, and bottom sheet
  */
 
+// Page detection helper functions
+function isServiceListPage() {
+  return window.location.pathname.includes('/services') || 
+         document.querySelector('form[id="services-form"]') !== null;
+}
+
+function isStaffSelectionPage() {
+  return window.location.pathname.includes('/staff') || 
+         document.querySelector('.staff__card') !== null;
+}
+
+// Bottom bar visibility control function
+function updateBottomBarVisibility() {
+  var bottomBar = document.getElementById('summary-bottom-bar');
+  if (!bottomBar) return;
+  
+  // First check - if not mobile view, ALWAYS hide
+  if (window.innerWidth > 900) {
+    bottomBar.classList.remove('show');
+    bottomBar.style.display = 'none';
+    return;
+  }
+  
+  // Only show on specific pages in mobile view
+  var shouldShow = isServiceListPage() || isStaffSelectionPage();
+  
+  if (shouldShow) {
+    var hasItems = false;
+    
+    // Check different sources for selected items
+    if (isServiceListPage()) {
+      // On service page, check the form
+      var form = document.querySelector('form[id="services-form"]');
+      if (form) {
+        hasItems = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked').length > 0;
+      }
+    } else if (isStaffSelectionPage()) {
+      // On staff page, check sessionStorage for services
+      try {
+        var storedServices = sessionStorage.getItem('selectedServices');
+        if (storedServices) {
+          var services = JSON.parse(storedServices);
+          hasItems = services && services.length > 0;
+        }
+      } catch (e) {
+        // Fallback: assume we have services if we're on staff page
+        hasItems = true;
+      }
+    }
+    
+    if (hasItems) {
+      bottomBar.style.display = '';
+      bottomBar.classList.add('show');
+    } else {
+      bottomBar.classList.remove('show');
+    }
+  } else {
+    bottomBar.classList.remove('show');
+    bottomBar.style.display = 'none';
+  }
+}
+
 // Initialize appointment summary functionality
 document.addEventListener('DOMContentLoaded', function() {
   initAppointmentSummary();
@@ -15,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   updateAppointmentSummary();
   updateBarAndSheet();
+  updateBottomBarVisibility();
 });
 
 // Main appointment summary update function
@@ -319,12 +382,8 @@ function updateBarAndSheet() {
     }
     if (barDuration) barDuration.textContent = durationText;
     
-    // Only show bar on mobile
-    if (window.innerWidth <= 900) {
-      bar.classList.add('show');
-    } else {
-      bar.classList.remove('show');
-    }
+    // Use updateBottomBarVisibility for consistent logic
+    updateBottomBarVisibility();
     
     if (barNext) barNext.disabled = false;
   } else {
@@ -333,20 +392,21 @@ function updateBarAndSheet() {
   }
 }
 
-// Add resize handler to show/hide bottom bar based on screen width
+// Add resize handler to show/hide bottom bar based on screen width and page type
 window.addEventListener('resize', function() {
-  // Only show the bottom bar on mobile if there are items
-  var form = document.querySelector('form[id="services-form"]');
-  if (!form) return;
-  
-  var hasItems = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked').length > 0;
   var bottomBar = document.getElementById('summary-bottom-bar');
   
   if (bottomBar) {
-    if (window.innerWidth <= 900 && hasItems) {
-      bottomBar.classList.add('show');
-    } else {
+    // Force hide in desktop view
+    if (window.innerWidth > 900) {
       bottomBar.classList.remove('show');
+      bottomBar.style.display = 'none';
+    } else {
+      bottomBar.style.display = '';
+      updateBottomBarVisibility();
     }
   }
 });
+
+// Make updateBottomBarVisibility globally available
+window.updateBottomBarVisibility = updateBottomBarVisibility;

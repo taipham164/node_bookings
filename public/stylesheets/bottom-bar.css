@@ -1,0 +1,52 @@
+/* Bottom Bar Mobile-Only CSS Rules */
+
+/* Force hide bottom bar in desktop view - Highest priority */
+@media (min-width: 901px) {
+  #summary-bottom-bar,
+  #summary-bottom-bar.show {
+    display: none !important;
+    visibility: hidden !important;
+    transform: translateY(100%) !important;
+    opacity: 0 !important;
+  }
+}
+
+/* Hide bottom bar on specific pages regardless of screen size */
+body[data-page="availability"] #summary-bottom-bar,
+body[data-page="availability"] #summary-bottom-bar.show,
+body[data-page="contact"] #summary-bottom-bar,
+body[data-page="contact"] #summary-bottom-bar.show {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Ensure bottom bar only shows on mobile for service and staff pages */
+@media (max-width: 900px) {
+  /* Only show on service list and staff selection pages */
+  body[data-page="services"] #summary-bottom-bar.show,
+  body[data-page="staff"] #summary-bottom-bar.show {
+    display: flex !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+  }
+  
+  /* Hide on all other pages in mobile view */
+  body:not([data-page="services"]):not([data-page="staff"]) #summary-bottom-bar,
+  body:not([data-page="services"]):not([data-page="staff"]) #summary-bottom-bar.show {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+/* Additional safety rules */
+#summary-bottom-bar {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Ensure proper z-index for mobile */
+@media (max-width: 900px) {
+  #summary-bottom-bar.show {
+    z-index: 1000;
+  }
+}

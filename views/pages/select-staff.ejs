@@ -3,6 +3,12 @@
 
 <head>
   <link rel="stylesheet" href="/stylesheets/style.css" />
+  <link rel="stylesheet" href="/stylesheets/sidebar.css" />
+  <link rel="stylesheet" href="/stylesheets/bottom-bar.css" />
+  <link rel="stylesheet" href="/stylesheets/desktop-override.css" />
+  <script src="/js/form-handler.js" defer></script>
+  <script src="/javascripts/appointment-summary.js" defer></script>
+  <script src="/js/staff-selection-handler.js" defer></script>
 </head>
 
 <body>
@@ -13,6 +19,21 @@
   <div class="content">
     
     <div class="content-main">
+      <div class="steps">
+        <div class="steps__step">
+          <div class="steps__step-wrapper">
+            <div class="steps__step-title">
+              <span>Services</span>
+              <a href="/services">Edit</a>
+            </div>
+            <div class="steps__step-body" id="staff-page-services-summary">
+              <!-- Services will be populated here by JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <a class="button" href="/services"><span class="icon back-arrow"></span> Back</a>
       <h4>Select a staff member</h4>
       <div class="staff">
         <% if (bookableStaff.length > 0) { %>
@@ -98,6 +119,130 @@
     </div>
   <% } %>
 
-</body>
+<script>
+// Staff page specific functionality
+document.addEventListener('DOMContentLoaded', function() {
+  populateStaffPageSummary();
+  
+  // Update bottom bar content for staff page
+  updateStaffPageBottomBarContent();
+});
 
-</html>
+function populateStaffPageSummary() {
+  var summaryItems = document.getElementById('summary-items');
+  var summaryEmpty = document.getElementById('summary-empty');
+  var continueBtn = document.getElementById('continue-btn');
+  var stepsSummary = document.getElementById('staff-page-services-summary');
+  
+  if (!summaryItems || !summaryEmpty) return;
+  
+  try {
+    var storedServices = sessionStorage.getItem('selectedServices');
+    if (storedServices) {
+      var services = JSON.parse(storedServices);
+      
+      // Clear existing items
+      summaryItems.innerHTML = '';
+      
+      if (services && services.length > 0) {
+        services.forEach(function(service) {
+          var li = document.createElement('li');
+          li.style.display = 'flex';
+          li.style.alignItems = 'center';
+          li.style.justifyContent = 'space-between';
+          li.style.padding = '8px 0';
+          
+          var quantityText = service.quantity > 1 ? ' <span style="color:#0070f3;font-weight:500;">x' + service.quantity + '</span>' : '';
+          var durationText = service.duration ? '<span style="margin-left:8px;">' + service.duration + '</span>' : '';
+          
+          li.innerHTML =
+            '<div>' +
+              '<div style="font-weight:600;">' + service.name + quantityText + '</div>' +
+              '<div style="font-size:0.97em;color:#666;">' + durationText + '</div>' +
+            '</div>';
+          
+          summaryItems.appendChild(li);
+        });
+        
+        // Populate steps summary too
+        if (stepsSummary) {
+          var stepsHtml = services.map(function(service) {
+            var qty = service.quantity > 1 ? ' (x' + service.quantity + ')' : '';
+            return '<div class="steps__step-item">' + service.name + qty + '</div>';
+          }).join('');
+          stepsSummary.innerHTML = stepsHtml;
+        }
+        
+        // Show items, hide empty message
+        summaryItems.style.display = 'block';
+        summaryEmpty.style.display = 'none';
+        
+        // Update continue button
+        if (continueBtn) {
+          continueBtn.style.display = 'block';
+          continueBtn.disabled = false;
+          continueBtn.textContent = 'Continue to Availability';
+          // Remove form attribute since there's no form on staff page
+          continueBtn.removeAttribute('form');
+          continueBtn.removeAttribute('type');
+        }
+      } else {
+        showEmptySummary();
+      }
+    } else {
+      showEmptySummary();
+    }
+  } catch (e) {
+    console.error('Error loading stored services:', e);
+    showEmptySummary();
+  }
+}
+
+function showEmptySummary() {
+  var summaryItems = document.getElementById('summary-items');
+  var summaryEmpty = document.getElementById('summary-empty');
+  var continueBtn = document.getElementById('continue-btn');
+  
+  if (summaryItems) summaryItems.style.display = 'none';
+  if (summaryEmpty) summaryEmpty.style.display = 'block';
+  if (continueBtn) continueBtn.style.display = 'none';
+}
+
+function updateStaffPageBottomBarContent() {
+  var barCount = document.getElementById('summary-bar-count');
+  var barNext = document.getElementById('summary-bar-next');
+  var sheetNext = document.getElementById('summary-sheet-next');
+  
+  try {
+    var storedServices = sessionStorage.getItem('selectedServices');
+    if (storedServices) {
+      var services = JSON.parse(storedServices);
+      var totalItems = 0;
+      
+      services.forEach(function(service) {
+        totalItems += service.quantity || 1;
+      });
+      
+      var description = totalItems === 1 ? '1 service selected' : totalItems + ' services selected';
+      
+      if (barCount) {
+        barCount.textContent = description;
+      }
+      
+      // Update next buttons for staff page
+      [barNext, sheetNext].forEach(function(btn) {
+        if (btn) {
+          btn.disabled = false;
+          btn.removeAttribute('form');
+          btn.removeAttribute('type');
+          btn.textContent = 'Continue';
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error updating bottom bar:', e);
+  }
+}
+</script>
+
+</body>

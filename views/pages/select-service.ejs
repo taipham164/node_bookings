@@ -46,6 +46,9 @@
   </style>
   <link rel="stylesheet" href="/stylesheets/style.css">
   <link rel="stylesheet" href="/stylesheets/sidebar.css">
+  <link rel="stylesheet" href="/stylesheets/bottom-bar.css">
+  <link rel="stylesheet" href="/stylesheets/desktop-override.css">
+  <script src="/js/form-handler.js" defer></script>
   <script src="/javascripts/appointment-summary.js" defer></script>
 </head>
 
@@ -442,16 +445,45 @@ document.addEventListener('DOMContentLoaded', function() {
   form.addEventListener('submit', function(e) {
     let checkedCount = 0;
     let totalQty = 0;
+    var selectedServices = [];
+    
     checkboxes.forEach(cb => {
       if (!cb.checked) return;
       checkedCount++;
       const qtyInput = document.getElementById('quantity-' + cb.value);
       let qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 0 : 0;
       totalQty += qty;
+      
+      // Store service info for staff page
+      var label = cb.closest('.service-label');
+      if (label) {
+        var name = label.querySelector('h4')?.textContent?.trim() || '';
+        var priceSpan = label.querySelector('span[style*="color:#0070f3"]');
+        var price = priceSpan ? priceSpan.textContent.trim() : '';
+        var durationSpan = label.querySelector('span[style*="color:#888"]');
+        var duration = durationSpan ? durationSpan.textContent.trim().replace(/^•\s*/, '') : '';
+        
+        selectedServices.push({
+          id: cb.value,
+          name: name,
+          price: price,
+          duration: duration,
+          quantity: qty
+        });
+      }
     });
+    
     if (checkedCount > MAX_DIFFERENT_SERVICES || totalQty > MAX_TOTAL_AMOUNT || checkedCount === 0 || totalQty === 0) {
       e.preventDefault();
       enforceLimits();
+    } else {
+      // Store selected services in sessionStorage for staff page
+      try {
+        sessionStorage.setItem('selectedServices', JSON.stringify(selectedServices));
+        console.log('Stored services for staff page:', selectedServices);
+      } catch (error) {
+        console.log('Could not store services:', error);
+      }
     }
   });
 });

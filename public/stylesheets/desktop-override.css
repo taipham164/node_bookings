@@ -1,0 +1,40 @@
+/* Desktop Override CSS - Hard overrides for desktop view */
+
+/* Force hide bottom bar and related elements in desktop view */
+@media (min-width: 901px) {
+  #summary-bottom-bar,
+  #summary-bottom-sheet,
+  #summary-sheet-overlay {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(100%) !important;
+  }
+  
+  /* Ensure mobile-specific elements are hidden */
+  .mobile-only {
+    display: none !important;
+  }
+  
+  /* Reset body overflow in desktop view */
+  body {
+    overflow: auto !important;
+  }
+}
+
+/* Ensure proper behavior in mobile view */
+@media (max-width: 900px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Hard override for any conflicting styles */
+@media (min-width: 901px) {
+  #summary-bottom-bar.show {
+    display: none !important;
+    visibility: hidden !important;
+    transform: translateY(100%) !important;
+  }
+}
