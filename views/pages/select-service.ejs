@@ -120,6 +120,175 @@
         font-size: 0.9rem;
       }
     }
+
+    /* Fix service title overflow - override inline styles */
+    .card__info h4 {
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      max-width: 100% !important;
+      word-wrap: break-word !important;
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+    
+    /* Fix the flex container that contains the h4 */
+    .card__info > div:first-child {
+      min-width: 0 !important;
+      overflow: hidden !important;
+    }
+    
+    /* Allow multi-line titles on mobile for better readability */
+    @media (max-width: 768px) {
+      .card__info h4 {
+        white-space: normal !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        line-clamp: 2 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-height: 2.4em !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .card__info h4 {
+        max-height: 2.6em !important;
+        line-height: 1.3 !important;
+      }
+    }
+    
+    /* Ensure the card info container doesn't overflow */
+    .card__info {
+      min-width: 0 !important;
+      overflow: hidden !important;
+      flex: 1 !important;
+    }
+    
+    /* Fix for service label container */
+    .service-label {
+      overflow: hidden !important;
+      width: 100% !important;
+    }
+
+    /* Reduce card padding for better space utilization */
+    .card__wrapper {
+      padding: 18px 20px !important;
+      margin-bottom: 8px !important;
+    }
+    
+    @media (max-width: 768px) {
+      .card__wrapper {
+        padding: 16px 14px !important;
+        margin-bottom: 6px !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .card__wrapper {
+        padding: 14px 12px !important;
+      }
+    }
+    
+    @media (max-width: 360px) {
+      .card__wrapper {
+        padding: 12px 10px !important;
+        margin-bottom: 4px !important;
+      }
+    }
+
+    /* Ensure card wrapper has enough left padding for scaled checkbox */
+    .card__wrapper {
+      padding-left: 22px !important;
+      padding-right: 20px !important;
+    }
+    
+    @media (max-width: 768px) {
+      .card__wrapper {
+        padding-left: 18px !important;
+        padding-right: 14px !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .card__wrapper {
+        padding-left: 16px !important;
+        padding-right: 12px !important;
+      }
+    }
+    
+    @media (max-width: 360px) {
+      .card__wrapper {
+        padding-left: 14px !important;
+        padding-right: 10px !important;
+      }
+    }
+
+    /* Service card layout fixes with new class structure */
+    .service-card-info {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+    }
+    
+    .service-title-row {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+    }
+    
+    .service-checkbox {
+      margin: 0 8px 0 4px !important;
+      transform: scale(1.2) !important;
+      flex-shrink: 0 !important;
+      position: relative !important;
+    }
+    
+    .service-title {
+      margin: 0 !important;
+      font-size: 1.15em !important;
+      font-weight: 600 !important;
+      line-height: 1.2 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+    
+    /* Mobile responsive behavior for titles */
+    @media (max-width: 768px) {
+      .service-title {
+        white-space: normal !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        line-clamp: 2 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-height: 2.4em !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .service-title {
+        font-size: 1.05em !important;
+        max-height: 2.6em !important;
+        line-height: 1.3 !important;
+      }
+    }
+    
+    @media (max-width: 360px) {
+      .service-title {
+        font-size: 1em !important;
+      }
+    }
   </style>
 </head>
 
@@ -205,10 +374,10 @@
                                 %>
                                 <img src="<%= imgUrl ? imgUrl : '/images/blank-logo-sm.svg' %>" alt="<%= item.itemData.name || 'Service' %>" loading="lazy">
                               </div>
-                              <div class="card__info" style="flex:1;display:flex;flex-direction:column;gap:6px;">
-                                <div style="display:flex;align-items:center;gap:10px;">
-                                  <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin:0 8px 0 0;transform:scale(1.2);" <%= hasPrice ? '' : 'disabled' %>>
-                                  <h4 style="margin:0;font-size:1.15em;font-weight:600;line-height:1.2;"><%= item.itemData.name || 'Service' %></h4>
+                              <div class="card__info service-card-info">
+                                <div class="service-title-row">
+                                  <input type="checkbox" name="services[]" value="<%= variation.id %>" class="service-checkbox" <%= hasPrice ? '' : 'disabled' %>>
+                                  <h4 class="service-title"><%= item.itemData.name || 'Service' %></h4>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
                                   <% if (variation.itemVariationData && variation.itemVariationData.pricingType === "FIXED_PRICING" && variation.itemVariationData.priceMoney) { %>
@@ -279,10 +448,10 @@
                             <div class="card__image">
                               <img src="/images/blank-logo-sm.svg" alt="<%= item.itemData.name || 'Service' %>" loading="lazy">
                             </div>
-                            <div class="card__info" style="flex:1;display:flex;flex-direction:column;gap:6px;">
-                              <div style="display:flex;align-items:center;gap:10px;">
-                                <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin:0 8px 0 0;transform:scale(1.2);" <%= hasPrice ? '' : 'disabled' %>>
-                                <h4 style="margin:0;font-size:1.15em;font-weight:600;line-height:1.2;"><%= item.itemData.name || 'Service' %></h4>
+                            <div class="card__info service-card-info">
+                              <div class="service-title-row">
+                                <input type="checkbox" name="services[]" value="<%= variation.id %>" class="service-checkbox" <%= hasPrice ? '' : 'disabled' %>>
+                                <h4 class="service-title"><%= item.itemData.name || 'Service' %></h4>
                               </div>
                               <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
                                 <% if (variation.itemVariationData && variation.itemVariationData.pricingType === "FIXED_PRICING" && variation.itemVariationData.priceMoney) { %>
@@ -329,9 +498,12 @@
           grid-template-columns: 1fr;
           gap: 1.2em;
         }
+        /* Force single column layout for better title display */
         @media (min-width: 700px) {
           .two-col-inner {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr;
+            max-width: 800px;
+            margin: 0 auto;
           }
         }
         .category-tab:hover {
