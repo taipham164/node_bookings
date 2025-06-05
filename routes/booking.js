@@ -25,6 +25,47 @@ require("dotenv").config();
 const locationId = process.env["SQ_LOCATION_ID"];
 
 /**
+ * Normalize phone number to E.164 format for consistency
+ * @param {string} phone - Raw phone number input
+ * @returns {string} - Normalized phone number
+ */
+function normalizePhoneNumber(phone) {
+  if (!phone) return null;
+  
+  // Remove all non-digits
+  const digits = phone.replace(/\D/g, '');
+  
+  // Add country code if missing (assuming US)
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  } else if (digits.length === 11 && digits.startsWith('1')) {
+    return `+${digits}`;
+  }
+  
+  // Return as-is if already formatted or international
+  return `+${digits}`;
+}
+
+/**
+ * Safe BigInt conversion function
+ */
+function safeNumberConversion(value) {
+  if (typeof value === 'bigint') {
+    const num = Number(value);
+    if (num === Infinity || num === -Infinity) {
+      console.warn('BigInt value too large for Number conversion:', value);
+      return 0;
+    }
+    return num;
+  }
+  if (typeof value === 'string') {
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  return value || 0;
+}
+
+/**
  * POST /booking/create
  *
  * Create a new booking, booking details and customer information is submitted
@@ -39,38 +80,76 @@ const locationId = process.env["SQ_LOCATION_ID"];
  * `serviceVariationVersion` - the version of the service initially selected
  */
 router.post("/create", async (req, res, next) => {
-    // Debug: print appointmentSegments before booking
-    // console.log('DEBUG: appointmentSegments', JSON.stringify(appointmentSegments, null, 2));
-  // Debug: log session at booking step
-  if (req.session) {
+  try {
+    // Ensure session exists
+    if (!req.session) {
+      req.session = {};
+    }
+    
+    // Debug: log session at booking step
     console.log('DEBUG: /booking/create session.selectedServices', req.session.selectedServices);
     console.log('DEBUG: /booking/create session.quantities', req.session.quantities);
-  }
-  // Multi-service support: prefer session if not present in body
-  let selectedServices = req.body["services[]"] || req.body.services;
-  // Fallback to session if not present in body (e.g., user navigates directly to booking)
-  if (!selectedServices) {
-    selectedServices = req.session.selectedServices || [req.query.serviceId];
-  }
-  const serviceVariationVersion = req.query.version;
-  const staffId = req.query.staffId;
-  const startAt = req.query.startAt;
-  const customerNote = req.body.customerNote;
-  const emailAddress = req.body.emailAddress;
-  const familyName = req.body.familyName;
-  const givenName = req.body.givenName;
+    
+    // Multi-service support: prefer session if not present in body
+    let selectedServices = req.body["services[]"] || req.body.services;
+    
+    // Fallback to session if not present in body (e.g., user navigates directly to booking)
+    if (!selectedServices && req.session.selectedServices) {
+      selectedServices = req.session.selectedServices;
+    } else if (!selectedServices) {
+      selectedServices = [req.query.serviceId];
+    }
+    
+    const serviceVariationVersion = req.query.version;
+    const staffId = req.query.staffId;
+    const startAt = req.query.startAt;
+    const customerNote = req.body.customerNote;
+    const emailAddress = req.body.emailAddress;
+    const familyName = req.body.familyName;
+    const givenName = req.body.givenName;
+    const phoneNumber = req.body.phoneNumber; // Add phone number support
 
-  try {
+    // Validate form data
+    if (!emailAddress || !familyName || !givenName) {
+      return res.render("pages/formatted-error", { 
+        error: "Please fill in all required fields: name and email address." 
+      });
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailAddress)) {
+      return res.render("pages/formatted-error", { 
+        error: "Please enter a valid email address." 
+      });
+    }
+    
+    // Phone number validation and normalization
+    let normalizedPhone = null;
+    if (phoneNumber && phoneNumber.trim()) {
+      normalizedPhone = normalizePhoneNumber(phoneNumber.trim());
+      // Basic phone validation
+      const phoneRegex = /^\+\d{10,15}$/;
+      if (!phoneRegex.test(normalizedPhone)) {
+        return res.render("pages/formatted-error", { 
+          error: "Please enter a valid phone number." 
+        });
+      }
+    }
+
     // Debug logs for service selection and quantities
     console.log('DEBUG: selectedServices', selectedServices);
+    
     // If multiple services, create appointment segments for each
     let appointmentSegments = [];
     const serviceIds = Array.isArray(selectedServices) ? selectedServices : [selectedServices];
+    
     for (const serviceId of serviceIds) {
       // Retrieve catalog object by the variation ID
       const { result: { object: catalogItemVariation } } = await catalogApi.retrieveCatalogObject(serviceId);
       const durationMinutes = convertMsToMins(catalogItemVariation.itemVariationData.serviceDuration);
       const version = catalogItemVariation.version; // Use the correct version for this service
+      
       appointmentSegments.push({
         durationMinutes,
         serviceVariationId: serviceId,
@@ -78,30 +157,34 @@ router.post("/create", async (req, res, next) => {
         teamMemberId: staffId,
       });
     }
+    
     if (appointmentSegments.length === 0) {
       // No valid services selected
       return res.render("pages/formatted-error", { error: "No valid services selected for booking." });
     }
+    
     // Debug: print appointmentSegments before booking
-    // console.log('DEBUG: appointmentSegments', JSON.stringify(appointmentSegments, null, 2));
+    console.log('DEBUG: appointmentSegments', JSON.stringify(appointmentSegments, null, 2));
+    
     // Create booking
     const { result: { booking } } = await bookingsApi.createBooking({
       booking: {
         appointmentSegments,
-        customerId: await getCustomerID(givenName, familyName, emailAddress),
+        customerId: await getCustomerID(givenName, familyName, emailAddress, normalizedPhone),
         customerNote,
         locationId,
         startAt,
       },
       idempotencyKey: crypto.randomUUID(),
     });
+    
     res.redirect("/booking/" + booking.id);
   } catch (error) {
     // Handle invalid email error gracefully
     if (error.errors && error.errors.some(e => e.code === 'INVALID_VALUE' && e.field === 'email')) {
       // Fetch actual service details for better UX
       let serviceDetails = [];
-      if (req.session.selectedServices && req.session.selectedServices.length) {
+      if (req.session?.selectedServices?.length) {
         for (const sid of req.session.selectedServices) {
           try {
             const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
@@ -112,10 +195,11 @@ router.post("/create", async (req, res, next) => {
               duration: variation.itemVariationData.serviceDuration
             });
           } catch (e) {
-            serviceDetails.push({ id: sid, name: '', duration: 0 });
+            serviceDetails.push({ id: sid, name: '[Service unavailable]', duration: 0 });
           }
         }
       }
+      
       return res.render("pages/contact", {
         serviceDetails,
         selectedServices: req.session.selectedServices || [],
@@ -127,7 +211,17 @@ router.post("/create", async (req, res, next) => {
         error: 'The provided email address is invalid. Please enter a valid email address.'
       });
     }
-    console.error(error);
+    
+    // Log the full error for debugging
+    console.error('Booking creation error:', error);
+    
+    // Generic error handling
+    if (error.message) {
+      return res.render("pages/formatted-error", { 
+        error: `Booking failed: ${error.message}` 
+      });
+    }
+    
     next(error);
   }
 });
@@ -213,6 +307,7 @@ router.get("/:bookingId", async (req, res, next) => {
           priceMoney: null
         }))
     );
+    
     const teamMemberPromises = teamMemberIds.map(tid =>
       bookingsApi.retrieveTeamMemberBookingProfile(tid)
         .then(({ result: { teamMemberBookingProfile } }) => teamMemberBookingProfile)
@@ -227,12 +322,16 @@ router.get("/:bookingId", async (req, res, next) => {
     for (const segment of booking.appointmentSegments) {
       const sid = segment.serviceVariationId;
       if (!serviceDetailsMap[sid]) {
-        // Defensive: ensure duration and priceMoney are numbers, not BigInt or string
         const base = { ...serviceDetailsArr.find(s => s.id === sid), quantity: 0 };
-        if (base.duration && typeof base.duration === 'bigint') base.duration = Number(base.duration);
-        if (base.duration && typeof base.duration === 'string') base.duration = Number(base.duration);
-        if (base.priceMoney && base.priceMoney.amount && typeof base.priceMoney.amount === 'bigint') base.priceMoney.amount = Number(base.priceMoney.amount);
-        if (base.priceMoney && base.priceMoney.amount && typeof base.priceMoney.amount === 'string') base.priceMoney.amount = Number(base.priceMoney.amount);
+        
+        // Safe BigInt conversion
+        if (base.duration) {
+          base.duration = safeNumberConversion(base.duration);
+        }
+        if (base.priceMoney?.amount) {
+          base.priceMoney.amount = safeNumberConversion(base.priceMoney.amount);
+        }
+        
         serviceDetailsMap[sid] = base;
       }
       serviceDetailsMap[sid].quantity += 1;
@@ -243,8 +342,6 @@ router.get("/:bookingId", async (req, res, next) => {
     let location = req.app.locals.location || { address: {}, timezone: 'UTC' };
     if (!location.address) location.address = {};
     if (!location.timezone) location.timezone = 'UTC';
-
-   
 
     res.render("pages/confirmation", { booking, teamMemberProfiles, serviceDetails, location });
   } catch (error) {
@@ -307,12 +404,15 @@ function convertMsToMins(duration) {
 /**
  * Return the id of a customer that matches the firstName, lastName and email
  * If such customer doesn't exist, create a new customer.
+ * Updated to support phone numbers for login feature.
  *
  * @param {string} givenName
  * @param {string} familyName
  * @param {string} emailAddress
+ * @param {string} phoneNumber - Optional phone number
  */
-async function getCustomerID(givenName, familyName, emailAddress) {
+async function getCustomerID(givenName, familyName, emailAddress, phoneNumber = null) {
+  // First, search by email address
   const { result: { customers } } = await customersApi.searchCustomers({
     query: {
       filter: {
@@ -329,20 +429,42 @@ async function getCustomerID(givenName, familyName, emailAddress) {
       customer.familyName === familyName
     );
 
-    // If a matching customer is found, return the first matching customer
+    // If a matching customer is found, update their phone number if provided and different
     if (matchingCustomers.length > 0) {
-      return matchingCustomers[0].id;
+      const existingCustomer = matchingCustomers[0];
+      
+      // Update phone number if provided and different from existing
+      if (phoneNumber && existingCustomer.phoneNumber !== phoneNumber) {
+        try {
+          await customersApi.updateCustomer(existingCustomer.id, {
+            phoneNumber: phoneNumber
+          });
+          console.log(`Updated phone number for customer ${existingCustomer.id}`);
+        } catch (updateError) {
+          console.warn('Failed to update customer phone number:', updateError);
+          // Continue with booking even if phone update fails
+        }
+      }
+      
+      return existingCustomer.id;
     }
   }
 
-  // If no matching customer is found, create a new customer and return its ID
-  const { result: { customer } } = await customersApi.createCustomer({
+  // If no matching customer is found, create a new customer
+  const customerData = {
     emailAddress,
     familyName,
     givenName,
     idempotencyKey: crypto.randomUUID(),
     referenceId: "BOOKINGS-SAMPLE-APP",
-  });
+  };
+  
+  // Add phone number if provided
+  if (phoneNumber) {
+    customerData.phoneNumber = phoneNumber;
+  }
+
+  const { result: { customer } } = await customersApi.createCustomer(customerData);
 
   return customer.id;
 }

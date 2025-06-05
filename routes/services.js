@@ -21,6 +21,29 @@ const {
   catalogApi,
 } = require("../util/square-client");
 
+// Helper function to safely handle BigInt values from Square API
+function safeNumberConversion(value) {
+  if (typeof value === 'bigint') {
+    // Convert BigInt to number, but check for overflow
+    const num = Number(value);
+    if (num === Infinity || num === -Infinity) {
+      console.warn('BigInt value too large for Number conversion:', value);
+      return 0;
+    }
+    return num;
+  }
+  if (typeof value === 'string') {
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  return value || 0;
+}
+
+// BigInt-safe JSON stringifier
+function replacer(key, value) {
+  return typeof value === 'bigint' ? value.toString() : value;
+}
+
 /**
  * GET /services
  *
@@ -28,17 +51,30 @@ const {
  */
 router.get("/", async (req, res, next) => {
   const cancel = req.query.cancel;
+  const errorMessage = req.query.error;
+  
+  // Handle error messages
+  let error = null;
+  if (errorMessage === 'missing_params') {
+    error = 'Missing required information. Please start your booking again.';
+  } else if (errorMessage === 'no_service_selected') {
+    error = 'Please select a service to continue.';
+  }
+  
   try {
-
     // Fetch all catalog objects (items and categories)
     const { result: { objects } } = await catalogApi.listCatalog(undefined, undefined);
     if (!objects) {
-      return res.render("pages/select-service", { cancel, items: [], allCategories: [] });
+      return res.render("pages/select-service", { 
+        cancel, 
+        items: [], 
+        allCategories: [], 
+        error 
+      });
     }
 
     // Separate items and categories
     // Only include items that are bookable online by customer
-    // Try to debug and print itemData keys for inspection
     // Only show items where at least one variation has availableForBooking true
     const items = objects.filter(obj => {
       if (obj.type !== "ITEM" || !obj.itemData || obj.itemData.productType !== "APPOINTMENTS_SERVICE" || obj.isDeleted || obj.is_deleted) {
@@ -98,7 +134,6 @@ router.get("/", async (req, res, next) => {
     });
 
     // --- BEGIN: Fetch booking counts for each service and category ---
-    // Replace searchBookings with retrieveBooking for a specific booking_id
     let serviceBookingCounts = {};
     let categoryBookingCounts = {};
     try {
@@ -181,20 +216,21 @@ router.get("/", async (req, res, next) => {
       }
     }
 
-    res.render("pages/select-service", { cancel, items, allCategories, categorized, location: req.app.locals.location, imageMap, itemSecondaryImages });
+    res.render("pages/select-service", { 
+      cancel, 
+      items, 
+      allCategories, 
+      categorized, 
+      location: req.app.locals.location, 
+      imageMap, 
+      itemSecondaryImages,
+      error 
+    });
   } catch (error) {
     console.error(error);
     next(error);
   }
 });
-
-// Helper function to safely handle BigInt values
-function safeNumberConversion(value) {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-  return value;
-}
 
 /**
  * POST /services/select
@@ -216,11 +252,15 @@ router.post("/select", async (req, res, next) => {
     }
   }
 
-
   // If only one service is selected, ensure it's an array
   let serviceIds = Array.isArray(selectedServices) ? selectedServices : [selectedServices];
   // Remove any empty/undefined serviceIds (caused by no selection)
   serviceIds = serviceIds.filter(Boolean);
+
+  // Validate that at least one service is selected
+  if (serviceIds.length === 0) {
+    return res.redirect('/services?error=no_service_selected');
+  }
 
   // Instead of using quantity, expand serviceIds so each quantity is a separate entry
   let expandedServiceIds = [];
@@ -235,7 +275,6 @@ router.post("/select", async (req, res, next) => {
   let expandedQuantities = {};
   expandedServiceIds.forEach(sid => { expandedQuantities[sid] = 1; });
 
-
   // After building expandedServiceIds, fetch all selected services and check for priceMoney
   const missingPriceIds = [];
   let totalDuration = 0;
@@ -248,12 +287,12 @@ router.post("/select", async (req, res, next) => {
       if (!variation.itemVariationData.priceMoney) {
         missingPriceIds.push(sid);
       } else {
-        // Calculate duration in minutes - ensure numeric type
-        const serviceDuration = safeNumberConversion(variation.itemVariationData.serviceDuration) || 0;
+        // Calculate duration in minutes - ensure numeric type with safe conversion
+        const serviceDuration = safeNumberConversion(variation.itemVariationData.serviceDuration);
         totalDuration += serviceDuration;
         
         // Calculate price (amount is in cents) - handle possible BigInt
-        const amount = safeNumberConversion(variation.itemVariationData.priceMoney.amount) || 0;
+        const amount = safeNumberConversion(variation.itemVariationData.priceMoney.amount);
         const currency = variation.itemVariationData.priceMoney.currency;
         totalPrice += amount;
         
@@ -266,7 +305,7 @@ router.post("/select", async (req, res, next) => {
           }
         };
         
-        console.log(`DEBUG: Service ${sid} details: duration=${serviceDuration}, amount=${amount} (${typeof amount}), totalPrice=${totalPrice} (${typeof totalPrice})`);
+        console.log(`DEBUG: Service ${sid} details: duration=${serviceDuration}, amount=${amount}, totalPrice=${totalPrice}`);
       }
     } catch (e) {
       missingPriceIds.push(sid); // If fetch fails, treat as missing price
@@ -286,57 +325,71 @@ router.post("/select", async (req, res, next) => {
         missingNames.push(sid);
       }
     }
-    // Fetch all catalog objects (items and categories) for the service selection page so user can adjust selection
-    const { result: { objects } } = await catalogApi.listCatalog(undefined, undefined);
-    let items = [];
-    let allCategories = [];
-    let categorized = {};
-    if (objects) {
-      items = objects.filter(obj => obj.type === "ITEM" && obj.itemData && obj.itemData.productType === "APPOINTMENTS_SERVICE" && !obj.is_deleted && !obj.isDeleted);
-      const categories = objects.filter(obj => obj.type === "CATEGORY" && obj.categoryData && !obj.is_deleted && !obj.isDeleted);
-      // Build a map of categoryId -> category { id, name, ordinal }
-      const categoryMap = {};
-      categories.forEach(cat => {
-        categoryMap[cat.id] = {
-          id: cat.id,
-          name: cat.categoryData.name,
-          ordinal: typeof cat.categoryData.ordinal === 'number' ? cat.categoryData.ordinal : (cat.categoryData.locationOverrides && cat.categoryData.locationOverrides[0] && typeof cat.categoryData.locationOverrides[0].ordinal === 'number' ? cat.categoryData.locationOverrides[0].ordinal : 0)
-        };
-      });
-      // Group items by category id for frontend convenience
-      categorized = {};
-      items.forEach(item => {
-        let catIds = [];
-        if (item.itemData.categories && Array.isArray(item.itemData.categories)) {
-          catIds = item.itemData.categories.map(catObj => catObj.id);
-        } else if (item.itemData.category && item.itemData.category.id) {
-          catIds = [item.itemData.category.id];
-        } else if (item.itemData.categoryId) {
-          catIds = [item.itemData.categoryId];
-        }
-        catIds.forEach(catId => {
-          if (!categorized[catId]) categorized[catId] = [];
-          categorized[catId].push(item);
+    
+    // Re-render the services page with error message
+    try {
+      // Fetch all catalog objects for re-rendering
+      const { result: { objects } } = await catalogApi.listCatalog(undefined, undefined);
+      let items = [];
+      let allCategories = [];
+      let categorized = {};
+      let imageMap = {};
+      let itemSecondaryImages = {};
+      
+      if (objects) {
+        items = objects.filter(obj => obj.type === "ITEM" && obj.itemData && obj.itemData.productType === "APPOINTMENTS_SERVICE" && !obj.is_deleted && !obj.isDeleted);
+        const categories = objects.filter(obj => obj.type === "CATEGORY" && obj.categoryData && !obj.is_deleted && !obj.isDeleted);
+        
+        // Build category map
+        const categoryMap = {};
+        categories.forEach(cat => {
+          categoryMap[cat.id] = {
+            id: cat.id,
+            name: cat.categoryData.name,
+            ordinal: typeof cat.categoryData.ordinal === 'number' ? cat.categoryData.ordinal : 0
+          };
         });
-      });
-      // Only include categories that have at least one service
-      allCategories = Object.values(categoryMap)
-        .filter(cat => categorized[cat.id] && categorized[cat.id].length > 0)
-        .sort((a, b) => {
-          if (a.ordinal !== b.ordinal) return a.ordinal - b.ordinal;
-          return a.name.localeCompare(b.name);
+        
+        // Group items by category
+        categorized = {};
+        items.forEach(item => {
+          let catIds = [];
+          if (item.itemData.categories && Array.isArray(item.itemData.categories)) {
+            catIds = item.itemData.categories.map(catObj => catObj.id);
+          } else if (item.itemData.category && item.itemData.category.id) {
+            catIds = [item.itemData.category.id];
+          } else if (item.itemData.categoryId) {
+            catIds = [item.itemData.categoryId];
+          }
+          catIds.forEach(catId => {
+            if (!categorized[catId]) categorized[catId] = [];
+            categorized[catId].push(item);
+          });
         });
+        
+        // Filter categories that have services
+        allCategories = Object.values(categoryMap)
+          .filter(cat => categorized[cat.id] && categorized[cat.id].length > 0)
+          .sort((a, b) => a.ordinal - b.ordinal || a.name.localeCompare(b.name));
+      }
+      
+      return res.render("pages/select-service", {
+        cancel: null,
+        items,
+        allCategories,
+        categorized,
+        location: req.app.locals.location,
+        imageMap,
+        itemSecondaryImages,
+        error: `The following services require an estimate: ${missingNames.join(", ")}. Please call us for a quote before booking.`
+      });
+    } catch (renderError) {
+      console.error('Error re-rendering services page:', renderError);
+      return res.redirect('/services?error=missing_price');
     }
-    return res.render("pages/select-service", {
-      cancel: null,
-      items,
-      allCategories,
-      categorized,
-      location: req.app.locals.location,
-      error: `The following services require an estimate: ${missingNames.join(", ")}. Please call us for a quote before booking.`
-    });
   }
 
+  // Store everything in session
   if (!req.session) req.session = {};
   req.session.selectedServices = expandedServiceIds;
   req.session.quantities = expandedQuantities;

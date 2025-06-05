@@ -4,202 +4,320 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    .card__wrapper {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      margin-bottom: 1.2em;
-      padding: 18px 18px 18px 12px;
-      display: flex;
-      align-items: center;
-      transition: box-shadow 0.2s, transform 0.2s;
-      border: 1px solid #f0f0f0;
-    }
-    .card__wrapper:hover {
-      box-shadow: 0 4px 16px rgba(0,112,243,0.13);
-      transform: translateY(-2px) scale(1.01);
-      border: 1px solid #0070f3;
-    }
-    .service-label {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      cursor: pointer;
-    }
-    .card__image img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 10px;
-      margin-right: 18px;
-      border: 2px solid #f0f0f0;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-      opacity: 0;
-      animation: fadeinimg 0.5s forwards;
-    }
-    @keyframes fadeinimg {
-      to { opacity: 1; }
-    }
-
-
-  </style>
+  <title>Select Services - <%= (typeof location !== 'undefined' && location && location.businessName) ? location.businessName : 'Booking System' %></title>
   <link rel="stylesheet" href="/stylesheets/style.css">
   <link rel="stylesheet" href="/stylesheets/sidebar.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <script src="/javascripts/appointment-summary.js" defer></script>
+  <style>
+    .hero-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 3rem 0 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .hero-subtitle {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      margin-bottom: 2rem;
+    }
+    .quick-actions {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      margin-top: -2rem;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .my-appointments-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+    }
+    .my-appointments-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+      color: white;
+    }
+    .book-new-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+    }
+    .book-new-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+      color: white;
+    }
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2rem;
+      }
+      .quick-actions {
+        margin: -1rem 1rem 2rem;
+        padding: 1rem;
+      }
+      .my-appointments-btn, .book-new-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="container">
+      <div class="hero-content">
+        <h1 class="hero-title">Book Your Appointment</h1>
+        <p class="hero-subtitle">Choose from our professional services and book instantly</p>
+      </div>
+    </div>
+  </div>
 
+  <!-- Quick Actions -->
+  <div class="container">
+    <div class="quick-actions">
+      <a href="/auth/login" class="my-appointments-btn">
+        <i class="fas fa-mobile-alt"></i>
+        My Appointments
+      </a>
+      <span class="book-new-btn">
+        <i class="fas fa-calendar-plus"></i>
+        Book New Appointment
+      </span>
+    </div>
+  </div>
 
-  <!-- Cancel Success Notice (fixed at bottom, outside content-left) -->
-  <% if (cancel === "success") { %>
-    <div id="cancel-success-notice" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);opacity:0.97;display:flex;align-items:center;gap:10px;cursor:pointer;">
-      <img src="/images/success.svg" style="height:24px;width:24px;vertical-align:middle;margin-right:8px;">Your booking was cancelled successfully!
+  <!-- Cancel Success Notice -->
+  <% if (typeof cancel !== 'undefined' && cancel === "success") { %>
+    <div id="cancel-success-notice" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#28a745;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(40,167,69,0.18);opacity:0.97;display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <i class="fas fa-check-circle" style="font-size:1.2em;"></i>
+      Your booking was cancelled successfully!
     </div>
   <% } %>
 
   <header>
     <%- include("../partials/header") %>
   </header>
+
   <div class="content" style="display: flex; flex-direction: row; gap: 2.5em;">
     <!-- Main service list -->
     <div class="content-main services" style="flex: 2 1 0;">
-      <!-- <div class="content-left business">
-        <div class="business__logo">
-          <%if (location.logoUrl) { %>
-            <img src="<%= location.logoUrl %>">
-          <% } else { %>
-            <img src="/images/blank-logo.svg">
-          <% } %>
+      
+      <!-- Error Message -->
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="error-message">
+          <i class="fas fa-exclamation-triangle"></i>
+          <%= error %>
         </div>
-        <h3>
-          <%= location.businessName || location.name %>
-        </h3>
-        <%if (location.description) { %>
-          <h5> <%= location.description %> </h5>
-        <% } %>
-        <div class="business__location">
-          <h4>Location</h4>
-          <div>
-            <%if (location.address) { %>
-              <%if (location.address.addressLine1) { %>
-                <span><%= location.address.addressLine1 %>, </span> <br>
-              <% } %>
-              <%if (location.address.addressLine2) { %>
-                <span><%= location.address.addressLine2 %>, </span>
-              <% } %>
-              <span>
-                <%= location.address.locality %>,
-                <%= location.address.administrativeDistrictLevel1 %>,
-                <%= location.address.postalCode %>
-              </span>
-            <% } else { %>
-              <span>No location information</span>
-            <% } %>
-          </div>
-        </div>
-        <div class="business__contact">
-        <h4>Contact</h4>
-        <%if (location.phoneNumber || location.businessEmail) { %>
-          <%if (location.businessEmail) { %>
-            Email: <span> <%= location.businessEmail %> </span>
-            <br>
-          <% } %>
-          <%if (location.phoneNumber) { %>
-            Phone:
-            <span> <%= location.phoneNumber %> </span>
-          <% } %>
-        <% } else { %>
-            <span>No contact information</span>
-        <% } %>
-        </div>
-        <%if (cancel === "success") { %>
-          <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;font-weight:600;color:#fff;background:#d00;border:none;padding:16px 38px;border-radius:10px;font-size:1.13em;box-shadow:0 4px 24px rgba(220,0,0,0.18);opacity:0.97;display:flex;align-items:center;gap:10px;">
-            <img src="/images/success.svg" style="height:24px;width:24px;vertical-align:middle;margin-right:8px;">Your booking was cancelled successfully!
-          </div>
-        <% } %>
-      </div> -->
-      <!-- <h4> Book an appointment </h4>
-      <h4 class="title">Services</h4>
-      <h4 class="underline"></h4> -->
-      <% /* Use categorized from backend, do not regroup here! */ %>
-      <div class="category-tabs" style="display: flex; gap: 1em; margin-bottom: 1.5em; border-bottom: 1px solid #eee;">
-        <% allCategories.forEach(function(cat, idx) { %>
-          <button type="button" class="category-tab" data-category="<%= cat.id %>" aria-selected="<%= idx === 0 ? 'true' : 'false' %>" style="background:#f8f8f8;border:2px solid #0070f3;border-bottom:3px solid <%= idx === 0 ? '#0070f3' : 'transparent' %>;padding:10px 18px;font-size:1em;cursor:pointer;font-weight:<%= idx === 0 ? 'bold' : 'normal' %>;color:<%= idx === 0 ? '#0070f3' : '#222' %>;border-radius:6px 6px 0 0;margin-bottom:-2px;min-width:100px;"> <%= cat.name %> </button>
-        <% }); %>
-      </div>
-      <form id="services-form" action="/services/select" method="POST">
-        <div class="cards two-col-cards">
+      <% } %>
+
+      <!-- Category Tabs -->
+      <% if (typeof allCategories !== 'undefined' && allCategories && allCategories.length > 1) { %>
+        <div class="category-tabs" style="display: flex; gap: 1em; margin-bottom: 1.5em; border-bottom: 1px solid #eee; flex-wrap: wrap;">
           <% allCategories.forEach(function(cat, idx) { %>
-            <div class="service-category" data-category-panel="<%= cat.id %>" style="display:<%= idx === 0 ? 'block' : 'none' %>;grid-column: 1 / -1;">
-              <div class="two-col-inner">
-                <% if (categorized[cat.id] && categorized[cat.id].length > 0) { %>
-                  <% categorized[cat.id].forEach(function(item, itemIdx) { %>
-                    <% item.itemData.variations.forEach(function(variation) { %>
-                      <% var hasPrice = variation.itemVariationData.priceMoney; %>
-                      <div class="card__wrapper<%= hasPrice ? '' : ' card__wrapper--disabled' %>">
-                        <!-- ...existing code for label, image, info, etc... -->
-                        <label class="service-label<%= hasPrice ? '' : ' service-label--disabled' %>" style="width:100%;align-items:flex-start;gap:18px;">
-                          <div class="card__image">
-                            <% let imgUrl = null;
-                               if (item.itemData.imageIds && item.itemData.imageIds.length > 0) {
-                                 imgUrl = imageMap[item.itemData.imageIds[0]];
-                               }
-                            %>
-                            <img src="<%= imgUrl ? imgUrl : '/images/blank-logo-sm.svg' %>" alt="<%= item.itemData.name %>" loading="lazy">
-                          </div>
-                          <div class="card__info" style="flex:1;display:flex;flex-direction:column;gap:6px;">
-                            <div style="display:flex;align-items:center;gap:10px;">
-                              <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin:0 8px 0 0;transform:scale(1.2);" <%= hasPrice ? '' : 'disabled' %>>
-                              <h4 style="margin:0;font-size:1.15em;font-weight:600;line-height:1.2;"><%= item.itemData.name %></h4>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
-                              <%if (variation.itemVariationData.pricingType === "FIXED_PRICING" && variation.itemVariationData.priceMoney) { %>
-                                <span style="font-weight:500;color:#0070f3;font-size:1.05em;"><%= formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) %></span>
-                                <span style="color:#888;font-size:0.98em;">• <%= formatTime(variation.itemVariationData.serviceDuration) %></span>
-                              <% } else { %>
-                                <span style="color:#d00;font-weight:bold;">Call/Text for Estimate</span>
-                              <% } %>
-                            </div>
-                            <div style="margin-top:2px;">
-                              <% 
-                                // Gather secondary image URLs for this item
-                                var secondaryImageUrls = [];
-                                if (itemSecondaryImages && itemSecondaryImages[item.id] && itemSecondaryImages[item.id].length > 0) {
-                                  itemSecondaryImages[item.id].forEach(function(imgId) {
-                                    if (imageMap[imgId]) secondaryImageUrls.push(imageMap[imgId]);
-                                  });
-                                }
-                              %>
-                              <a href="#" class="see-detail-link" data-service='<%- JSON.stringify({
-                                name: item.itemData.name,
-                                description: item.itemData.description || "No description available.",
-                                id: variation.id,
-                                price: variation.itemVariationData.priceMoney ? formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) : null,
-                                secondaryImages: secondaryImageUrls
-                              }) %>' style="font-size:0.98em; color:#0070f3; text-decoration:underline;">See detail</a>
-                            </div>
-                            <div class="quantity-control" style="margin-top:8px;" <%= hasPrice ? '' : 'style=\"pointer-events:none;opacity:0.5;\"' %>>
-                              <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', -1)" <%= hasPrice ? '' : 'disabled' %>>-</button>
-                              <span id="qty-display-<%= variation.id %>">1</span>
-                              <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', 1)" <%= hasPrice ? '' : 'disabled' %>>+</button>
-                              <input type="hidden" name="quantities[<%= variation.id %>]" value="1" id="quantity-<%= variation.id %>" autocomplete="off">
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                    <% }); %>
-                  <% }); %>
-                <% } else { %>
-                  <div class="card__wrapper disabled" style="justify-content:center;text-align:center;padding:2em 0;grid-column: 1 / -1;">No services in this category.</div>
-                <% } %>
-              </div>
-            </div>
+            <button type="button" class="category-tab" data-category="<%= cat.id %>" aria-selected="<%= idx === 0 ? 'true' : 'false' %>" style="background:#f8f8f8;border:2px solid #e9ecef;border-bottom:3px solid <%= idx === 0 ? '#0070f3' : 'transparent' %>;padding:10px 18px;font-size:1em;cursor:pointer;font-weight:<%= idx === 0 ? 'bold' : 'normal' %>;color:<%= idx === 0 ? '#0070f3' : '#222' %>;border-radius:6px 6px 0 0;margin-bottom:-2px;min-width:100px;transition:all 0.2s ease;"> 
+              <%= cat.name %> 
+            </button>
           <% }); %>
         </div>
-        
+      <% } %>
+
+      <form id="services-form" action="/services/select" method="POST">
+        <div class="cards two-col-cards">
+          <% if (typeof allCategories !== 'undefined' && allCategories && allCategories.length > 0) { %>
+            <% allCategories.forEach(function(cat, idx) { %>
+              <div class="service-category" data-category-panel="<%= cat.id %>" style="display:<%= idx === 0 ? 'block' : 'none' %>;grid-column: 1 / -1;">
+                <div class="two-col-inner">
+                  <% if (typeof categorized !== 'undefined' && categorized && categorized[cat.id] && categorized[cat.id].length > 0) { %>
+                    <% categorized[cat.id].forEach(function(item, itemIdx) { %>
+                      <% if (item && item.itemData && item.itemData.variations) { %>
+                        <% item.itemData.variations.forEach(function(variation) { %>
+                          <% var hasPrice = variation && variation.itemVariationData && variation.itemVariationData.priceMoney; %>
+                          <div class="card__wrapper<%= hasPrice ? '' : ' card__wrapper--disabled' %>">
+                            <label class="service-label<%= hasPrice ? '' : ' service-label--disabled' %>" style="width:100%;align-items:flex-start;gap:18px;">
+                              <div class="card__image">
+                                <% 
+                                  let imgUrl = null;
+                                  if (item.itemData.imageIds && item.itemData.imageIds.length > 0 && typeof imageMap !== 'undefined' && imageMap) {
+                                    imgUrl = imageMap[item.itemData.imageIds[0]];
+                                  }
+                                %>
+                                <img src="<%= imgUrl ? imgUrl : '/images/blank-logo-sm.svg' %>" alt="<%= item.itemData.name || 'Service' %>" loading="lazy">
+                              </div>
+                              <div class="card__info" style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                  <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin:0 8px 0 0;transform:scale(1.2);" <%= hasPrice ? '' : 'disabled' %>>
+                                  <h4 style="margin:0;font-size:1.15em;font-weight:600;line-height:1.2;"><%= item.itemData.name || 'Service' %></h4>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
+                                  <% if (variation.itemVariationData && variation.itemVariationData.pricingType === "FIXED_PRICING" && variation.itemVariationData.priceMoney) { %>
+                                    <span style="font-weight:500;color:#0070f3;font-size:1.05em;"><%= formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) %></span>
+                                    <span style="color:#888;font-size:0.98em;">• <%= formatTime(variation.itemVariationData.serviceDuration) %></span>
+                                  <% } else { %>
+                                    <span style="color:#d00;font-weight:bold;">Call/Text for Estimate</span>
+                                  <% } %>
+                                </div>
+                                <div style="margin-top:2px;">
+                                  <% 
+                                    // Gather secondary image URLs for this item - with safety checks
+                                    var secondaryImageUrls = [];
+                                    if (typeof itemSecondaryImages !== 'undefined' && itemSecondaryImages && itemSecondaryImages[item.id] && itemSecondaryImages[item.id].length > 0) {
+                                      itemSecondaryImages[item.id].forEach(function(imgId) {
+                                        if (typeof imageMap !== 'undefined' && imageMap && imageMap[imgId]) {
+                                          secondaryImageUrls.push(imageMap[imgId]);
+                                        }
+                                      });
+                                    }
+                                    
+                                    var serviceData = {
+                                      name: item.itemData.name || 'Service',
+                                      description: item.itemData.description || "No description available.",
+                                      id: variation.id,
+                                      price: (variation.itemVariationData && variation.itemVariationData.priceMoney) ? formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) : null,
+                                      secondaryImages: secondaryImageUrls
+                                    };
+                                  %>
+                                  <a href="#" class="see-detail-link" data-service='<%- JSON.stringify(serviceData) %>' style="font-size:0.98em; color:#0070f3; text-decoration:underline;">See detail</a>
+                                </div>
+                                <div class="quantity-control" style="margin-top:8px;" <%= hasPrice ? '' : 'style=\"pointer-events:none;opacity:0.5;\"' %>>
+                                  <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', -1)" <%= hasPrice ? '' : 'disabled' %>>-</button>
+                                  <span id="qty-display-<%= variation.id %>">1</span>
+                                  <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', 1)" <%= hasPrice ? '' : 'disabled' %>>+</button>
+                                  <input type="hidden" name="quantities[<%= variation.id %>]" value="1" id="quantity-<%= variation.id %>" autocomplete="off">
+                                </div>
+                              </div>
+                            </label>
+                          </div>
+                        <% }); %>
+                      <% } %>
+                    <% }); %>
+                  <% } else { %>
+                    <div class="card__wrapper disabled" style="justify-content:center;text-align:center;padding:2em 0;grid-column: 1 / -1;">
+                      <i class="fas fa-info-circle" style="font-size:2rem;color:#ccc;margin-bottom:1rem;"></i>
+                      <p>No services available in this category.</p>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <!-- Fallback if no categories or items -->
+            <div class="card__wrapper disabled" style="justify-content:center;text-align:center;padding:3em 0;grid-column: 1 / -1;">
+              <i class="fas fa-calendar-times" style="font-size:3rem;color:#ccc;margin-bottom:1rem;"></i>
+              <h3>No Services Available</h3>
+              <p>Please check back later or contact us directly.</p>
+              <% if (typeof items !== 'undefined' && items && items.length > 0) { %>
+                <!-- Fallback: show items without categories -->
+                <div style="margin-top: 2rem;">
+                  <% items.forEach(function(item) { %>
+                    <% if (item && item.itemData && item.itemData.variations) { %>
+                      <% item.itemData.variations.forEach(function(variation) { %>
+                        <% var hasPrice = variation && variation.itemVariationData && variation.itemVariationData.priceMoney; %>
+                        <div class="card__wrapper<%= hasPrice ? '' : ' card__wrapper--disabled' %>" style="margin-bottom: 1rem;">
+                          <label class="service-label<%= hasPrice ? '' : ' service-label--disabled' %>" style="width:100%;align-items:flex-start;gap:18px;">
+                            <div class="card__image">
+                              <img src="/images/blank-logo-sm.svg" alt="<%= item.itemData.name || 'Service' %>" loading="lazy">
+                            </div>
+                            <div class="card__info" style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                              <div style="display:flex;align-items:center;gap:10px;">
+                                <input type="checkbox" name="services[]" value="<%= variation.id %>" style="margin:0 8px 0 0;transform:scale(1.2);" <%= hasPrice ? '' : 'disabled' %>>
+                                <h4 style="margin:0;font-size:1.15em;font-weight:600;line-height:1.2;"><%= item.itemData.name || 'Service' %></h4>
+                              </div>
+                              <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
+                                <% if (variation.itemVariationData && variation.itemVariationData.pricingType === "FIXED_PRICING" && variation.itemVariationData.priceMoney) { %>
+                                  <span style="font-weight:500;color:#0070f3;font-size:1.05em;"><%= formatMoney(variation.itemVariationData.priceMoney.amount, variation.itemVariationData.priceMoney.currency) %></span>
+                                  <span style="color:#888;font-size:0.98em;">• <%= formatTime(variation.itemVariationData.serviceDuration) %></span>
+                                <% } else { %>
+                                  <span style="color:#d00;font-weight:bold;">Call/Text for Estimate</span>
+                                <% } %>
+                              </div>
+                              <div class="quantity-control" style="margin-top:8px;" <%= hasPrice ? '' : 'style=\"pointer-events:none;opacity:0.5;\"' %>>
+                                <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', -1)" <%= hasPrice ? '' : 'disabled' %>>-</button>
+                                <span id="qty-display-<%= variation.id %>">1</span>
+                                <button type="button" class="qty-btn" onclick="changeQty('<%= variation.id %>', 1)" <%= hasPrice ? '' : 'disabled' %>>+</button>
+                                <input type="hidden" name="quantities[<%= variation.id %>]" value="1" id="quantity-<%= variation.id %>" autocomplete="off">
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                      <% }); %>
+                    <% } %>
+                  <% }); %>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
       </form>
+
+      <!-- Service Limit Notice -->
+      <div id="service-limit-notice" style="display:none;color:#d00;font-weight:bold;text-align:center;margin:1em 0;padding:1rem;background:#fff5f5;border:1px solid #fed7d7;border-radius:8px;">
+        <i class="fas fa-exclamation-triangle"></i>
+        You can select up to 3 different services and a total of 3 items only.
+      </div>
+
+      <!-- Grid Styles -->
       <style>
         .two-col-cards {
           display: grid;
@@ -212,18 +330,16 @@
           gap: 1.2em;
         }
         @media (min-width: 700px) {
-          .two-col-cards {
-            grid-template-columns: 1fr;
-          }
           .two-col-inner {
             grid-template-columns: repeat(2, 1fr);
           }
         }
+        .category-tab:hover {
+          background: #f0f7ff !important;
+          border-color: #0070f3 !important;
+          color: #0070f3 !important;
+        }
       </style>
-      <!-- Add this notice somewhere visible, e.g. after the form buttons -->
-      <div id="service-limit-notice" style="display:none;color:#d00;font-weight:bold;text-align:center;margin:1em 0;">
-        You can select up to 3 different services and a total of 3 items only.
-      </div>
     </div>
     
     <!-- Include the appointment summary partial -->
@@ -244,9 +360,6 @@
       </div>
       
       <div style="display: flex; gap: 12px; margin-top: 24px;">
-        <!-- <button id="modal-add-service-btn" class="button btn-primary" style="flex: 1;">
-          Add to Selection
-        </button> -->
         <button onclick="closeServiceDetail()" class="button" style="background: #f5f5f5; color: #333; border: 1px solid #ddd;">
           Close
         </button>
@@ -254,631 +367,313 @@
     </div>
   </div>
 
+  <!-- Include all the existing JavaScript -->
   <script>
-  // Category tab switching logic
-  document.addEventListener('DOMContentLoaded', function() {
-    var tabs = document.querySelectorAll('.category-tab');
-    var panels = document.querySelectorAll('.service-category[data-category-panel]');
-    tabs.forEach(function(tab) {
-      tab.addEventListener('click', function() {
-        var selected = this.getAttribute('data-category');
-        // Switch tab styles
-        tabs.forEach(function(t, i) {
-          t.style.borderBottom = '3px solid transparent';
-          t.style.fontWeight = 'normal';
-          t.style.color = '#222';
-          t.setAttribute('aria-selected', 'false');
-          t.style.background = '#f8f8f8';
+    // Category tab switching logic
+    document.addEventListener('DOMContentLoaded', function() {
+      var tabs = document.querySelectorAll('.category-tab');
+      var panels = document.querySelectorAll('.service-category[data-category-panel]');
+      
+      if (tabs.length > 0 && panels.length > 0) {
+        tabs.forEach(function(tab) {
+          tab.addEventListener('click', function() {
+            var selected = this.getAttribute('data-category');
+            // Switch tab styles
+            tabs.forEach(function(t) {
+              t.style.borderBottom = '3px solid transparent';
+              t.style.fontWeight = 'normal';
+              t.style.color = '#222';
+              t.setAttribute('aria-selected', 'false');
+              t.style.background = '#f8f8f8';
+            });
+            this.style.borderBottom = '3px solid #0070f3';
+            this.style.fontWeight = 'bold';
+            this.style.color = '#0070f3';
+            this.setAttribute('aria-selected', 'true');
+            this.style.background = '#fff';
+            // Show/hide panels
+            panels.forEach(function(panel) {
+              if (panel.getAttribute('data-category-panel') === selected) {
+                panel.style.display = 'block';
+              } else {
+                panel.style.display = 'none';
+              }
+            });
+          });
         });
-        this.style.borderBottom = '3px solid #0070f3';
-        this.style.fontWeight = 'bold';
-        this.style.color = '#0070f3';
-        this.setAttribute('aria-selected', 'true');
-        this.style.background = '#fff';
-        // Show/hide panels
-        panels.forEach(function(panel) {
-          if (panel.getAttribute('data-category-panel') === selected) {
-            panel.style.display = 'block';
+      }
+    });
+
+    // Rest of your existing JavaScript with safety checks
+    function changeQty(id, delta) {
+      var input = document.getElementById('quantity-' + id);
+      var display = document.getElementById('qty-display-' + id);
+      var checkbox = document.querySelector('input[type="checkbox"][value="' + id + '"]');
+      
+      if (!input || !display) return;
+      
+      var val = parseInt(input.value, 10) || 1;
+      val += delta;
+      if (val < 1) val = 1;
+      if (val > 3) val = 3;
+      input.value = val;
+      display.textContent = val;
+      
+      // If user increases quantity, auto-check the box
+      if (checkbox && !checkbox.checked && !checkbox.disabled) {
+        checkbox.checked = true;
+        var event = new Event('change', { bubbles: true });
+        checkbox.dispatchEvent(event);
+      }
+      
+      // Always update limits and continue button
+      if (typeof enforceLimits === 'function') enforceLimits();
+      if (typeof updateAppointmentSummary === 'function') updateAppointmentSummary();
+    }
+
+    const MAX_DIFFERENT_SERVICES = 3;
+    const MAX_TOTAL_AMOUNT = 3;
+
+    function enforceLimits() {
+      const form = document.querySelector('form[action="/services/select"]');
+      if (!form) return;
+
+      const elements = {
+        checkboxes: form.querySelectorAll('input[type="checkbox"][name="services[]"]'),
+        continueBtn: document.getElementById('continue-btn'),
+        bottomBar: document.getElementById('summary-bottom-bar'),
+        callUsMsg: document.getElementById('call-us-message'),
+        notice: document.getElementById('service-limit-notice'),
+        summaryBarNext: document.getElementById('summary-bar-next'),
+        summarySheetNext: document.getElementById('summary-sheet-next')
+      };
+
+      let state = { checkedCount: 0, totalQty: 0 };
+
+      // Calculate totals and update quantities
+      elements.checkboxes.forEach(cb => {
+        const qtyInput = document.getElementById('quantity-' + cb.value);
+        const qtyDisplay = document.getElementById('qty-display-' + cb.value);
+        
+        if (cb.checked) {
+          state.checkedCount++;
+          if (qtyInput) {
+            qtyInput.disabled = false;
+            let val = Math.max(1, Math.min(MAX_TOTAL_AMOUNT, parseInt(qtyInput.value, 10) || 1));
+            qtyInput.value = val;
+            if (qtyDisplay) qtyDisplay.textContent = val;
+            state.totalQty += val;
+          }
+        } else {
+          if (qtyInput) {
+            qtyInput.disabled = true;
+            qtyInput.value = 1;
+            if (qtyDisplay) qtyDisplay.textContent = 1;
+          }
+        }
+      });
+
+      // Determine states
+      const hasSelections = state.checkedCount > 0;
+      const overLimits = state.checkedCount > MAX_DIFFERENT_SERVICES || state.totalQty > MAX_TOTAL_AMOUNT;
+
+      // Update checkboxes state
+      elements.checkboxes.forEach(cb => {
+        if (!cb.checked) {
+          cb.disabled = state.checkedCount >= MAX_DIFFERENT_SERVICES;
+        }
+      });
+
+      // Update UI visibility
+      if (elements.notice) {
+        elements.notice.style.display = overLimits ? 'block' : 'none';
+      }
+
+      // Update continue button and mobile bar button states
+      [elements.continueBtn, elements.summaryBarNext, elements.summarySheetNext].forEach(btn => {
+        if (btn) {
+          if (hasSelections) {
+            btn.style.display = '';
+            btn.disabled = overLimits;
+            if (btn === elements.continueBtn) {
+              btn.classList.toggle('continue-fixed-btn-active', !overLimits);
+            }
           } else {
-            panel.style.display = 'none';
+            btn.style.display = 'none';
+          }
+        }
+      });
+
+      // Update call us message
+      if (elements.callUsMsg) {
+        elements.callUsMsg.style.display = overLimits ? 'block' : 'none';
+      }
+
+      // Update mobile bottom bar visibility
+      if (elements.bottomBar && hasSelections) {
+        elements.bottomBar.classList.add('show');
+      } else if (elements.bottomBar) {
+        elements.bottomBar.classList.remove('show');
+      }
+    }
+
+    function closeServiceDetail() {
+      var modal = document.getElementById('service-detail-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Initialize everything on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.querySelector('form[action="/services/select"]');
+      if (!form) return;
+      
+      const checkboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
+      
+      // Add event listeners
+      checkboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+          enforceLimits();
+          if (typeof updateAppointmentSummary === 'function') {
+            updateAppointmentSummary();
+          }
+          if (typeof updateBarAndSheet === 'function') {
+            updateBarAndSheet();
           }
         });
-      });
-    });
-  });
-
-function changeQty(id, delta) {
-  var input = document.getElementById('quantity-' + id);
-  var display = document.getElementById('qty-display-' + id);
-  var checkbox = document.querySelector('input[type="checkbox"][value="' + id + '"]');
-  var val = parseInt(input.value, 4) || 1;
-  val += delta;
-  if (val < 1) val = 1;
-  if (val > 3) val = 3;
-  input.value = val;
-  display.textContent = val;
-  // If user increases quantity, auto-check the box
-  if (checkbox && !checkbox.checked && !checkbox.disabled) {
-    checkbox.checked = true;
-    var event = new Event('change', { bubbles: true });
-    checkbox.dispatchEvent(event);
-  }
-  // Always update limits and continue button
-  enforceLimits();
-  if (typeof updateContinueBtnState === 'function') updateContinueBtnState();
-
-  // Update appointment summary if function exists
-  if (typeof window.updateAppointmentSummary === 'function') {
-    window.updateAppointmentSummary();
-  }
-}
-
-
- const MAX_DIFFERENT_SERVICES = 3;
- const MAX_TOTAL_AMOUNT = 3;
-
-function enforceLimits() {
-  const form = document.querySelector('form[action="/services/select"]');
-  if (!form) return;
-
-  const elements = {
-    checkboxes: form.querySelectorAll('input[type="checkbox"][name="services[]"]'),
-    continueBtn: document.getElementById('continue-btn'),
-    bottomBar: document.getElementById('summary-bottom-bar'),
-    callUsMsg: document.getElementById('call-us-message'),
-    notice: document.getElementById('service-limit-notice'),
-    summaryBarNext: document.getElementById('summary-bar-next'),
-    summarySheetNext: document.getElementById('summary-sheet-next')
-  };
-
-  let state = {
-    checkedCount: 0,
-    totalQty: 0
-  };
-
-  // Calculate totals and update quantities
-  elements.checkboxes.forEach(cb => {
-    const qtyInput = document.getElementById('quantity-' + cb.value);
-    const qtyDisplay = document.getElementById('qty-display-' + cb.value);
-    
-    if (cb.checked) {
-      state.checkedCount++;
-      if (qtyInput) {
-        qtyInput.disabled = false;
-        let val = Math.max(1, Math.min(MAX_TOTAL_AMOUNT, parseInt(qtyInput.value, 10) || 1));
-        qtyInput.value = val;
-        if (qtyDisplay) qtyDisplay.textContent = val;
-        state.totalQty += val;
-      }
-    } else {
-      if (qtyInput) {
-        qtyInput.disabled = true;
-        qtyInput.value = 1;
-        if (qtyDisplay) qtyDisplay.textContent = 1;
-      }
-    }
-  });
-
-  // Determine states
-  const hasSelections = state.checkedCount > 0;
-  const overLimits = state.checkedCount > MAX_DIFFERENT_SERVICES || state.totalQty > MAX_TOTAL_AMOUNT;
-
-  // Update checkboxes state
-  elements.checkboxes.forEach(cb => {
-    if (!cb.checked) {
-      cb.disabled = state.checkedCount >= MAX_DIFFERENT_SERVICES;
-    }
-  });
-
-  // Update UI visibility
-  if (elements.notice) {
-    elements.notice.style.display = overLimits ? 'block' : 'none';
-  }
-
-  // Update continue button and mobile bar button states
-  [elements.continueBtn, elements.summaryBarNext, elements.summarySheetNext].forEach(btn => {
-    if (btn) {
-      if (hasSelections) {
-        // Show buttons when services are selected
-        btn.style.display = '';
-        btn.disabled = overLimits; // Disable if over limits
-        if (btn === elements.continueBtn) {
-          btn.classList.toggle('continue-fixed-btn-active', !overLimits);
-        }
-      } else {
-        // Hide buttons when no services selected
-        btn.style.display = 'none';
-      }
-    }
-  });
-
-  // Update call us message
-  if (elements.callUsMsg) {
-    elements.callUsMsg.style.display = overLimits ? 'block' : 'none';
-  }
-
-  // Update mobile bottom bar visibility
-  if (elements.bottomBar && hasSelections) {
-    elements.bottomBar.classList.add('show');
-  } else if (elements.bottomBar) {
-    elements.bottomBar.classList.remove('show');
-  }
-}
-
-// Checkbox and quantity event listeners
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.querySelector('form[action="/services/select"]');
-  if (!form) return;
-  
-  const checkboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
-  checkboxes.forEach(cb => {
-    cb.addEventListener('change', function() {
-      enforceLimits();
-      if (typeof updateAppointmentSummary === 'function') {
-        updateAppointmentSummary();
-      }
-      if (typeof updateBarAndSheet === 'function') {
-        updateBarAndSheet();
-      }
-    });
-    
-    const qtyInput = document.getElementById('quantity-' + cb.value);
-    if (qtyInput) {
-      qtyInput.addEventListener('input', function() {
-        enforceLimits();
-        if (typeof updateAppointmentSummary === 'function') {
-          updateAppointmentSummary();
-        }
-        if (typeof updateBarAndSheet === 'function') {
-          updateBarAndSheet();
-        }
-      });
-    }
-  });
-  
-  enforceLimits();
-
-  // Prevent submit if limits violated
-  form.addEventListener('submit', function(e) {
-    let checkedCount = 0;
-    let totalQty = 0;
-    checkboxes.forEach(cb => {
-      if (!cb.checked) return;
-      checkedCount++;
-      const qtyInput = document.getElementById('quantity-' + cb.value);
-      let qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 0 : 0;
-      totalQty += qty;
-    });
-    if (checkedCount > MAX_DIFFERENT_SERVICES || totalQty > MAX_TOTAL_AMOUNT || checkedCount === 0 || totalQty === 0) {
-      e.preventDefault();
-      enforceLimits();
-    }
-  });
-});
-
-
-
-  function closeServiceDetail() {
-    document.getElementById('service-detail-modal').style.display = 'none';
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.see-detail-link').forEach(function(link) {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        var data = JSON.parse(this.getAttribute('data-service'));
-        document.getElementById('modal-service-name').textContent = data.name;
-        document.getElementById('modal-service-description').textContent = data.description;
-        document.getElementById('modal-service-price').textContent = data.price ? 'Price: ' + data.price : '';
-        // Render secondary images
-        var secImgDiv = document.getElementById('modal-service-secondary-images');
-        secImgDiv.innerHTML = '';
-        if (data.secondaryImages && data.secondaryImages.length > 0) {
-          data.secondaryImages.forEach(function(url) {
-            var img = document.createElement('img');
-            img.src = url;
-            img.alt = data.name + ' photo';
-            img.style.width = '70px';
-            img.style.height = '70px';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '8px';
-            img.style.border = '1.5px solid #eee';
-            img.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)';
-            img.style.cursor = 'pointer';
-            img.addEventListener('click', function(e) {
-              e.stopPropagation();
-              showBigImage(url, data.name);
-            });
-            secImgDiv.appendChild(img);
+        
+        const qtyInput = document.getElementById('quantity-' + cb.value);
+        if (qtyInput) {
+          qtyInput.addEventListener('input', function() {
+            enforceLimits();
+            if (typeof updateAppointmentSummary === 'function') {
+              updateAppointmentSummary();
+            }
+            if (typeof updateBarAndSheet === 'function') {
+              updateBarAndSheet();
+            }
           });
         }
-        secImgDiv.style.display = (data.secondaryImages && data.secondaryImages.length > 0) ? 'flex' : 'none';
-
-        // Helper to show a big image overlay
-        window.showBigImage = function(url, name) {
-          var overlay = document.createElement('div');
-          overlay.style.position = 'fixed';
-          overlay.style.top = '0';
-          overlay.style.left = '0';
-          overlay.style.width = '100vw';
-          overlay.style.height = '100vh';
-          overlay.style.background = 'rgba(0,0,0,0.7)';
-          overlay.style.display = 'flex';
-          overlay.style.alignItems = 'center';
-          overlay.style.justifyContent = 'center';
-          overlay.style.zIndex = '9999';
-          overlay.addEventListener('click', function() { document.body.removeChild(overlay); });
-          var img = document.createElement('img');
-          img.src = url;
-          img.alt = name + ' large photo';
-          img.style.maxWidth = '90vw';
-          img.style.maxHeight = '90vh';
-          img.style.borderRadius = '12px';
-          img.style.boxShadow = '0 4px 32px rgba(0,0,0,0.25)';
-          img.style.background = '#fff';
-          img.style.display = 'block';
-          overlay.appendChild(img);
-          document.body.appendChild(overlay);
-        };
-        document.getElementById('service-detail-modal').style.display = 'flex';
-        
       });
-    });
-
-    // Prevent submit if no service is selected and update button style
-    var form = document.querySelector('form[action="/services/select"]');
-    var continueBtn = document.getElementById('continue-btn');
-    var errorMsg = document.getElementById('service-error');
-    var checkboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
-    function updateContinueBtnState() {
-      // This function is now handled by enforceLimits()
+      
       enforceLimits();
-    }
-    checkboxes.forEach(function(cb) {
-      cb.addEventListener('change', updateContinueBtnState);
-    });
-    updateContinueBtnState();
-    if (form && continueBtn) {
-      form.addEventListener('submit', function(e) {
-        var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
-        var allCheckboxes = form.querySelectorAll('input[type="checkbox"][name="services[]"]');
-        // Enable quantity input for checked, disable for unchecked
-        allCheckboxes.forEach(function(cb) {
-          var qtyInput = document.getElementById('quantity-' + cb.value);
-          if (qtyInput) {
-            if (cb.checked) {
-              qtyInput.disabled = false;
-            } else {
-              qtyInput.disabled = true;
+
+      // Service detail modal handling
+      document.querySelectorAll('.see-detail-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          try {
+            var data = JSON.parse(this.getAttribute('data-service'));
+            var modal = document.getElementById('service-detail-modal');
+            var nameEl = document.getElementById('modal-service-name');
+            var descEl = document.getElementById('modal-service-description');
+            var priceEl = document.getElementById('modal-service-price');
+            
+            if (nameEl) nameEl.textContent = data.name || '';
+            if (descEl) descEl.textContent = data.description || '';
+            if (priceEl) priceEl.textContent = data.price ? 'Price: ' + data.price : '';
+            
+            // Render secondary images
+            var secImgDiv = document.getElementById('modal-service-secondary-images');
+            if (secImgDiv) {
+              secImgDiv.innerHTML = '';
+              if (data.secondaryImages && data.secondaryImages.length > 0) {
+                data.secondaryImages.forEach(function(url) {
+                  var img = document.createElement('img');
+                  img.src = url;
+                  img.alt = data.name + ' photo';
+                  img.style.width = '70px';
+                  img.style.height = '70px';
+                  img.style.objectFit = 'cover';
+                  img.style.borderRadius = '8px';
+                  img.style.border = '1.5px solid #eee';
+                  img.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)';
+                  img.style.cursor = 'pointer';
+                  img.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (typeof showBigImage === 'function') {
+                      showBigImage(url, data.name);
+                    }
+                  });
+                  secImgDiv.appendChild(img);
+                });
+              }
+              secImgDiv.style.display = (data.secondaryImages && data.secondaryImages.length > 0) ? 'flex' : 'none';
             }
+
+            if (modal) modal.style.display = 'flex';
+          } catch (error) {
+            console.error('Error parsing service data:', error);
           }
         });
-        if (!checked.length) {
+      });
+
+      // Hide cancel success notice
+      var cancelNotice = document.getElementById('cancel-success-notice');
+      if (cancelNotice) {
+        function hideNotice() {
+          cancelNotice.style.display = 'none';
+          document.removeEventListener('click', hideNotice, true);
+          document.removeEventListener('touchstart', hideNotice, true);
+        }
+        cancelNotice.addEventListener('click', hideNotice);
+        setTimeout(function() {
+          document.addEventListener('click', hideNotice, true);
+          document.addEventListener('touchstart', hideNotice, true);
+        }, 100);
+      }
+
+      // Prevent submit if limits violated
+      form.addEventListener('submit', function(e) {
+        let checkedCount = 0;
+        let totalQty = 0;
+        checkboxes.forEach(cb => {
+          if (!cb.checked) return;
+          checkedCount++;
+          const qtyInput = document.getElementById('quantity-' + cb.value);
+          let qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 0 : 0;
+          totalQty += qty;
+        });
+        if (checkedCount > MAX_DIFFERENT_SERVICES || totalQty > MAX_TOTAL_AMOUNT || checkedCount === 0 || totalQty === 0) {
           e.preventDefault();
-          errorMsg.style.display = 'block';
-          setTimeout(function() { errorMsg.style.display = 'none'; }, 2500);
-          // Optionally scroll to error
-          errorMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
+          enforceLimits();
         }
       });
-    }
-  });
-  // Sidebar functionality is now handled by global-sidebar.js
-  // Hide cancel success notice on any click/tap
-  document.addEventListener('DOMContentLoaded', function() {
-    var cancelNotice = document.getElementById('cancel-success-notice');
-    if (cancelNotice) {
-      function hideNotice() {
-        cancelNotice.style.display = 'none';
-        document.removeEventListener('click', hideNotice, true);
-        document.removeEventListener('touchstart', hideNotice, true);
-      }
-      cancelNotice.addEventListener('click', hideNotice);
-      setTimeout(function() {
-        document.addEventListener('click', hideNotice, true);
-        document.addEventListener('touchstart', hideNotice, true);
-      }, 100); // Prevent immediate hide on page load
-    }
-  });
-  // Appointment summary logic
-  document.addEventListener('DOMContentLoaded', function() {
-    var summaryList = document.getElementById('summary-list');
-    var summaryItems = document.getElementById('summary-items');
-    var summaryEmpty = document.getElementById('summary-empty');
-    // var nextBtn = document.getElementById('summary-next-btn');
-    var form = document.querySelector('form[action="/services/select"]');
-    if (!form || !summaryList || !summaryItems || !summaryEmpty) return;
-
-    function updateSummary() {
-      var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
-      var continueBtn = document.getElementById('continue-btn');
-      var summaryBarNext = document.getElementById('summary-bar-next');
-      var summarySheetNext = document.getElementById('summary-sheet-next');
-      
-      summaryItems.innerHTML = '';
-      let hasItems = false;
-      
-      checked.forEach(function(cb) {
-        var label = cb.closest('.service-label');
-        var name = label ? label.querySelector('h4')?.textContent?.trim() : '';
-        var qtyInput = document.getElementById('quantity-' + cb.value);
-        var qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 1 : 1;
-        var priceSpan = label ? label.querySelector('span[style*="color:#0070f3"]') : null;
-        var price = priceSpan ? priceSpan.textContent.trim() : '';
-        var durationSpan = label ? label.querySelector('span[style*="color:#888"]') : null;
-        var duration = durationSpan ? durationSpan.textContent.trim().replace(/^•\s*/, '') : '';
-        var li = document.createElement('li');
-        li.style.display = 'flex';
-        li.style.alignItems = 'center';
-        li.style.justifyContent = 'space-between';
-        li.style.padding = '8px 0';
-        li.innerHTML =
-          '<div>' +
-            '<div style="font-weight:600;">' + name + (qty > 1 ? ' <span style="color:#0070f3;font-weight:500;">x' + qty + '</span>' : '') + '</div>' +
-            '<div style="font-size:0.97em;color:#666;">' +
-              (price ? '<span>' + price + '</span>' : '') +
-              (duration ? '<span style="margin-left:8px;">' + duration + '</span>' : '') +
-            '</div>' +
-          '</div>' +
-          '<button type="button" class="remove-summary-item" data-id="' + cb.value + '" style="background:none;border:none;color:#d00;font-size:1.2em;cursor:pointer;padding:0 8px;">&times;</button>';
-        summaryItems.appendChild(li);
-        hasItems = true;
-      });
-      
-      // Update summary visibility
-      summaryItems.style.display = hasItems ? 'block' : 'none';
-      summaryEmpty.style.display = hasItems ? 'none' : 'block';
-      
-      // Update all next buttons
-      const nextButtons = [continueBtn, summaryBarNext, summarySheetNext];
-      nextButtons.forEach(btn => {
-        if (btn) {
-          if (hasItems) {
-            btn.style.display = btn === continueBtn ? 'block' : '';
-            btn.disabled = false;
-          } else {
-            btn.style.display = 'none'; // Hide the button completely when no items
-          }
-        }
-      });
-      
-      // Update mobile bar
-      if (window.updateBarAndSheet) {
-        window.updateBarAndSheet();
-      }
-    }
-
-    // Expose updateSummary globally for changeQty
-    window.updateAppointmentSummary = updateSummary;
-
-    // Remove item from summary and uncheck
-    summaryItems.addEventListener('click', function(e) {
-      if (e.target.classList.contains('remove-summary-item')) {
-        var id = e.target.getAttribute('data-id');
-        var cb = form.querySelector('input[type="checkbox"][name="services[]"][value="' + id + '"]');
-        if (cb) {
-          cb.checked = false;
-          cb.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      }
     });
 
-    // Update summary on checkbox/qty change
-    form.addEventListener('change', updateSummary);
-    form.addEventListener('input', updateSummary);
-    updateSummary();
+    // Helper to show large image overlay
+    window.showBigImage = function(url, name) {
+      var overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100vw';
+      overlay.style.height = '100vh';
+      overlay.style.background = 'rgba(0,0,0,0.7)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = '9999';
+      overlay.addEventListener('click', function() { document.body.removeChild(overlay); });
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = name + ' large photo';
+      img.style.maxWidth = '90vw';
+      img.style.maxHeight = '90vh';
+      img.style.borderRadius = '12px';
+      img.style.boxShadow = '0 4px 32px rgba(0,0,0,0.25)';
+      img.style.background = '#fff';
+      img.style.display = 'block';
+      overlay.appendChild(img);
+      document.body.appendChild(overlay);
+    };
 
-    // // Next button submits the form
-    // nextBtn.addEventListener('click', function() {
-    //   if (!nextBtn.disabled) form.submit();
-    // });
-  });
-  // Mobile appointment summary toggle logic
-  document.addEventListener('DOMContentLoaded', function() {
-    var summary = document.getElementById('appointment-summary');
-    var toggleBtn = document.getElementById('summary-toggle-btn');
-    var overlay = document.getElementById('summary-mobile-overlay');
-    var closeBtn = document.getElementById('summary-close-btn');
-    function openSummary() {
-      summary.classList.add('mobile-open');
-      overlay.style.display = 'block';
-      closeBtn.style.display = 'block';
-      document.body.style.overflow = 'hidden';
+    // Initialize appointment summary functions if they exist
+    if (typeof updateAppointmentSummary === 'function') {
+      window.updateAppointmentSummary = updateAppointmentSummary;
     }
-    function closeSummary() {
-      summary.classList.remove('mobile-open');
-      overlay.style.display = 'none';
-      closeBtn.style.display = 'none';
-      document.body.style.overflow = '';
+    if (typeof updateBarAndSheet === 'function') {
+      window.updateBarAndSheet = updateBarAndSheet;
     }
-    if (toggleBtn && summary && overlay && closeBtn) {
-      toggleBtn.addEventListener('click', openSummary);
-      closeBtn.addEventListener('click', closeSummary);
-      overlay.addEventListener('click', closeSummary);
-    }
-    // Hide summary on desktop
-    function handleResize() {
-      if (window.innerWidth <= 900) {
-        toggleBtn.style.display = 'flex';
-        summary.classList.remove('mobile-open');
-        overlay.style.display = 'none';
-        closeBtn.style.display = 'none';
-      } else {
-        toggleBtn.style.display = 'none';
-        summary.classList.remove('mobile-open');
-        overlay.style.display = 'none';
-        closeBtn.style.display = 'none';
-        document.body.style.overflow = '';
-      }
-    }
-    window.addEventListener('resize', handleResize);
-    handleResize();
-  });
-  // Mobile summary bar and sheet logic
-  document.addEventListener('DOMContentLoaded', function() {
-    var form = document.querySelector('form[action="/services/select"]');
-    var bar = document.getElementById('summary-bottom-bar');
-    var barCount = document.getElementById('summary-bar-count');
-    var barTotal = document.getElementById('summary-bar-total');
-    var barDuration = document.getElementById('summary-bar-duration');
-    var barExpand = document.getElementById('summary-bar-expand');
-    var barNext = document.getElementById('summary-bar-next');
-    var sheet = document.getElementById('summary-bottom-sheet');
-    var sheetClose = document.getElementById('summary-sheet-close');
-    var overlay = document.getElementById('summary-sheet-overlay');
-    var sheetItems = document.getElementById('summary-sheet-items');
-    var sheetEmpty = document.getElementById('summary-sheet-empty');
-
-    // Bottom sheet toggle functions
-    function openBottomSheet() {
-      sheet.style.display = 'block';
-      overlay.classList.add('open');
-      barExpand.classList.add('sheet-open');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeBottomSheet() {
-      sheet.style.display = 'none';
-      overlay.classList.remove('open');
-      barExpand.classList.remove('sheet-open');
-      document.body.style.overflow = '';
-    }
-
-    // Event listeners for bottom sheet
-    if (barExpand) barExpand.addEventListener('click', openBottomSheet);
-    if (sheetClose) sheetClose.addEventListener('click', closeBottomSheet);
-    if (overlay) overlay.addEventListener('click', closeBottomSheet);
-
-    function updateMobileBar() {
-      if (!form) return;
-      var checked = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked');
-      var totalItems = 0;
-      var serviceCount = 0;
-      var totalDuration = 0;
-      var totalPrice = 0;
-
-      // Clear sheet items
-      if (sheetItems) sheetItems.innerHTML = '';
-
-      checked.forEach(function(cb) {
-        var label = cb.closest('.service-label');
-        if (!label) return;
-
-        var qtyInput = document.getElementById('quantity-' + cb.value);
-        var qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 1 : 1;
-        totalItems += qty;
-        serviceCount++;
-
-        // Get name, price and duration
-        var name = label.querySelector('h4')?.textContent?.trim() || '';
-        var priceSpan = label.querySelector('span[style*="color:#0070f3"]');
-        var durationSpan = label.querySelector('span[style*="color:#888"]');
-        
-        // Calculate duration
-        if (durationSpan) {
-          var durationText = durationSpan.textContent.trim().replace(/^•\s*/, '');
-          var minutes = 0;
-          if (durationText.includes('hr')) {
-            var parts = durationText.split('hr');
-            minutes = parseInt(parts[0].trim()) * 60;
-            if (parts[1] && parts[1].includes('min')) {
-              minutes += parseInt(parts[1].replace(/[^0-9]/g, ''));
-            }
-          } else if (durationText.includes('min')) {
-            minutes = parseInt(durationText);
-          }
-          totalDuration += minutes * qty;
-        }
-
-        // Calculate price
-        if (priceSpan) {
-          var price = parseFloat(priceSpan.textContent.replace(/[^0-9.]/g, ''));
-          if (!isNaN(price)) {
-            totalPrice += price * qty;
-          }
-        }
-
-        // Add to sheet items
-        if (sheetItems) {
-          var li = document.createElement('li');
-          li.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;';
-          li.innerHTML = `
-            <div>
-              <div style="font-weight:600;">${name}${qty > 1 ? ` <span style="color:#0070f3;font-weight:500;">x${qty}</span>` : ''}</div>
-              <div style="font-size:0.92em;color:#666;margin-top:4px;">
-                ${durationSpan ? `<span>${durationText}</span>` : ''}
-                ${priceSpan ? `<span style="margin-left:8px;color:#0070f3;">${priceSpan.textContent.trim()}</span>` : ''}
-              </div>
-            </div>
-            <button type="button" data-id="${cb.value}" 
-              style="background:none;border:none;color:#d00;font-size:1.2em;cursor:pointer;padding:0 8px;">&times;</button>
-          `;
-          sheetItems.appendChild(li);
-        }
-      });
-
-      // Update bottom sheet visibility
-      if (sheetItems && sheetEmpty) {
-        sheetItems.style.display = totalItems > 0 ? 'block' : 'none';
-        sheetEmpty.style.display = totalItems > 0 ? 'none' : 'block';
-      }
-
-      // Update bar display
-      if (totalItems > 0) {
-        var description = totalItems === 1 ? '1 service selected' : totalItems + ' services selected';
-        barCount.textContent = description;
-        barTotal.textContent = totalPrice > 0 ? '$' + totalPrice.toFixed(2) : '';
-        
-        // Format duration
-        var hours = Math.floor(totalDuration / 60);
-        var mins = totalDuration % 60;
-        var durationText = '';
-        if (hours > 0) {
-          durationText += hours + (hours === 1 ? ' hr ' : ' hrs ');
-        }
-        if (mins > 0 || hours === 0) {
-          durationText += mins + ' min';
-        }
-        barDuration.textContent = durationText;
-        
-        bar.classList.add('show');
-        if (barNext) barNext.disabled = false;
-      } else {
-        bar.classList.remove('show');
-        if (barNext) barNext.disabled = true;
-      }
-    }
-
-    // Update when checkbox/quantity changes
-    form.addEventListener('change', updateMobileBar);
-    form.addEventListener('input', function(e) {
-      if (e.target.type === 'number' || e.target.classList.contains('qty-btn')) {
-        updateMobileBar();
-      }
-    });
-
-    // Remove items from sheet
-    if (sheetItems) {
-      sheetItems.addEventListener('click', function(e) {
-        var removeBtn = e.target.closest('button');
-        if (removeBtn) {
-          var id = removeBtn.getAttribute('data-id');
-          var checkbox = form.querySelector(`input[type="checkbox"][value="${id}"]`);
-          if (checkbox) {
-            checkbox.checked = false;
-            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-            updateMobileBar();
-          }
-        }
-      });
-    }
-
-    // Initialize
-    updateMobileBar();
-
-    // Expose for use by quantity changes
-    window.updateBarAndSheet = updateMobileBar;
-  });
   </script>
 </body>
 </html>
