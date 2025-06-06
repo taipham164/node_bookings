@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initAppointmentSummary();
   initMobileBottomBar();
   initBottomSheet();
+  initFloatingButton();
 
   // Initial state update
   if (typeof enforceLimits === 'function') {
@@ -63,17 +64,24 @@ function updateAppointmentSummary() {
   
   // Update summary visibility
   summaryItems.style.display = hasItems ? 'block' : 'none';
-  summaryEmpty.style.display = hasItems ? 'none' : 'block';
-  
-  // Update all next buttons
+  summaryEmpty.style.display = hasItems ? 'none' : 'block';  // Update all next buttons with enhanced styling for inline button
   const nextButtons = [continueBtn, summaryBarNext, summarySheetNext];
   nextButtons.forEach(btn => {
     if (btn) {
       if (hasItems) {
         btn.style.display = btn === continueBtn ? 'block' : '';
         btn.disabled = false;
+        // Enhanced styling for inline continue button
+        if (btn === continueBtn) {
+          btn.style.opacity = '1';
+          btn.style.cursor = 'pointer';
+        }
       } else {
         btn.style.display = 'none'; // Hide the button completely when no items
+        if (btn === continueBtn) {
+          btn.style.opacity = '0.5';
+          btn.style.cursor = 'not-allowed';
+        }
       }
     }
   });
@@ -350,3 +358,25 @@ window.addEventListener('resize', function() {
     }
   }
 });
+
+// Initialize floating button functionality
+function initFloatingButton() {
+  var continueBtn = document.getElementById('continue-btn');
+  var form = document.querySelector('form[id="services-form"]');
+  
+  if (!continueBtn || !form) return;
+
+  // Handle form submission
+  form.addEventListener('submit', function(e) {
+    var hasItems = form.querySelectorAll('input[type="checkbox"][name="services[]"]:checked').length > 0;
+    if (!hasItems) {
+      e.preventDefault();
+      return;
+    }
+
+    // Show loading state
+    continueBtn.disabled = true;
+    continueBtn.style.opacity = '0.7';
+    continueBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+  });
+}

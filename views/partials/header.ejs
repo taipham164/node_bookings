@@ -2,7 +2,61 @@
 <% /* Global Styles and Scripts */ %>
 <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
 <link href="/stylesheets/sidebar.css" rel="stylesheet" type="text/css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <script src="/js/global-sidebar.js"></script>
+
+<style>
+  .header-actions {
+    position: absolute;
+    right: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .phone-login-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+  }
+  .phone-login-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    color: white;
+  }
+  @media (max-width: 768px) {
+    .header-actions {
+      position: static;
+      transform: none;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+    .phone-login-btn {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.8rem;
+    }
+  }
+  @media (max-width: 600px) {
+    .header-actions {
+      right: 60px;
+      gap: 0.5rem;
+    }
+    .phone-login-btn span {
+      display: none;
+    }
+  }
+</style>
 
 <div class="top-nav">
     <div class="top-nav__logo">
@@ -19,6 +73,15 @@
         <%= location.businessName || location.name %>
       </a>
     </div>
+    
+    <!-- Phone Login Button -->
+    <div class="header-actions">
+      <a href="/auth/login" class="phone-login-btn" title="View My Appointments">
+        <i class="fas fa-mobile-alt"></i>
+        <span>My Appointments</span>
+      </a>
+    </div>
+    
     <button id="sidebar-toggle-btn" class="header-menu-btn" aria-label="Menu">
       <svg width="24" height="24" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="4" y1="7" x2="20" y2="7"/>
@@ -51,9 +114,22 @@
     <% } %>
   </div>
   <div class="sidebar-content">
+    <!-- Quick Actions Section -->
+    <div class="sidebar-section">
+      <strong><i class="fas fa-bolt me-2"></i>Quick Actions</strong><br>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <a href="/auth/login" class="sidebar-link" style="background: #f0f7ff; padding: 8px 12px; border-radius: 6px; border: 1px solid #0070f3;">
+          <i class="fas fa-mobile-alt me-2"></i>View My Appointments
+        </a>
+        <a href="/services" class="sidebar-link" style="background: #f8f9fa; padding: 8px 12px; border-radius: 6px; border: 1px solid #e9ecef;">
+          <i class="fas fa-calendar-plus me-2"></i>Book New Appointment
+        </a>
+      </div>
+    </div>
+
     <!-- Address Section -->
     <div class="sidebar-section">
-      <strong>Address</strong><br>
+      <strong><i class="fas fa-map-marker-alt me-2"></i>Address</strong><br>
       <% if (location.address) { %>
         <div class="address-container">
           <span>
@@ -83,12 +159,16 @@
 
     <!-- Contact Section -->
     <div class="sidebar-section">
-      <strong>Contact</strong><br>
+      <strong><i class="fas fa-phone me-2"></i>Contact</strong><br>
       <% if (location.phoneNumber) { %>
-        <a href="tel:<%= location.phoneNumber %>" class="sidebar-link"><%= location.phoneNumber %></a><br>
+        <a href="tel:<%= location.phoneNumber %>" class="sidebar-link">
+          <i class="fas fa-phone me-2"></i><%= location.phoneNumber %>
+        </a><br>
       <% } %>
       <% if (location.businessEmail) { %>
-        <a href="mailto:<%= location.businessEmail %>" class="sidebar-link"><%= location.businessEmail %></a>
+        <a href="mailto:<%= location.businessEmail %>" class="sidebar-link">
+          <i class="fas fa-envelope me-2"></i><%= location.businessEmail %>
+        </a>
       <% } %>
       <% if (!location.phoneNumber && !location.businessEmail) { %>
         <span>No contact information</span>
@@ -97,7 +177,7 @@
 
     <!-- Business Hours Section -->
     <div class="sidebar-section">
-      <strong>Business Hours</strong><br>
+      <strong><i class="fas fa-clock me-2"></i>Business Hours</strong><br>
       <% 
         const businessHours = location.businessHours;
         if (businessHours?.periods) { 
@@ -177,7 +257,7 @@
 
     <!-- Social Links Section -->
     <div class="sidebar-section social-section">
-      <strong>Follow Us</strong>
+      <strong><i class="fas fa-share-alt me-2"></i>Follow Us</strong>
       <div class="social-links">
         <% if (location.websiteUrl) { %>
           <a href="<%= location.websiteUrl %>" target="_blank" class="social-link" aria-label="Visit our website">

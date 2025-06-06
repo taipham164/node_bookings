@@ -78,33 +78,72 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
   const serviceId = req.params.serviceId;
   const serviceVersion = req.query.version;
   const staffId = req.params.staffId;
+  
+  // Validate required parameters
+  if (!serviceId || !staffId) {
+    console.warn('Missing required route parameters:', { serviceId: !!serviceId, staffId: !!staffId });
+    return res.redirect('/services?error=invalid_params');
+  }
+  
   const startAt = dateHelpers.getStartAtDate();
+  
+  // Ensure session exists
+  if (!req.session) {
+    req.session = {};
+  }
+  
   // Retrieve multi-service selection from session if available
-  const selectedServices = req.session && req.session.selectedServices ? req.session.selectedServices : [serviceId];
-  const quantities = req.session && req.session.quantities ? req.session.quantities : {};
+  const selectedServices = req.session.selectedServices || [serviceId];
+  const quantities = req.session.quantities || {};
 
   // Build serviceDetails and segmentFilters for all selected services and their quantities
   const serviceDetails = [];
   const segmentFilters = [];
+  
   for (const sid of selectedServices) {
-    const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
-    const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
-    const duration = variation.itemVariationData.serviceDuration;
-    // Get quantity for this service (default 1)
-    const quantity = quantities && quantities[sid] ? parseInt(quantities[sid], 10) : 1;
-    serviceDetails.push({
-      id: sid,
-      name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
-      duration,
-      quantity
-    });
-    // For each quantity, push a segment
-    for (let i = 0; i < quantity; i++) {
-      segmentFilters.push({
-        serviceVariationId: sid,
-        durationMinutes: Math.round(Number(duration) / 1000 / 60)
+    try {
+      const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
+      const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+      
+      if (!item) {
+        console.warn(`No item found for service variation ${sid}`);
+        continue;
+      }
+      
+      const duration = variation.itemVariationData.serviceDuration;
+      // Get quantity for this service (default 1)
+      const quantity = quantities && quantities[sid] ? parseInt(quantities[sid], 10) : 1;
+      
+      serviceDetails.push({
+        id: sid,
+        name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
+        duration,
+        quantity
+      });
+      
+      // For each quantity, push a segment
+      for (let i = 0; i < quantity; i++) {
+        segmentFilters.push({
+          serviceVariationId: sid,
+          durationMinutes: Math.round(Number(duration) / 1000 / 60)
+        });
+      }
+    } catch (serviceError) {
+      console.error(`Error fetching service details for ${sid}:`, serviceError);
+      // Continue with other services, but log the error
+      serviceDetails.push({
+        id: sid,
+        name: '[Service unavailable]',
+        duration: 0,
+        quantity: 1
       });
     }
+  }
+
+  // If no valid services found, redirect back
+  if (segmentFilters.length === 0) {
+    console.error('No valid services found for availability search');
+    return res.redirect('/services?error=no_valid_services');
   }
 
   const searchRequest = {
@@ -121,12 +160,14 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       limit: 100 // Ensure all possible slots are returned
     }
   };
+  
   try {
     // get service item - needed to display service details in left pane
     const retrieveServicePromise = catalogApi.retrieveCatalogObject(serviceId, true);
     let availabilities;
     // additional data to send to template
     let additionalInfo;
+    
     // search availability for the specific staff member if staff id is passed as a param
     if (staffId === ANY_STAFF_PARAMS) {
       // For "any staff", get all team members who can perform the first service (for left pane info)
@@ -151,18 +192,50 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       const availabilityPromise = bookingsApi.searchAvailability(searchRequest);
       // get team member booking profile - needed to display team member details in left pane
       const bookingProfilePromise = bookingsApi.retrieveTeamMemberBookingProfile(staffId);
-      const [ { result }, { result: services }, { result: { teamMemberBookingProfile } } ] = await Promise.all([ availabilityPromise, retrieveServicePromise, bookingProfilePromise ]);
+      
+      const [ { result }, { result: services }, { result: { teamMemberBookingProfile } } ] = 
+        await Promise.all([ availabilityPromise, retrieveServicePromise, bookingProfilePromise ]);
+      
       availabilities = result.availabilities;
       additionalInfo = {
         bookingProfile: teamMemberBookingProfile,
         serviceItem: services.relatedObjects.filter(relatedObject => relatedObject.type === "ITEM")[0],
         serviceVariation: services.object
       };
+      
+      // Store booking profile in session for later use
+      req.session.teamMemberBookingProfile = teamMemberBookingProfile;
     }
+    
+    // Validate that we have the required service item
+    if (!additionalInfo.serviceItem) {
+      console.error('No service item found in availability search');
+      return res.redirect('/services?error=service_not_found');
+    }
+    
     // send the serviceId & serviceVersion since it's needed to book an appointment in the next step
-    res.render("pages/availability", { availabilities, serviceId, serviceVersion, ...additionalInfo, selectedServices, quantities, serviceDetails });
+    res.render("pages/availability", { 
+      availabilities, 
+      serviceId, 
+      serviceVersion, 
+      ...additionalInfo, 
+      selectedServices, 
+      quantities, 
+      serviceDetails 
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Error in availability search:', error);
+    
+    // Handle specific API errors gracefully
+    if (error.errors) {
+      const apiError = error.errors[0];
+      if (apiError.code === 'NOT_FOUND') {
+        return res.redirect('/services?error=service_not_found');
+      } else if (apiError.code === 'INVALID_REQUEST_BODY') {
+        return res.redirect('/services?error=invalid_booking_params');
+      }
+    }
+    
     next(error);
   }
 });

@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Login - <%= location?.businessName || 'Booking System' %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
+    <!-- reCAPTCHA v3 (if using App Check) -->
+    <% if (recaptchaSiteKey) { %>
+    <script src="https://www.google.com/recaptcha/api.js?render=<%= recaptchaSiteKey %>"></script>
+    <% } %>
+    
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .login-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 400px;
+            width: 100%;
+        }
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .login-body {
+            padding: 2rem;
+        }
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            font-size: 16px;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            width: 100%;
+        }
+        .btn-outline-secondary {
+            border-radius: 10px;
+            padding: 8px 20px;
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        .verification-code-input {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 5px;
+        }
+        .phone-display {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        .step.active {
+            background: #667eea;
+            color: white;
+        }
+        .step.completed {
+            background: #28a745;
+            color: white;
+        }
+        .loading {
+            display: none;
+        }
+        .loading.show {
+            display: inline-block;
+        }
+        #recaptcha-container {
+            margin: 20px 0;
+        }
+        .customer-info {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="login-card">
+                        <div class="login-header">
+                            <h2><i class="fas fa-mobile-alt me-2"></i>Phone Login</h2>
+                            <p class="mb-0">Access your appointments with your phone number</p>
+                        </div>
+                        
+                        <div class="login-body">
+                            <!-- Step Indicator -->
+                            <div class="step-indicator">
+                                <div class="step active" id="step1">1</div>
+                                <div class="step" id="step2">2</div>
+                            </div>
+
+                            <!-- Error Message -->
+                            <% if (error) { %>
+                                <div class="alert alert-danger" role="alert" id="error-alert">
+                                    <i class="fas fa-exclamation-triangle me-2"></i><%= error %>
+                                </div>
+                            <% } %>
+
+                            <!-- Success Message -->
+                            <div class="alert alert-success" role="alert" id="success-alert" style="display: none;">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span id="success-message"></span>
+                            </div>
+
+                            <!-- Loading Indicator -->
+                            <div class="text-center loading" id="loading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div class="mt-2">
+                                    <small id="loading-message">Processing...</small>
+                                </div>
+                            </div>
+
+                            <!-- Step 1: Phone Number Input -->
+                            <div id="phone-step">
+                                <div class="mb-4">
+                                    <label for="phoneNumber" class="form-label">
+                                        <i class="fas fa-phone me-2"></i>Phone Number
+                                    </label>
+                                    <input 
+                                        type="tel" 
+                                        class="form-control" 
+                                        id="phoneNumber" 
+                                        placeholder="(555) 123-4567"
+                                        autocomplete="tel"
+                                    >
+                                    <div class="form-text">
+                                        Enter the phone number associated with your appointments
+                                    </div>
+                                </div>
+                                
+                                <!-- Customer Info Display (hidden initially) -->
+                                <div class="customer-info" id="customer-info" style="display: none;">
+                                    <h6 class="mb-1">Account Found!</h6>
+                                    <div id="customer-name"></div>
+                                </div>                                <!-- reCAPTCHA Container -->
+                                <div id="recaptcha-container"></div>
+                                
+                                <button type="button" class="btn btn-primary" id="send-code-btn">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    <span class="btn-text">Send Verification Code</span>
+                                    <span class="spinner-border spinner-border-sm ms-2 loading" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </span>
+                                </button>
+                            </div>
+
+                            <!-- Step 2: Verification Code Input (hidden initially) -->
+                            <div id="verification-step" style="display: none;">
+                                <div class="phone-display">
+                                    <h6 class="mb-1">Verification code sent to:</h6>
+                                    <strong id="display-phone"></strong>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="verificationCode" class="form-label">
+                                        <i class="fas fa-key me-2"></i>Enter 6-Digit Code
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control verification-code-input" 
+                                        id="verificationCode" 
+                                        placeholder="000000"
+                                        maxlength="6"
+                                        pattern="\d{6}"
+                                        autocomplete="one-time-code"
+                                    >
+                                    <div class="form-text">
+                                        Check your messages for the 6-digit verification code
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-primary mb-3" id="verify-code-btn">
+                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                    <span class="btn-text">Verify & Login</span>
+                                    <span class="spinner-border spinner-border-sm ms-2 loading" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </span>
+                                </button>
+
+                                <!-- Resend Code Option -->
+                                <div class="text-center">
+                                    <p class="mb-2">Didn't receive the code?</p>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="resend-code-btn">
+                                        <i class="fas fa-redo me-2"></i>Resend Code
+                                    </button>
+                                </div>
+
+                                <!-- Change Phone Number -->
+                                <div class="text-center mt-3">
+                                    <button type="button" class="btn btn-link text-muted" id="change-phone-btn">
+                                        <i class="fas fa-arrow-left me-2"></i>Use Different Phone Number
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Back to Booking -->
+                            <div class="text-center mt-4 pt-3 border-top">
+                                <a href="/services" class="text-muted">
+                                    <i class="fas fa-calendar-plus me-2"></i>Make New Appointment
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>    <script>
+        // Firebase configuration
+        const firebaseConfig = <%- firebaseConfig %>;
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        
+        let recaptchaVerifier;
+        let confirmationResult;
+        let currentPhoneNumber;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setupPhoneInput();
+            setupRecaptcha();
+            setupEventListeners();
+        });
+
+        function setupPhoneInput() {
+            const phoneInput = document.getElementById('phoneNumber');
+            phoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 6) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+                } else if (value.length >= 3) {
+                    value = value.replace(/(\d{3})(\d{0,3})/, '($1) $2');
+                }
+                e.target.value = value;
+                
+                // Check customer when phone number is complete
+                if (value.replace(/\D/g, '').length === 10) {
+                    checkCustomerExists(value);
+                } else {
+                    hideCustomerInfo();
+                }
+            });
+        }        function setupRecaptcha() {
+            try {
+                recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                    'size': 'normal',
+                    'callback': function(response) {
+                        console.log('reCAPTCHA solved');
+                        document.getElementById('send-code-btn').disabled = false;
+                    },
+                    'expired-callback': function() {
+                        console.log('reCAPTCHA expired');
+                        document.getElementById('send-code-btn').disabled = true;
+                    }
+                });
+                
+                recaptchaVerifier.render().then(function(widgetId) {
+                    console.log('reCAPTCHA rendered successfully');
+                }).catch(function(error) {
+                    console.error('reCAPTCHA render failed:', error);
+                    showError('reCAPTCHA failed to load. Please refresh the page and try again.');
+                });
+            } catch (error) {
+                console.error('reCAPTCHA setup failed:', error);
+                showError('reCAPTCHA setup failed. Please refresh the page and try again.');
+            }
+        }        function setupEventListeners() {
+            document.getElementById('send-code-btn').addEventListener('click', sendVerificationCode);
+            document.getElementById('verify-code-btn').addEventListener('click', verifyCode);
+            document.getElementById('resend-code-btn').addEventListener('click', resendCode);
+            document.getElementById('change-phone-btn').addEventListener('click', changePhoneNumber);
+            
+            // Auto-submit verification code when 6 digits entered
+            document.getElementById('verificationCode').addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/\D/g, '');
+                if (e.target.value.length === 6) {
+                    setTimeout(verifyCode, 500);
+                }
+            });
+        }
+
+        async function checkCustomerExists(phoneNumber) {
+            try {
+                const normalizedPhone = normalizePhoneNumber(phoneNumber);
+                const response = await fetch(`/auth/check-customer/${encodeURIComponent(normalizedPhone)}`);
+                const data = await response.json();
+                
+                if (data.exists) {
+                    showCustomerInfo(data.customer);
+                } else {
+                    hideCustomerInfo();
+                    showError('No account found with this phone number. Please check your number or create a new booking.');
+                }
+            } catch (error) {
+                console.error('Error checking customer:', error);
+                hideCustomerInfo();
+            }
+        }
+
+        function showCustomerInfo(customer) {
+            const customerInfo = document.getElementById('customer-info');
+            const customerName = document.getElementById('customer-name');
+            customerName.textContent = `${customer.givenName} ${customer.familyName}`;
+            customerInfo.style.display = 'block';
+            hideError();
+        }
+
+        function hideCustomerInfo() {
+            document.getElementById('customer-info').style.display = 'none';
+        }
+
+        function normalizePhoneNumber(phone) {
+            const digits = phone.replace(/\D/g, '');
+            if (digits.length === 10) {
+                return `+1${digits}`;
+            } else if (digits.length === 11 && digits.startsWith('1')) {
+                return `+${digits}`;
+            }
+            return `+${digits}`;
+        }        async function sendVerificationCode() {
+            const phoneInput = document.getElementById('phoneNumber');
+            const phoneNumber = normalizePhoneNumber(phoneInput.value);
+            
+            if (!phoneNumber || phoneNumber.replace(/\D/g, '').length < 10) {
+                showError('Please enter a valid phone number');
+                return;
+            }
+
+            if (!recaptchaVerifier) {
+                showError('reCAPTCHA verification is required. Please refresh the page and try again.');
+                return;
+            }
+
+            setLoading(true, 'Sending verification code...');
+            currentPhoneNumber = phoneNumber;
+
+            try {
+                confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
+                console.log('SMS sent successfully');
+                showVerificationStep(phoneNumber);
+                showSuccess('Verification code sent to your phone!');
+            } catch (error) {
+                console.error('SMS sending failed:', error);
+                handleAuthError(error);
+            } finally {
+                setLoading(false);
+            }
+        }        async function verifyCode() {
+            const code = document.getElementById('verificationCode').value;
+            
+            if (!code || code.length !== 6) {
+                showError('Please enter the 6-digit verification code');
+                return;
+            }
+
+            if (!confirmationResult) {
+                showError('Please request a verification code first');
+                return;
+            }
+
+            setLoading(true, 'Verifying code...');
+
+            try {
+                const result = await confirmationResult.confirm(code);
+                console.log('Phone verification successful:', result.user);
+                
+                // Send to backend for Square customer verification
+                await verifyWithBackend(currentPhoneNumber);
+            } catch (error) {
+                console.error('Code verification failed:', error);
+                handleAuthError(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function verifyWithBackend(phoneNumber) {
+            try {
+                const response = await fetch('/auth/verify-firebase-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phoneNumber: phoneNumber })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Login successful! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = data.redirectUrl || '/auth/appointments';
+                    }, 1500);
+                } else {
+                    throw new Error(data.error || 'Backend verification failed');
+                }
+            } catch (error) {
+                console.error('Backend verification error:', error);
+                showError('Verification failed. Please try again.');
+            }
+        }        async function resendCode() {
+            if (!currentPhoneNumber) {
+                showError('Please enter your phone number first');
+                return;
+            }
+            
+            if (!recaptchaVerifier) {
+                showError('reCAPTCHA verification is required. Please refresh the page and try again.');
+                return;
+            }
+            
+            setLoading(true, 'Resending code...');
+            
+            try {
+                confirmationResult = await auth.signInWithPhoneNumber(currentPhoneNumber, recaptchaVerifier);
+                showSuccess('Verification code resent to your phone!');
+            } catch (error) {
+                console.error('Resend failed:', error);
+                handleAuthError(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function changePhoneNumber() {
+            document.getElementById('phone-step').style.display = 'block';
+            document.getElementById('verification-step').style.display = 'none';
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('step1').classList.remove('completed');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('phoneNumber').value = '';
+            hideCustomerInfo();
+            hideError();
+            currentPhoneNumber = null;
+            confirmationResult = null;
+        }
+
+        function showVerificationStep(phoneNumber) {
+            document.getElementById('phone-step').style.display = 'none';
+            document.getElementById('verification-step').style.display = 'block';
+            document.getElementById('display-phone').textContent = formatPhoneForDisplay(phoneNumber);
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+            document.getElementById('verificationCode').focus();
+        }
+
+        function formatPhoneForDisplay(phoneNumber) {
+            const digits = phoneNumber.replace(/\D/g, '');
+            if (digits.length === 11 && digits.startsWith('1')) {
+                const number = digits.slice(1);
+                return `(${number.slice(0,3)}) ${number.slice(3,6)}-${number.slice(6)}`;
+            }
+            return phoneNumber;
+        }        function setLoading(isLoading, message = '') {
+            const loadingElements = document.querySelectorAll('.loading');
+            const buttons = document.querySelectorAll('button');
+            
+            if (isLoading) {
+                loadingElements.forEach(el => el.classList.add('show'));
+                buttons.forEach(btn => btn.disabled = true);
+                if (message) {
+                    showInfo(message);
+                }
+            } else {
+                loadingElements.forEach(el => el.classList.remove('show'));
+                buttons.forEach(btn => btn.disabled = false);
+                // Re-disable send button if reCAPTCHA not solved
+                try {
+                    if (recaptchaVerifier && typeof recaptchaVerifier.getResponse === 'function' && !recaptchaVerifier.getResponse()) {
+                        document.getElementById('send-code-btn').disabled = true;
+                    }
+                } catch (e) {
+                    // Ignore reCAPTCHA check errors
+                    console.log('reCAPTCHA check skipped');
+                }
+                hideInfo();
+            }
+        }
+
+        function showError(message) {
+            hideSuccess();
+            hideInfo();
+            const errorAlert = document.getElementById('error-alert');
+            if (errorAlert) {
+                errorAlert.textContent = message;
+                errorAlert.style.display = 'block';
+            } else {
+                // Create error alert if it doesn't exist
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger';
+                alert.id = 'error-alert';
+                alert.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
+                document.querySelector('.login-body').insertBefore(alert, document.querySelector('.step-indicator').nextSibling);
+            }
+        }
+
+        function hideError() {
+            const errorAlert = document.getElementById('error-alert');
+            if (errorAlert) {
+                errorAlert.style.display = 'none';
+            }
+        }
+
+        function showSuccess(message) {
+            hideError();
+            hideInfo();
+            const successAlert = document.getElementById('success-alert');
+            if (successAlert) {
+                document.getElementById('success-message').textContent = message;
+                successAlert.style.display = 'block';
+            }
+        }
+
+        function hideSuccess() {
+            const successAlert = document.getElementById('success-alert');
+            if (successAlert) {
+                successAlert.style.display = 'none';
+            }
+        }
+
+        function showInfo(message) {
+            const loadingDiv = document.getElementById('loading');
+            if (loadingDiv) {
+                loadingDiv.innerHTML = `
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 mb-0">${message}</p>
+                `;
+                loadingDiv.style.display = 'block';
+            }
+        }
+
+        function hideInfo() {
+            const loadingDiv = document.getElementById('loading');
+            if (loadingDiv) {
+                loadingDiv.style.display = 'none';
+            }
+        }        function handleAuthError(error) {
+            console.error('Auth error:', error);
+            
+            switch (error.code) {
+                case 'auth/invalid-phone-number':
+                    showError('Invalid phone number. Please check your number and try again.');
+                    break;
+                case 'auth/too-many-requests':
+                    showError('Too many requests. Please try again later.');
+                    break;
+                case 'auth/captcha-check-failed':
+                    showError('reCAPTCHA verification failed. Please refresh the page and try again.');
+                    break;
+                case 'auth/invalid-verification-code':
+                    showError('Invalid verification code. Please check and try again.');
+                    break;
+                case 'auth/code-expired':
+                    showError('Verification code expired. Please request a new code.');
+                    break;
+                case 'auth/billing-not-enabled':
+                    showError('Phone authentication requires Firebase billing to be enabled. Please contact the administrator.');
+                    break;
+                case 'auth/quota-exceeded':
+                    showError('SMS quota exceeded. Please try again later or contact the administrator.');
+                    break;
+                case 'auth/invalid-api-key':
+                    showError('Firebase configuration error. Please contact the administrator.');
+                    break;
+                default:
+                    const message = error.message || 'Please try again.';
+                    showError(`An error occurred: ${message}`);
+            }
+        }
+    </script>
+</body>
+</html>

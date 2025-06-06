@@ -36,14 +36,21 @@ const {
  */
 router.get("/:serviceId", async (req, res, next) => {
   // Always use all selected services from session
-  const selectedServices = req.session && req.session.selectedServices ? req.session.selectedServices : [req.params.serviceId];
-  const quantities = req.session && req.session.quantities ? req.session.quantities : {};
+  const selectedServices = req.session?.selectedServices || [req.params.serviceId];
+  const quantities = req.session?.quantities || {};
   const serviceVersion = req.query.version;
   
+  // Handle error messages from redirects
+  const errorMessage = req.query.error;
+  let error = null;
+  if (errorMessage === 'no_staff_selected') {
+    error = 'Please select a staff member to continue.';
+  }
+  
   // Get total price and duration from the session
-  const totalPrice = req.session && req.session.totalPrice ? req.session.totalPrice : 0;
-  const totalDuration = req.session && req.session.totalDuration ? req.session.totalDuration : 0;
-  const serviceSessionDetails = req.session && req.session.serviceDetails ? req.session.serviceDetails : {};
+  const totalPrice = req.session?.totalPrice || 0;
+  const totalDuration = req.session?.totalDuration || 0;
+  const serviceSessionDetails = req.session?.serviceDetails || {};
   
   try {
     // Fetch all selected service variations for display
@@ -57,8 +64,13 @@ router.get("/:serviceId", async (req, res, next) => {
       if (serviceSessionDetails[sid] && serviceSessionDetails[sid].price) {
         price = serviceSessionDetails[sid].price;
       } else if (variation.itemVariationData.priceMoney) {
+        // Safe BigInt conversion
+        const amount = typeof variation.itemVariationData.priceMoney.amount === 'bigint' 
+          ? Number(variation.itemVariationData.priceMoney.amount)
+          : variation.itemVariationData.priceMoney.amount;
+        
         price = {
-          amount: variation.itemVariationData.priceMoney.amount,
+          amount: amount,
           currency: variation.itemVariationData.priceMoney.currency
         };
       }
@@ -112,7 +124,8 @@ router.get("/:serviceId", async (req, res, next) => {
       quantities, 
       serviceDetails, 
       totalPrice,
-      totalDuration
+      totalDuration,
+      error // Pass any error messages to the template
     });
   } catch (error) {
     console.error(error);
@@ -133,17 +146,26 @@ router.post("/select", async (req, res, next) => {
     
     // Validate that a staff member was selected
     if (!selectedStaffId) {
-      return res.status(400).send("Please select a staff member to continue.");
+      const selectedServices = req.session?.selectedServices || [];
+      const firstServiceId = selectedServices[0] || req.body.serviceId;
+      const serviceVersion = req.body.serviceVersion || req.query.version || '';
+      
+      return res.redirect(`/staff/${firstServiceId}?version=${serviceVersion}&error=no_staff_selected`);
+    }
+    
+    // Ensure session exists
+    if (!req.session) {
+      req.session = {};
     }
     
     // Store the selected staff in the session
-    if (!req.session) req.session = {};
     req.session.selectedStaffId = selectedStaffId;
     
     // Get staff profile details to store in session
     const { result: { teamMemberBookingProfile } } = await bookingsApi.retrieveTeamMemberBookingProfile(selectedStaffId);
     
     // Store the staff profile info in the session
+    req.session.teamMemberBookingProfile = teamMemberBookingProfile;
     req.session.staffProfile = {
       id: teamMemberBookingProfile.teamMemberId,
       displayName: teamMemberBookingProfile.displayName,
@@ -158,9 +180,15 @@ router.post("/select", async (req, res, next) => {
     // Get services from session to pass to availability page
     const selectedServices = req.session.selectedServices || [];
     const firstServiceId = selectedServices[0] || null;
+    const serviceVersion = req.body.serviceVersion || req.query.version || '';
     
-    // Redirect to the availability (date/time selection) page
-    res.redirect(`/availability/${firstServiceId}?staff=${selectedStaffId}`);
+    if (!firstServiceId) {
+      return res.redirect('/services?error=no_service_selected');
+    }
+    
+    // CRITICAL FIX: Correct the redirect format to match availability route pattern
+    // Route pattern is /:staffId/:serviceId, so staff ID comes first
+    res.redirect(`/availability/${selectedStaffId}/${firstServiceId}?version=${serviceVersion}`);
   } catch (error) {
     console.error("Error in staff selection:", error);
     next(error);
