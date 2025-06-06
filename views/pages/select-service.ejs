@@ -7,9 +7,52 @@
   <title>Select Services - <%= (typeof location !== 'undefined' && location && location.businessName) ? location.businessName : 'Booking System' %></title>
   <link rel="stylesheet" href="/stylesheets/style.css">
   <link rel="stylesheet" href="/stylesheets/sidebar.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <script src="/javascripts/appointment-summary.js" defer></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">  <script src="/javascripts/appointment-summary.js" defer></script>
   <style>
+    /* Enhanced Next Button Styling for Appointment Summary */
+    .enhanced-next-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      border: none !important;
+      padding: 1rem 1.5rem !important;
+      border-radius: 8px !important;
+      font-size: 1rem !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.3s ease !important;
+      width: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    
+    .enhanced-next-btn:disabled {
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    
+    .enhanced-next-btn:not(:disabled):hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
+      background: rgba(102, 126, 234, 0.8) !important;
+    }
+    
+    .enhanced-next-btn:not(:disabled):active {
+      transform: translateY(0px) !important;
+      box-shadow: 0 2px 10px rgba(102, 126, 234, 0.2) !important;
+    }
+    
+    /* Override any external CSS that might conflict */
+    #appointment-summary .button-container .enhanced-next-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    #appointment-summary .button-container .enhanced-next-btn:not(:disabled):hover {
+      background: rgba(102, 126, 234, 0.8) !important;
+    }
+    
     .hero-section {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;

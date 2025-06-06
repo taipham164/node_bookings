@@ -7,11 +7,11 @@
   <title>Select Staff - <%= location?.businessName || 'Booking System' %></title>
   <link rel="stylesheet" href="/stylesheets/style.css" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <style>
-    .staff-container {
+  <style>    .staff-container {
       max-width: 800px;
       margin: 0 auto;
       padding: 2rem;
+      padding-bottom: 120px; /* Add space for floating button */
     }
     .staff-grid {
       display: grid;
@@ -174,12 +174,11 @@
       .staff-avatar {
         margin-bottom: 1rem;
       }
-    }
-
-    /* Enhanced mobile responsive styles for staff page */
+    }    /* Enhanced mobile responsive styles for staff page */
     @media (max-width: 768px) {
       .staff-container {
         padding: 1rem !important;
+        padding-bottom: 120px !important; /* Maintain space for floating button */
         max-width: 100% !important;
       }
       
@@ -227,11 +226,10 @@
         right: 1rem !important;
         font-size: 1.2rem !important;
       }
-    }
-
-    @media (max-width: 480px) {
+    }    @media (max-width: 480px) {
       .staff-container {
         padding: 0.75rem !important;
+        padding-bottom: 120px !important; /* Maintain space for floating button */
       }
       
       .staff-card {
@@ -278,11 +276,10 @@
         right: 0.75rem !important;
         font-size: 1rem !important;
       }
-    }
-
-    @media (max-width: 360px) {
+    }    @media (max-width: 360px) {
       .staff-container {
         padding: 0.5rem !important;
+        padding-bottom: 120px !important; /* Maintain space for floating button */
       }
       
       .staff-card {
@@ -475,12 +472,11 @@
                 </div>
                 <i class="fas fa-chevron-right select-arrow"></i>
               </label>
-            <% }); %>
-          </div>
+            <% }); %>          </div>
 
-          <!-- Submit Button -->
-          <div style="margin-top: 2rem; text-align: center;">
-            <button type="submit" class="btn btn-primary" id="continue-btn" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1rem 2rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; opacity: 0.5;">
+          <!-- Submit Button - Fixed at bottom -->
+          <div class="continue-fixed-btn" style="position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 2100; min-width: 220px; max-width: 90vw;">
+            <button type="submit" class="btn btn-primary" id="continue-btn" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1rem 2rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; opacity: 0.5; width: 100%;">
               <i class="fas fa-arrow-right me-2"></i>
               Continue to Date & Time
             </button>
@@ -518,9 +514,7 @@
       const form = document.getElementById('staff-form');
       const continueBtn = document.getElementById('continue-btn');
       const staffCards = document.querySelectorAll('.staff-card');
-      const radioButtons = document.querySelectorAll('input[name="staffId"]');
-
-      // Enable continue button when staff is selected
+      const radioButtons = document.querySelectorAll('input[name="staffId"]');      // Enable continue button when staff is selected
       function updateContinueButton() {
         const selectedStaff = document.querySelector('input[name="staffId"]:checked');
         if (selectedStaff) {
@@ -579,18 +573,44 @@
           background: #f0f7ff !important;
           transform: translateY(-2px);
           box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2) !important;
-        }
-        .staff-card.any-staff.selected {
+        }        .staff-card.any-staff.selected {
           border-color: #28a745 !important;
           background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%) !important;
           box-shadow: 0 8px 25px rgba(40, 167, 69, 0.2) !important;
+        }        /* Override external CSS for continue button container and button */
+        .continue-fixed-btn {
+          padding: 0 !important;
+          background: transparent !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          font-size: inherit !important;
+          font-weight: inherit !important;
+          color: inherit !important;
+          opacity: 1 !important;
+          transition: none !important;
         }
-        .btn:disabled {
+        
+        .continue-fixed-btn:hover {
+          background: transparent !important;
+          opacity: 1 !important;
+        }
+        
+        #continue-btn:disabled {
+          opacity: 0.5 !important;
           cursor: not-allowed !important;
+          transform: none !important;
+          box-shadow: none !important;
         }
-        .btn:not(:disabled):hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        
+        #continue-btn:not(:disabled):hover {
+          transform: translateY(-2px) !important;
+          box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
+          background: rgba(102, 126, 234, 0.8) !important;
+        }
+        
+        #continue-btn:not(:disabled):active {
+          transform: translateY(0px) !important;
+          box-shadow: 0 2px 10px rgba(102, 126, 234, 0.2) !important;
         }
       `;
       document.head.appendChild(style);
