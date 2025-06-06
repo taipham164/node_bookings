@@ -84,17 +84,30 @@ router.post("/verify-firebase-token", async (req, res, next) => {
   try {
     const { phoneNumber } = req.body;
     
+    console.log('verify-firebase-token called with phoneNumber:', phoneNumber);
+    
     if (!phoneNumber) {
+      console.error('No phone number provided');
       return res.status(400).json({ error: 'Phone number is required' });
     }
     
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
+    console.log('Normalized phone number:', normalizedPhone);
     
     // Validate phone number format
     const phoneRegex = /^\+\d{10,15}$/;
     if (!phoneRegex.test(normalizedPhone)) {
+      console.error('Invalid phone number format:', normalizedPhone);
       return res.status(400).json({ error: 'Invalid phone number format' });
     }
+    
+    // Check if Square client is available
+    if (!customersApi) {
+      console.error('Square Customers API not available');
+      return res.status(500).json({ error: 'Square API not configured' });
+    }
+    
+    console.log('Searching for customer in Square with phone:', normalizedPhone);
     
     // Search for customer by phone number in Square
     const { result: { customers } } = await customersApi.searchCustomers({
@@ -107,12 +120,16 @@ router.post("/verify-firebase-token", async (req, res, next) => {
       }
     });
     
+    console.log('Customer search result:', customers ? customers.length : 0, 'customers found');
+    
     if (!customers || customers.length === 0) {
+      console.error('No customer found with phone number:', normalizedPhone);
       return res.status(404).json({ error: 'No customer found with this phone number' });
     }
     
     // Customer found - create session
     const customer = customers[0];
+    console.log('Customer found:', customer.id, customer.givenName, customer.familyName);
     
     if (!req.session) req.session = {};
     req.session.authenticatedCustomer = {
@@ -125,10 +142,13 @@ router.post("/verify-firebase-token", async (req, res, next) => {
       firebaseVerified: true
     };
     
+    console.log('Session created successfully for customer:', customer.id);
     res.json({ success: true, redirectUrl: '/auth/appointments' });
     
   } catch (error) {
     console.error('Error in verify-firebase-token:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ error: 'Server error during verification' });
   }
 });
@@ -138,27 +158,71 @@ router.post("/verify-firebase-token", async (req, res, next) => {
  * Display customer's past and upcoming appointments
  */
 router.get("/appointments", async (req, res, next) => {
+  console.log('=== /auth/appointments route called ===');
+  
   try {
+    console.log('Step 1: Checking authentication...');
+    
     // Check if user is authenticated
     if (!req.session?.authenticatedCustomer) {
+      console.log('No authenticated customer found, redirecting to login');
       return res.redirect('/auth/login');
     }
     
     const customer = req.session.authenticatedCustomer;
     const customerId = customer.id;
     
-    // Search for all bookings for this customer
-    const { result: { bookings } } = await bookingsApi.searchBookings({
-      query: {
-        filter: {
-          customerId: customerId,
-          locationId: process.env.SQ_LOCATION_ID
-        }
-      }
+    console.log('Step 2: Loading appointments for customer:', customerId);
+    console.log('Customer details:', {
+      id: customer.id,
+      givenName: customer.givenName,
+      familyName: customer.familyName,
+      phoneNumber: customer.phoneNumber
     });
     
-    if (!bookings || bookings.length === 0) {
-      return res.render("pages/customer-appointments", {
+    // Check if location ID is configured
+    console.log('Step 3: Checking location configuration...');
+    console.log('SQ_LOCATION_ID:', process.env.SQ_LOCATION_ID);
+    
+    if (!process.env.SQ_LOCATION_ID) {
+      console.error('SQ_LOCATION_ID not configured');
+      return res.render("pages/customer-appointment", {
+        customer,
+        upcomingAppointments: [],
+        pastAppointments: [],
+        hasAppointments: false,
+        error: 'Location not configured. Please contact administrator.'
+      });
+    }
+    
+    // Check if bookingsApi is available
+    console.log('Step 4: Checking bookings API availability...');
+    if (!bookingsApi) {
+      console.error('Bookings API not available');
+      return res.render("pages/customer-appointment", {
+        customer,
+        upcomingAppointments: [],
+        pastAppointments: [],
+        hasAppointments: false,
+        error: 'Booking system not configured. Please contact administrator.'
+      });
+    }      console.log('Step 5: Searching for bookings...');
+    
+    // List all bookings for this customer
+    // Parameters: limit, cursor, customerId, teamMemberId, locationId, startAtMin, startAtMax
+    const { result: { bookings } } = await bookingsApi.listBookings(
+      100, // limit - maximum number of bookings to return
+      undefined, // cursor - for pagination
+      customerId, // customerId - filter by customer
+      undefined, // teamMemberId - not filtering by team member
+      process.env.SQ_LOCATION_ID, // locationId - filter by location
+      undefined, // startAtMin - not filtering by start time
+      undefined  // startAtMax - not filtering by start time
+    );
+    
+    console.log(`Step 6: Found ${bookings ? bookings.length : 0} bookings for customer ${customerId}`);
+      if (!bookings || bookings.length === 0) {
+      return res.render("pages/customer-appointment", {
         customer,
         upcomingAppointments: [],
         pastAppointments: [],
@@ -261,8 +325,7 @@ router.get("/appointments", async (req, res, next) => {
       processBookings(upcomingBookings),
       processBookings(pastBookings)
     ]);
-    
-    res.render("pages/customer-appointments", {
+      res.render("pages/customer-appointment", {
       customer,
       upcomingAppointments,
       pastAppointments,

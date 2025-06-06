@@ -185,9 +185,7 @@
                                 <div class="customer-info" id="customer-info" style="display: none;">
                                     <h6 class="mb-1">Account Found!</h6>
                                     <div id="customer-name"></div>
-                                </div>
-                                
-                                <!-- reCAPTCHA Container -->
+                                </div>                                <!-- reCAPTCHA Container -->
                                 <div id="recaptcha-container"></div>
                                 
                                 <button type="button" class="btn btn-primary" id="send-code-btn">
@@ -261,8 +259,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>    <script>
         // Firebase configuration
         const firebaseConfig = <%- firebaseConfig %>;
         
@@ -298,27 +295,31 @@
                     hideCustomerInfo();
                 }
             });
-        }
-
-        function setupRecaptcha() {
-            recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                'size': 'normal',
-                'callback': function(response) {
-                    console.log('reCAPTCHA solved');
-                    document.getElementById('send-code-btn').disabled = false;
-                },
-                'expired-callback': function() {
-                    console.log('reCAPTCHA expired');
-                    document.getElementById('send-code-btn').disabled = true;
-                }
-            });
-            
-            recaptchaVerifier.render().then(function(widgetId) {
-                console.log('reCAPTCHA rendered');
-            });
-        }
-
-        function setupEventListeners() {
+        }        function setupRecaptcha() {
+            try {
+                recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                    'size': 'normal',
+                    'callback': function(response) {
+                        console.log('reCAPTCHA solved');
+                        document.getElementById('send-code-btn').disabled = false;
+                    },
+                    'expired-callback': function() {
+                        console.log('reCAPTCHA expired');
+                        document.getElementById('send-code-btn').disabled = true;
+                    }
+                });
+                
+                recaptchaVerifier.render().then(function(widgetId) {
+                    console.log('reCAPTCHA rendered successfully');
+                }).catch(function(error) {
+                    console.error('reCAPTCHA render failed:', error);
+                    showError('reCAPTCHA failed to load. Please refresh the page and try again.');
+                });
+            } catch (error) {
+                console.error('reCAPTCHA setup failed:', error);
+                showError('reCAPTCHA setup failed. Please refresh the page and try again.');
+            }
+        }        function setupEventListeners() {
             document.getElementById('send-code-btn').addEventListener('click', sendVerificationCode);
             document.getElementById('verify-code-btn').addEventListener('click', verifyCode);
             document.getElementById('resend-code-btn').addEventListener('click', resendCode);
@@ -371,14 +372,17 @@
                 return `+${digits}`;
             }
             return `+${digits}`;
-        }
-
-        async function sendVerificationCode() {
+        }        async function sendVerificationCode() {
             const phoneInput = document.getElementById('phoneNumber');
             const phoneNumber = normalizePhoneNumber(phoneInput.value);
             
             if (!phoneNumber || phoneNumber.replace(/\D/g, '').length < 10) {
                 showError('Please enter a valid phone number');
+                return;
+            }
+
+            if (!recaptchaVerifier) {
+                showError('reCAPTCHA verification is required. Please refresh the page and try again.');
                 return;
             }
 
@@ -389,20 +393,23 @@
                 confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
                 console.log('SMS sent successfully');
                 showVerificationStep(phoneNumber);
-                showSuccess('Verification code sent!');
+                showSuccess('Verification code sent to your phone!');
             } catch (error) {
                 console.error('SMS sending failed:', error);
                 handleAuthError(error);
             } finally {
                 setLoading(false);
             }
-        }
-
-        async function verifyCode() {
+        }        async function verifyCode() {
             const code = document.getElementById('verificationCode').value;
             
             if (!code || code.length !== 6) {
                 showError('Please enter the 6-digit verification code');
+                return;
+            }
+
+            if (!confirmationResult) {
+                showError('Please request a verification code first');
                 return;
             }
 
@@ -414,3 +421,210 @@
                 
                 // Send to backend for Square customer verification
                 await verifyWithBackend(currentPhoneNumber);
+            } catch (error) {
+                console.error('Code verification failed:', error);
+                handleAuthError(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function verifyWithBackend(phoneNumber) {
+            try {
+                const response = await fetch('/auth/verify-firebase-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phoneNumber: phoneNumber })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Login successful! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = data.redirectUrl || '/auth/appointments';
+                    }, 1500);
+                } else {
+                    throw new Error(data.error || 'Backend verification failed');
+                }
+            } catch (error) {
+                console.error('Backend verification error:', error);
+                showError('Verification failed. Please try again.');
+            }
+        }        async function resendCode() {
+            if (!currentPhoneNumber) {
+                showError('Please enter your phone number first');
+                return;
+            }
+            
+            if (!recaptchaVerifier) {
+                showError('reCAPTCHA verification is required. Please refresh the page and try again.');
+                return;
+            }
+            
+            setLoading(true, 'Resending code...');
+            
+            try {
+                confirmationResult = await auth.signInWithPhoneNumber(currentPhoneNumber, recaptchaVerifier);
+                showSuccess('Verification code resent to your phone!');
+            } catch (error) {
+                console.error('Resend failed:', error);
+                handleAuthError(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function changePhoneNumber() {
+            document.getElementById('phone-step').style.display = 'block';
+            document.getElementById('verification-step').style.display = 'none';
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('step1').classList.remove('completed');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('phoneNumber').value = '';
+            hideCustomerInfo();
+            hideError();
+            currentPhoneNumber = null;
+            confirmationResult = null;
+        }
+
+        function showVerificationStep(phoneNumber) {
+            document.getElementById('phone-step').style.display = 'none';
+            document.getElementById('verification-step').style.display = 'block';
+            document.getElementById('display-phone').textContent = formatPhoneForDisplay(phoneNumber);
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+            document.getElementById('verificationCode').focus();
+        }
+
+        function formatPhoneForDisplay(phoneNumber) {
+            const digits = phoneNumber.replace(/\D/g, '');
+            if (digits.length === 11 && digits.startsWith('1')) {
+                const number = digits.slice(1);
+                return `(${number.slice(0,3)}) ${number.slice(3,6)}-${number.slice(6)}`;
+            }
+            return phoneNumber;
+        }        function setLoading(isLoading, message = '') {
+            const loadingElements = document.querySelectorAll('.loading');
+            const buttons = document.querySelectorAll('button');
+            
+            if (isLoading) {
+                loadingElements.forEach(el => el.classList.add('show'));
+                buttons.forEach(btn => btn.disabled = true);
+                if (message) {
+                    showInfo(message);
+                }
+            } else {
+                loadingElements.forEach(el => el.classList.remove('show'));
+                buttons.forEach(btn => btn.disabled = false);
+                // Re-disable send button if reCAPTCHA not solved
+                try {
+                    if (recaptchaVerifier && typeof recaptchaVerifier.getResponse === 'function' && !recaptchaVerifier.getResponse()) {
+                        document.getElementById('send-code-btn').disabled = true;
+                    }
+                } catch (e) {
+                    // Ignore reCAPTCHA check errors
+                    console.log('reCAPTCHA check skipped');
+                }
+                hideInfo();
+            }
+        }
+
+        function showError(message) {
+            hideSuccess();
+            hideInfo();
+            const errorAlert = document.getElementById('error-alert');
+            if (errorAlert) {
+                errorAlert.textContent = message;
+                errorAlert.style.display = 'block';
+            } else {
+                // Create error alert if it doesn't exist
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger';
+                alert.id = 'error-alert';
+                alert.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
+                document.querySelector('.login-body').insertBefore(alert, document.querySelector('.step-indicator').nextSibling);
+            }
+        }
+
+        function hideError() {
+            const errorAlert = document.getElementById('error-alert');
+            if (errorAlert) {
+                errorAlert.style.display = 'none';
+            }
+        }
+
+        function showSuccess(message) {
+            hideError();
+            hideInfo();
+            const successAlert = document.getElementById('success-alert');
+            if (successAlert) {
+                document.getElementById('success-message').textContent = message;
+                successAlert.style.display = 'block';
+            }
+        }
+
+        function hideSuccess() {
+            const successAlert = document.getElementById('success-alert');
+            if (successAlert) {
+                successAlert.style.display = 'none';
+            }
+        }
+
+        function showInfo(message) {
+            const loadingDiv = document.getElementById('loading');
+            if (loadingDiv) {
+                loadingDiv.innerHTML = `
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 mb-0">${message}</p>
+                `;
+                loadingDiv.style.display = 'block';
+            }
+        }
+
+        function hideInfo() {
+            const loadingDiv = document.getElementById('loading');
+            if (loadingDiv) {
+                loadingDiv.style.display = 'none';
+            }
+        }        function handleAuthError(error) {
+            console.error('Auth error:', error);
+            
+            switch (error.code) {
+                case 'auth/invalid-phone-number':
+                    showError('Invalid phone number. Please check your number and try again.');
+                    break;
+                case 'auth/too-many-requests':
+                    showError('Too many requests. Please try again later.');
+                    break;
+                case 'auth/captcha-check-failed':
+                    showError('reCAPTCHA verification failed. Please refresh the page and try again.');
+                    break;
+                case 'auth/invalid-verification-code':
+                    showError('Invalid verification code. Please check and try again.');
+                    break;
+                case 'auth/code-expired':
+                    showError('Verification code expired. Please request a new code.');
+                    break;
+                case 'auth/billing-not-enabled':
+                    showError('Phone authentication requires Firebase billing to be enabled. Please contact the administrator.');
+                    break;
+                case 'auth/quota-exceeded':
+                    showError('SMS quota exceeded. Please try again later or contact the administrator.');
+                    break;
+                case 'auth/invalid-api-key':
+                    showError('Firebase configuration error. Please contact the administrator.');
+                    break;
+                default:
+                    const message = error.message || 'Please try again.';
+                    showError(`An error occurred: ${message}`);
+            }
+        }
+    </script>
+</body>
+</html>

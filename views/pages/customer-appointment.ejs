@@ -184,7 +184,15 @@
             </div>
         </div>
 
-        <% if (!hasAppointments) { %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <!-- Error State -->
+            <div class="container mt-4">
+                <div class="alert alert-danger text-center" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Error:</strong> <%= error %>
+                </div>
+            </div>
+        <% } else if (!hasAppointments) { %>
             <!-- Empty State -->
             <div class="empty-state">
                 <i class="fas fa-calendar-times"></i>
