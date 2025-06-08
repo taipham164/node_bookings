@@ -23,6 +23,8 @@ const {
   teamApi
 } = require("../util/square-client");
 
+const { safeJSONStringify } = require("../util/bigint-helpers");
+
 /**
  * GET /staff/:serviceId?version
  *
@@ -38,13 +40,19 @@ router.get("/:serviceId", async (req, res, next) => {
   // Always use all selected services from session
   const selectedServices = req.session?.selectedServices || [req.params.serviceId];
   const quantities = req.session?.quantities || {};
-  const serviceVersion = req.query.version;
+  const serviceVersion = req.query.version || "";
   
   // Handle error messages from redirects
   const errorMessage = req.query.error;
   let error = null;
   if (errorMessage === 'no_staff_selected') {
     error = 'Please select a staff member to continue.';
+  } else if (errorMessage === 'invalid_service') {
+    error = 'The selected service is not available. Please try again.';
+  } else if (errorMessage === 'no_staff_available') {
+    error = 'No staff members are available for this service at this time.';
+  } else if (errorMessage === 'staff_unavailable') {
+    error = 'The selected staff member is currently unavailable. Please choose another.';
   }
   
   // Get total price and duration from the session
@@ -53,6 +61,16 @@ router.get("/:serviceId", async (req, res, next) => {
   const serviceSessionDetails = req.session?.serviceDetails || {};
   
   try {
+    // Validate required parameters
+    if (!req.params.serviceId) {
+      return res.redirect('/services?error=no_service_selected');
+    }
+
+    // Validate location ID is configured
+    if (!locationId) {
+      throw new Error('Location ID not configured. Please check SQ_LOCATION_ID environment variable.');
+    }
+
     // Group services by ID and count quantities
     const serviceGroups = {};
     selectedServices.forEach(sid => {
@@ -65,9 +83,18 @@ router.get("/:serviceId", async (req, res, next) => {
 
     // Fetch all unique service variations for display
     const serviceDetails = [];
+    let mainServiceVariation = null;
+    let mainServiceItem = null;
+    
     for (const sid of Object.keys(serviceGroups)) {
       const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
       const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+      
+      // Store the main service data if this is the service we're displaying staff for
+      if (sid === req.params.serviceId) {
+        mainServiceVariation = variation;
+        mainServiceItem = item;
+      }
       
       // Get price from session details or from the fetched variation
       let price = null;
@@ -87,7 +114,6 @@ router.get("/:serviceId", async (req, res, next) => {
       
       serviceDetails.push({
         id: sid,
-        // name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
         name: item.itemData.name,
         duration: variation.itemVariationData.serviceDuration,
         quantity: serviceGroups[sid].quantity,
@@ -95,8 +121,25 @@ router.get("/:serviceId", async (req, res, next) => {
       });
     }
 
-    // Add missing definition for retrieveServicePromise
-    const retrieveServicePromise = catalogApi.retrieveCatalogObject(req.params.serviceId, true);
+    // If we didn't find the main service in our loop, fetch it separately
+    if (!mainServiceVariation) {
+      const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(req.params.serviceId, true);
+      mainServiceVariation = variation;
+      mainServiceItem = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+    }
+
+    // Validate that we have the required service data
+    if (!mainServiceVariation || !mainServiceItem) {
+      console.error(`Service not found: ${req.params.serviceId}`);
+      return res.redirect('/services?error=invalid_service');
+    }
+
+    // Validate that the service has team members assigned
+    const serviceTeamMembers = mainServiceVariation.itemVariationData.teamMemberIds || [];
+    if (serviceTeamMembers.length === 0) {
+      console.warn(`No team members assigned to service: ${req.params.serviceId}`);
+      return res.redirect(`/services?error=no_staff_available&service=${req.params.serviceId}`);
+    }
 
     // Send request to list staff booking profiles for the current location.
     const listBookingProfilesPromise = bookingsApi.listTeamMemberBookingProfiles(true, undefined, undefined, locationId);
@@ -111,19 +154,24 @@ router.get("/:serviceId", async (req, res, next) => {
     });
 
     // Wait until all API calls have completed.
-    const [ { result: services }, { result: { teamMemberBookingProfiles } }, { result: { teamMembers } } ] =
-      await Promise.all([ retrieveServicePromise, listBookingProfilesPromise, listActiveTeamMembersPromise ]);
+    const [ { result: { teamMemberBookingProfiles } }, { result: { teamMembers } } ] =
+      await Promise.all([ listBookingProfilesPromise, listActiveTeamMembersPromise ]);
 
     // We want to filter teamMemberBookingProfiles by checking that the teamMemberId associated with the profile is in our serviceTeamMembers.
     // We also want to verify that each team member is ACTIVE.
-    const serviceVariation = services.object;
-    const serviceItem = services.relatedObjects.filter(relatedObject => relatedObject.type === "ITEM")[0];
+    const serviceVariation = mainServiceVariation;
+    const serviceItem = mainServiceItem;
 
-    const serviceTeamMembers = serviceVariation.itemVariationData.teamMemberIds || [];
     const activeTeamMembers = teamMembers.map(teamMember => teamMember.id);
 
     const bookableStaff = teamMemberBookingProfiles
       .filter(profile => serviceTeamMembers.includes(profile.teamMemberId) && activeTeamMembers.includes(profile.teamMemberId));
+
+    // Validate that we have bookable staff available
+    if (bookableStaff.length === 0) {
+      console.warn(`No bookable staff found for service: ${req.params.serviceId}`);
+      return res.redirect(`/services?error=no_staff_available&service=${req.params.serviceId}`);
+    }
 
     // Pass all selectedServices, quantities, serviceDetails, and total price/duration to the view
     res.render("pages/select-staff", { 
@@ -151,7 +199,16 @@ router.get("/:serviceId", async (req, res, next) => {
  * This mimics how service selection works - select first, then submit form.
  */
 router.post("/select", async (req, res, next) => {
+  console.log('DEBUG: /staff/select route called');
+  console.log('DEBUG: /staff/select req.body:', req.body);
+  console.log('DEBUG: /staff/select req.session at start:', req.session);
+  
   try {
+    // Validate required environment configuration
+    if (!locationId) {
+      throw new Error('Location ID not configured. Please check SQ_LOCATION_ID environment variable.');
+    }
+
     // Get the selected staff member ID from the form
     const selectedStaffId = req.body.staffId;
     
@@ -160,6 +217,10 @@ router.post("/select", async (req, res, next) => {
       const selectedServices = req.session?.selectedServices || [];
       const firstServiceId = selectedServices[0] || req.body.serviceId;
       const serviceVersion = req.body.serviceVersion || req.query.version || '';
+      
+      if (!firstServiceId) {
+        return res.redirect('/services?error=no_service_selected');
+      }
       
       return res.redirect(`/staff/${firstServiceId}?version=${serviceVersion}&error=no_staff_selected`);
     }
@@ -187,21 +248,42 @@ router.post("/select", async (req, res, next) => {
       // Store the selected staff in the session
       req.session.selectedStaffId = selectedStaffId;
       
-      // Get staff profile details to store in session
-      const { result: { teamMemberBookingProfile } } = await bookingsApi.retrieveTeamMemberBookingProfile(selectedStaffId);
-      
-      // Store the staff profile info in the session
-      req.session.teamMemberBookingProfile = teamMemberBookingProfile;
-      req.session.staffProfile = {
-        id: teamMemberBookingProfile.teamMemberId,
-        displayName: teamMemberBookingProfile.displayName,
-        description: teamMemberBookingProfile.description || "",
-        profileImageUrl: teamMemberBookingProfile.profileImageUrl || ""
-      };
-      
-      // Debug: Log the selected staff info
-      console.log('DEBUG: /staff/select session.selectedStaffId', req.session.selectedStaffId);
-      console.log('DEBUG: /staff/select session.staffProfile', req.session.staffProfile);
+      try {
+        // Get staff profile details to store in session
+        const { result: { teamMemberBookingProfile } } = await bookingsApi.retrieveTeamMemberBookingProfile(selectedStaffId);
+        
+        // Validate that we received the profile data
+        if (!teamMemberBookingProfile) {
+          console.error(`Failed to retrieve booking profile for staff: ${selectedStaffId}`);
+          throw new Error('Staff member not found or not available for booking');
+        }
+        
+        // Store the staff profile info in the session
+        req.session.teamMemberBookingProfile = teamMemberBookingProfile;
+        req.session.staffProfile = {
+          id: teamMemberBookingProfile.teamMemberId,
+          displayName: teamMemberBookingProfile.displayName,
+          description: teamMemberBookingProfile.description || "",
+          profileImageUrl: teamMemberBookingProfile.profileImageUrl || ""
+        };
+        
+        // Debug: Log the selected staff info
+        console.log('DEBUG: /staff/select session.selectedStaffId', req.session.selectedStaffId);
+        console.log('DEBUG: /staff/select session.staffProfile', req.session.staffProfile);
+      } catch (apiError) {
+        console.error('Error retrieving staff booking profile:', apiError);
+        
+        // Redirect back to staff selection with error
+        const selectedServices = req.session?.selectedServices || [];
+        const firstServiceId = selectedServices[0] || req.body.serviceId;
+        const serviceVersion = req.body.serviceVersion || req.query.version || '';
+        
+        if (!firstServiceId) {
+          return res.redirect('/services?error=no_service_selected');
+        }
+        
+        return res.redirect(`/staff/${firstServiceId}?version=${serviceVersion}&error=staff_unavailable`);
+      }
     }
     
     // Get services from session to pass to availability page
@@ -209,7 +291,14 @@ router.post("/select", async (req, res, next) => {
     const firstServiceId = selectedServices[0] || null;
     const serviceVersion = req.body.serviceVersion || req.query.version || '';
     
+    // Debug: Log session data to diagnose the issue
+    console.log('DEBUG: /staff/select session.selectedServices', req.session.selectedServices);
+    console.log('DEBUG: /staff/select selectedServices', selectedServices);
+    console.log('DEBUG: /staff/select firstServiceId', firstServiceId);
+    console.log('DEBUG: /staff/select full session:', safeJSONStringify(req.session, 2));
+    
     if (!firstServiceId) {
+      console.log('DEBUG: /staff/select - No firstServiceId, redirecting to services with error');
       return res.redirect('/services?error=no_service_selected');
     }
     

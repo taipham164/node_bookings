@@ -76,7 +76,7 @@ async function searchActiveTeamMembers(serviceId) {
  */
 router.get("/:staffId/:serviceId", async (req, res, next) => {
   const serviceId = req.params.serviceId;
-  const serviceVersion = req.query.version;
+  const serviceVersion = req.query.version || "";
   const staffId = req.params.staffId;
   
   // Validate required parameters

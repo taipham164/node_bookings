@@ -133,7 +133,8 @@ app.use(function (err, req, res, next) {
   // other errors
   return res.render("pages/formatted-error", {
     code: err.statusCode,
-    description: err.errors ? JSON.stringify(err.errors, null, 4) : err.stack,
+    description: err.errors ? JSON.stringify(err.errors, (key, value) => 
+      typeof value === 'bigint' ? value.toString() : value, 4) : err.stack,
     shortDescription: err.message,
   });
 });

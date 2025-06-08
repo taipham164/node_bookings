@@ -12,6 +12,7 @@ limitations under the License.
 */
 
 const dateHelpers = require("../util/date-helpers");
+const { safeNumberConversion, safeJSONStringify, convertMsToMins, convertVersion } = require("../util/bigint-helpers");
 const express = require("express");
 const router = express.Router();
 const {
@@ -44,25 +45,6 @@ function normalizePhoneNumber(phone) {
   
   // Return as-is if already formatted or international
   return `+${digits}`;
-}
-
-/**
- * Safe BigInt conversion function
- */
-function safeNumberConversion(value) {
-  if (typeof value === 'bigint') {
-    const num = Number(value);
-    if (num === Infinity || num === -Infinity) {
-      console.warn('BigInt value too large for Number conversion:', value);
-      return 0;
-    }
-    return num;
-  }
-  if (typeof value === 'string') {
-    const parsed = parseInt(value, 10);
-    return isNaN(parsed) ? 0 : parsed;
-  }
-  return value || 0;
 }
 
 /**
@@ -104,37 +86,57 @@ router.post("/create", async (req, res, next) => {
     const staffId = req.query.staffId;
     const startAt = req.query.startAt;
     const customerNote = req.body.customerNote;
+    
+    // Handle both new and existing customer data
+    const customerId = req.body.customerId; // For existing customers
     const emailAddress = req.body.emailAddress;
     const familyName = req.body.familyName;
     const givenName = req.body.givenName;
-    const phoneNumber = req.body.phoneNumber; // Add phone number support
+    const phoneNumber = req.body.phoneNumber; // This should always be present now
 
-    // Validate form data
-    if (!emailAddress || !familyName || !givenName) {
+    // Validate phone number (required in new flow)
+    if (!phoneNumber || !phoneNumber.trim()) {
       return res.render("pages/formatted-error", { 
-        error: "Please fill in all required fields: name and email address." 
+        error: "Phone number is required. Please go back and enter your phone number." 
       });
     }
-    
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailAddress)) {
-      return res.render("pages/formatted-error", { 
-        error: "Please enter a valid email address." 
-      });
-    }
-    
-    // Phone number validation and normalization
-    let normalizedPhone = null;
-    if (phoneNumber && phoneNumber.trim()) {
-      normalizedPhone = normalizePhoneNumber(phoneNumber.trim());
-      // Basic phone validation
-      const phoneRegex = /^\+\d{10,15}$/;
-      if (!phoneRegex.test(normalizedPhone)) {
+
+    // For existing customers, we might have customerId but still need basic validation
+    if (customerId) {
+      console.log('Processing booking for existing customer:', customerId);
+      // For existing customers, we already have their info, just validate phone
+      const normalizedPhone = normalizePhoneNumber(phoneNumber.trim());
+      if (!normalizedPhone) {
         return res.render("pages/formatted-error", { 
           error: "Please enter a valid phone number." 
         });
       }
+    } else {
+      // For new customers, validate all required fields
+      if (!emailAddress || !familyName || !givenName) {
+        return res.render("pages/formatted-error", { 
+          error: "Please fill in all required fields: name and email address." 
+        });
+      }
+      
+      // Email validation for new customers
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailAddress)) {
+        return res.render("pages/formatted-error", { 
+          error: "Please enter a valid email address." 
+        });
+      }
+      
+      console.log('Processing booking for new customer');
+    }
+
+    // Phone number validation and normalization
+    const normalizedPhone = normalizePhoneNumber(phoneNumber.trim());
+    const phoneRegex = /^\+\d{10,15}$/;
+    if (!phoneRegex.test(normalizedPhone)) {
+      return res.render("pages/formatted-error", { 
+        error: "Please enter a valid phone number." 
+      });
     }
 
     // Debug logs for service selection and quantities
@@ -148,7 +150,7 @@ router.post("/create", async (req, res, next) => {
       // Retrieve catalog object by the variation ID
       const { result: { object: catalogItemVariation } } = await catalogApi.retrieveCatalogObject(serviceId);
       const durationMinutes = convertMsToMins(catalogItemVariation.itemVariationData.serviceDuration);
-      const version = catalogItemVariation.version; // Use the correct version for this service
+      const version = convertVersion(catalogItemVariation.version); // Safe conversion for BigInt
       
       appointmentSegments.push({
         durationMinutes,
@@ -163,14 +165,26 @@ router.post("/create", async (req, res, next) => {
       return res.render("pages/formatted-error", { error: "No valid services selected for booking." });
     }
     
-    // Debug: print appointmentSegments before booking
-    console.log('DEBUG: appointmentSegments', JSON.stringify(appointmentSegments, null, 2));
+    // Debug: print appointmentSegments before booking (with BigInt handling)
+    console.log('DEBUG: appointmentSegments', safeJSONStringify(appointmentSegments));
+    
+    // Determine customer ID - use existing customer ID or create new customer
+    let finalCustomerId;
+    if (customerId) {
+      // Use existing customer
+      finalCustomerId = customerId;
+      console.log('Using existing customer ID:', finalCustomerId);
+    } else {
+      // Create new customer
+      finalCustomerId = await getCustomerID(givenName, familyName, emailAddress, normalizedPhone);
+      console.log('Created new customer ID:', finalCustomerId);
+    }
     
     // Create booking
     const { result: { booking } } = await bookingsApi.createBooking({
       booking: {
         appointmentSegments,
-        customerId: await getCustomerID(givenName, familyName, emailAddress, normalizedPhone),
+        customerId: finalCustomerId,
         customerNote,
         locationId,
         startAt,
@@ -390,16 +404,6 @@ router.get("/:bookingId/reschedule", async (req, res, next) => {
     next(error);
   }
 });
-
-/**
- * Convert a duration in milliseconds to minutes
- *
- * @param {*} duration - duration in milliseconds
- * @returns {Number} - duration in minutes
- */
-function convertMsToMins(duration) {
-  return Math.round(Number(duration) / 1000 / 60);
-}
 
 /**
  * Return the id of a customer that matches the firstName, lastName and email

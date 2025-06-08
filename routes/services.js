@@ -21,28 +21,7 @@ const {
   catalogApi,
 } = require("../util/square-client");
 
-// Helper function to safely handle BigInt values from Square API
-function safeNumberConversion(value) {
-  if (typeof value === 'bigint') {
-    // Convert BigInt to number, but check for overflow
-    const num = Number(value);
-    if (num === Infinity || num === -Infinity) {
-      console.warn('BigInt value too large for Number conversion:', value);
-      return 0;
-    }
-    return num;
-  }
-  if (typeof value === 'string') {
-    const parsed = parseInt(value, 10);
-    return isNaN(parsed) ? 0 : parsed;
-  }
-  return value || 0;
-}
-
-// BigInt-safe JSON stringifier
-function replacer(key, value) {
-  return typeof value === 'bigint' ? value.toString() : value;
-}
+const { safeNumberConversion } = require("../util/bigint-helpers");
 
 /**
  * GET /services

@@ -160,7 +160,7 @@ class DatePickerHandler {
           serviceId: this.serviceId,
           staff: availability.teamMemberId,
           startAt: availability.date,
-          version: this.serviceVersion,
+          version: this.serviceVersion || "",
         };
         Object.keys(queryParams).forEach(queryParam => {
           const input = document.createElement("input");

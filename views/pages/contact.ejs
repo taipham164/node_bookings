@@ -110,6 +110,67 @@
       transform: translateY(-2px);
       box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
     }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-left: 1rem;
+    }
+    .btn-secondary:hover {
+      background: #5a6268;
+      transform: translateY(-1px);
+    }
+    .button-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .customer-info-display {
+      background: #e8f5e8;
+      border: 1px solid #c3e6c3;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .customer-info-display h6 {
+      margin: 0 0 1rem 0;
+      color: #155724;
+      font-weight: 600;
+    }
+    .customer-info-display .info-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .customer-info-display .info-item i {
+      width: 20px;
+      margin-right: 0.5rem;
+      color: #28a745;
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .hidden {
+      display: none !important;
+    }
     @media (max-width: 768px) {
       .form-row {
         grid-template-columns: 1fr;
@@ -212,10 +273,40 @@
           </div>
         <% } %>
         
-        <h4><i class="fas fa-user-edit me-2"></i>Enter your details</h4>
-        <p class="text-muted">Please provide your contact information to complete your booking.</p>
+        <h4><i class="fas fa-phone me-2"></i>Complete Your Booking</h4>
+        <p class="text-muted">Please provide your phone number to continue with your booking.</p>
         
-        <form class="contact-form" method="POST" action="/booking/create?serviceId=<%= serviceVariation.id %>&staffId=<%= teamMemberBookingProfile.teamMemberId %>&version=<%= serviceVersion %>&startAt=<%= startAt %>">
+        <!-- Phone Number Verification Step -->
+        <div id="phoneStep" class="form-step active">
+          <h6><i class="fas fa-mobile-alt me-2"></i>Phone Number Verification</h6>
+          <p class="text-muted">Enter your phone number to check if you're an existing customer.</p>
+          
+          <div class="form-group phone-field">
+            <label for="phoneNumber">
+              <i class="fas fa-phone me-1"></i>Phone Number *
+            </label>
+            <input 
+              type="tel" 
+              id="phoneNumber"
+              name="phoneNumber" 
+              required
+              placeholder="(555) 123-4567"
+              autocomplete="tel"
+            />
+            <div class="helper-text">
+              <i class="fas fa-info-circle text-primary"></i>
+              We'll check if you're an existing customer to streamline your booking
+            </div>
+          </div>
+          
+          <button type="button" id="verifyPhoneBtn" class="submit-btn">
+            <i class="fas fa-search me-2"></i>
+            Check Phone Number
+          </button>
+        </div>
+        
+        <!-- Customer Information Form (Hidden Initially) -->
+        <form id="bookingForm" class="contact-form" method="POST" action="/booking/create?serviceId=<%= serviceVariation.id %>&staffId=<%= teamMemberBookingProfile.teamMemberId %>&version=<%= serviceVersion %>&startAt=<%= startAt %>" style="display: none;">
           <!-- Hidden fields for multi-service support -->
           <% if (selectedServices && selectedServices.length > 1) { %>
             <% selectedServices.forEach(function(sid) { %>
@@ -226,9 +317,46 @@
             <% }); %>
           <% } %>
           
-          <!-- Personal Information -->
-          <div class="form-step active">
-            <h6><i class="fas fa-user me-2"></i>Personal Information</h6>
+          <!-- Hidden phone field to pass verified phone -->
+          <input type="hidden" id="verifiedPhone" name="phoneNumber" value="">
+          
+          <!-- Existing Customer Confirmation (Hidden Initially) -->
+          <div id="existingCustomerStep" class="form-step" style="display: none;">
+            <h6><i class="fas fa-user-check me-2"></i>Welcome Back!</h6>
+            <div id="customerInfo" class="customer-info-display">
+              <!-- Customer info will be populated here -->
+            </div>
+            <p class="text-muted">Is this information correct?</p>
+            
+            <div class="form-group">
+              <label for="customerNote">
+                <i class="fas fa-comment me-1"></i>Appointment Notes (Optional)
+              </label>
+              <textarea 
+                id="customerNote"
+                name="customerNote" 
+                placeholder="Any special requests or notes for your appointment..."
+                maxlength="1500" 
+                rows="4"
+              ></textarea>
+            </div>
+            
+            <div class="button-group">
+              <button type="button" id="confirmExistingBtn" class="submit-btn">
+                <i class="fas fa-calendar-check me-2"></i>
+                Confirm & Book Appointment
+              </button>
+              <button type="button" id="updateInfoBtn" class="btn btn-secondary">
+                <i class="fas fa-edit me-2"></i>
+                Update My Information
+              </button>
+            </div>
+          </div>
+          
+          <!-- New Customer Form (Hidden Initially) -->
+          <div id="newCustomerStep" class="form-step" style="display: none;">
+            <h6><i class="fas fa-user-plus me-2"></i>New Customer Information</h6>
+            <p class="text-muted">Please provide your details to create your customer profile.</p>
             
             <div class="form-row">
               <div class="form-group">
@@ -279,58 +407,24 @@
               />
             </div>
             
-            <div class="form-group phone-field">
-              <label for="phoneNumber">
-                <i class="fas fa-phone me-1"></i>Phone Number
-                <span class="optional-badge">Optional</span>
-              </label>
-              <input 
-                type="tel" 
-                id="phoneNumber"
-                name="phoneNumber" 
-                placeholder="(555) 123-4567"
-                autocomplete="tel"
-              />
-              <div class="helper-text">
-                <i class="fas fa-info-circle text-primary"></i>
-                Adding your phone number enables easy access to your appointments
-              </div>
-              
-              <div class="benefits-list">
-                <h6><i class="fas fa-mobile-alt me-1"></i>Phone Login Benefits:</h6>
-                <ul>
-                  <li>View your upcoming appointments anytime</li>
-                  <li>Access your appointment history</li>
-                  <li>Reschedule appointments on the go</li>
-                  <li>Get SMS verification for secure access</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Additional Notes -->
-          <div class="form-step">
-            <h6><i class="fas fa-sticky-note me-2"></i>Additional Information</h6>
-            
             <div class="form-group">
-              <label for="customerNote">
+              <label for="newCustomerNote">
                 <i class="fas fa-comment me-1"></i>Appointment Notes (Optional)
               </label>
               <textarea 
-                id="customerNote"
+                id="newCustomerNote"
                 name="customerNote" 
                 placeholder="Any special requests or notes for your appointment..."
                 maxlength="1500" 
                 rows="4"
               ></textarea>
-              <small class="text-muted">Feel free to mention any preferences, questions, or special requirements.</small>
             </div>
+            
+            <button type="submit" class="submit-btn">
+              <i class="fas fa-calendar-check me-2"></i>
+              Create Account & Book Appointment
+            </button>
           </div>
-
-          <button type="submit" class="submit-btn">
-            <i class="fas fa-calendar-check me-2"></i>
-            Book Appointment
-          </button>
         </form>
       </div>
     </div>
@@ -340,6 +434,13 @@
     document.addEventListener('DOMContentLoaded', function() {
       // Phone number formatting
       const phoneInput = document.getElementById('phoneNumber');
+      const verifyPhoneBtn = document.getElementById('verifyPhoneBtn');
+      const phoneStep = document.getElementById('phoneStep');
+      const bookingForm = document.getElementById('bookingForm');
+      const existingCustomerStep = document.getElementById('existingCustomerStep');
+      const newCustomerStep = document.getElementById('newCustomerStep');
+      const verifiedPhoneInput = document.getElementById('verifiedPhone');
+      
       if (phoneInput) {
         phoneInput.addEventListener('input', function(e) {
           let value = e.target.value.replace(/\D/g, '');
@@ -349,50 +450,168 @@
             value = value.replace(/(\d{3})(\d{0,3})/, '($1) $2');
           }
           e.target.value = value;
+          
+          // Enable/disable verify button based on phone length
+          if (verifyPhoneBtn) {
+            verifyPhoneBtn.disabled = value.replace(/\D/g, '').length < 10;
+          }
+        });
+      }
+      
+      // Phone verification handler
+      if (verifyPhoneBtn) {
+        verifyPhoneBtn.addEventListener('click', async function() {
+          const phone = phoneInput.value.replace(/\D/g, '');
+          
+          if (phone.length < 10) {
+            alert('Please enter a valid 10-digit phone number');
+            return;
+          }
+          
+          // Show loading state
+          const originalText = verifyPhoneBtn.innerHTML;
+          verifyPhoneBtn.innerHTML = '<span class="loading-spinner"></span> Checking...';
+          verifyPhoneBtn.disabled = true;
+          
+          try {
+            // Check if customer exists
+            const response = await fetch('/customer/check-phone', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ phoneNumber: phoneInput.value })
+            });
+            
+            const result = await response.json();
+            
+            // Store verified phone number
+            verifiedPhoneInput.value = phoneInput.value;
+            
+            // Hide phone step and show booking form
+            phoneStep.style.display = 'none';
+            bookingForm.style.display = 'block';
+            
+            if (result.exists) {
+              // Show existing customer flow
+              showExistingCustomer(result.customer);
+            } else {
+              // Show new customer flow
+              showNewCustomer();
+            }
+            
+          } catch (error) {
+            console.error('Error checking phone:', error);
+            alert('Error checking phone number. Please try again.');
+            
+            // Reset button state on error
+            verifyPhoneBtn.innerHTML = originalText;
+            verifyPhoneBtn.disabled = phone.replace(/\D/g, '').length < 10;
+          }
+        });
+      }
+      
+      function showExistingCustomer(customer) {
+        existingCustomerStep.style.display = 'block';
+        newCustomerStep.style.display = 'none';
+        
+        // Populate customer info
+        const customerInfo = document.getElementById('customerInfo');
+        customerInfo.innerHTML = `
+          <h6><i class="fas fa-user-check me-2"></i>Customer Information</h6>
+          <div class="info-item">
+            <i class="fas fa-user"></i>
+            <span><strong>Name:</strong> ${customer.givenName || ''} ${customer.familyName || ''}</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-envelope"></i>
+            <span><strong>Email:</strong> ${customer.emailAddress || 'Not provided'}</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-phone"></i>
+            <span><strong>Phone:</strong> ${phoneInput.value}</span>
+          </div>
+        `;
+        
+        // Store customer info in hidden fields
+        addHiddenField('customerId', customer.id);
+        addHiddenField('givenName', customer.givenName || '');
+        addHiddenField('familyName', customer.familyName || '');
+        addHiddenField('emailAddress', customer.emailAddress || '');
+      }
+      
+      function showNewCustomer() {
+        existingCustomerStep.style.display = 'none';
+        newCustomerStep.style.display = 'block';
+      }
+      
+      function addHiddenField(name, value) {
+        // Remove existing field if it exists
+        const existing = bookingForm.querySelector(`input[name="${name}"]`);
+        if (existing) {
+          existing.remove();
+        }
+        
+        // Add new hidden field
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = name;
+        hiddenField.value = value;
+        bookingForm.appendChild(hiddenField);
+      }
+      
+      // Confirm existing customer handler
+      const confirmExistingBtn = document.getElementById('confirmExistingBtn');
+      if (confirmExistingBtn) {
+        confirmExistingBtn.addEventListener('click', function() {
+          // Submit the form for existing customer
+          confirmExistingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Booking...';
+          confirmExistingBtn.disabled = true;
+          bookingForm.submit();
+        });
+      }
+      
+      // Update info handler
+      const updateInfoBtn = document.getElementById('updateInfoBtn');
+      if (updateInfoBtn) {
+        updateInfoBtn.addEventListener('click', function() {
+          // Switch to new customer form to update info
+          showNewCustomer();
         });
       }
 
-      // Form validation enhancement
-      const form = document.querySelector('.contact-form');
-      const submitBtn = document.querySelector('.submit-btn');
-      
-      form.addEventListener('submit', function(e) {
-        const email = document.getElementById('emailAddress').value;
-        const firstName = document.getElementById('givenName').value;
-        const lastName = document.getElementById('familyName').value;
-        
-        // Basic validation
-        if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-          e.preventDefault();
-          alert('Please fill in all required fields.');
-          return;
-        }
-        
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-          e.preventDefault();
-          alert('Please enter a valid email address.');
-          return;
-        }
-        
-        // Show loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Booking...';
-      });
-
-      // Input focus enhancement
-      const inputs = document.querySelectorAll('input, textarea');
-      inputs.forEach(input => {
-        input.addEventListener('focus', function() {
-          this.parentElement.style.transform = 'scale(1.02)';
-          this.parentElement.style.transition = 'transform 0.2s ease';
+      // Form submission handler for new customers
+      if (bookingForm) {
+        bookingForm.addEventListener('submit', function(e) {
+          const email = document.getElementById('emailAddress');
+          const firstName = document.getElementById('givenName');
+          const lastName = document.getElementById('familyName');
+          const submitBtn = bookingForm.querySelector('button[type="submit"]');
+          
+          // Only validate if new customer form is visible
+          if (newCustomerStep.style.display !== 'none') {
+            if (!firstName.value.trim() || !lastName.value.trim() || !email.value.trim()) {
+              e.preventDefault();
+              alert('Please fill in all required fields.');
+              return;
+            }
+            
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email.value)) {
+              e.preventDefault();
+              alert('Please enter a valid email address.');
+              return;
+            }
+          }
+          
+          // Show loading state
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Booking...';
+          }
         });
-        
-        input.addEventListener('blur', function() {
-          this.parentElement.style.transform = 'scale(1)';
-        });
-      });
+      }
     });
   </script>
 </body>

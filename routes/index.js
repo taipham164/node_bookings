@@ -19,6 +19,7 @@ const contactRoute = require("./contact");
 const servicesRoute = require("./services");
 const staffRoute = require("./staff");
 const authRoute = require("./auth"); // Add the new auth route
+const customerRoute = require("./customer"); // Add the new customer route
 
 router.use("/availability", availabilityRoute);
 router.use("/contact", contactRoute);
@@ -26,6 +27,7 @@ router.use("/services", servicesRoute);
 router.use("/staff", staffRoute);
 router.use("/booking", bookingRoute);
 router.use("/auth", authRoute); // Add auth routes
+router.use("/customer", customerRoute); // Add customer routes
 
 /**
  * GET /
