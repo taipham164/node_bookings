@@ -524,10 +524,83 @@
       </form>
 
       <!-- Service Limit Notice -->
-      <div id="service-limit-notice" style="display:none;color:#d00;font-weight:bold;text-align:center;margin:1em 0;padding:1rem;background:#fff5f5;border:1px solid #fed7d7;border-radius:8px;">
-        <i class="fas fa-exclamation-triangle"></i>
+      <div id="service-limit-notice" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;color:#d00;font-weight:bold;text-align:center;padding:1rem 1.5rem;background:#fff5f5;border:2px solid #fed7d7;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);animation:slideDown 0.3s ease-out;max-width:90vw;width:auto;white-space:nowrap;height:auto;min-height:auto;max-height:none;">
+        <i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>
         You can select up to 3 different services and a total of 3 items only.
       </div>
+
+      <!-- Call Us Message -->
+      <div id="call-us-message" style="display:none;position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:1000;color:#666;text-align:center;padding:1rem 1.5rem;background:#f8f9fa;border:2px solid #dee2e6;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);animation:slideDown 0.3s ease-out;max-width:90vw;width:auto;white-space:nowrap;height:auto;min-height:auto;max-height:none;">
+        <i class="fas fa-phone" style="margin-right:8px;"></i>
+        Need more than 3 services? Please call us to book your appointment.
+      </div>
+
+      <!-- Animation styles for floating notices -->
+      <style>
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+        
+        @keyframes slideUp {
+          from {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+          to {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+          }
+        }
+        
+        .sliding-out {
+          animation: slideUp 0.3s ease-out forwards !important;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          #service-limit-notice,
+          #call-us-message {
+            left: 10px !important;
+            right: 10px !important;
+            transform: none !important;
+            max-width: calc(100vw - 20px) !important;
+            width: auto !important;
+            white-space: normal !important;
+            font-size: 0.9rem !important;
+            height: auto !important;
+            min-height: auto !important;
+            max-height: none !important;
+            line-height: 1.4 !important;
+            padding: 0.8rem 1rem !important;
+            overflow: visible !important;
+            box-sizing: border-box !important;
+          }
+          
+          #call-us-message {
+            top: 70px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          #service-limit-notice,
+          #call-us-message {
+            font-size: 0.85rem !important;
+            padding: 0.7rem 0.8rem !important;
+            top: 15px !important;
+          }
+          
+          #call-us-message {
+            top: 60px !important;
+          }
+        }
+      </style>
 
       <!-- Grid Styles -->
       <style>
@@ -643,6 +716,15 @@
       
       // Always update limits and continue button
       if (typeof enforceLimits === 'function') enforceLimits();
+      
+      // Trigger appointment summary update via custom event
+      // This ensures the external appointment-summary.js can respond regardless of load timing
+      var summaryUpdateEvent = new CustomEvent('quantityChanged', {
+        detail: { serviceId: id, newQuantity: val }
+      });
+      document.dispatchEvent(summaryUpdateEvent);
+      
+      // Also try direct function call as fallback
       if (typeof updateAppointmentSummary === 'function') updateAppointmentSummary();
     }
 
@@ -650,6 +732,7 @@
     const MAX_TOTAL_AMOUNT = 3;
 
     function enforceLimits() {
+      console.log('DEBUG: enforceLimits called');
       const form = document.querySelector('form[action="/services/select"]');
       if (!form) return;
 
@@ -662,6 +745,16 @@
         summaryBarNext: document.getElementById('summary-bar-next'),
         summarySheetNext: document.getElementById('summary-sheet-next')
       };
+
+      console.log('DEBUG: Elements found:', {
+        checkboxes: elements.checkboxes.length,
+        continueBtn: !!elements.continueBtn,
+        bottomBar: !!elements.bottomBar,
+        callUsMsg: !!elements.callUsMsg,
+        notice: !!elements.notice,
+        summaryBarNext: !!elements.summaryBarNext,
+        summarySheetNext: !!elements.summarySheetNext
+      });
 
       let state = { checkedCount: 0, totalQty: 0 };
 
@@ -692,6 +785,15 @@
       const hasSelections = state.checkedCount > 0;
       const overLimits = state.checkedCount > MAX_DIFFERENT_SERVICES || state.totalQty > MAX_TOTAL_AMOUNT;
 
+      console.log('DEBUG: Service limits state:', {
+        checkedCount: state.checkedCount,
+        totalQty: state.totalQty,
+        hasSelections,
+        overLimits,
+        MAX_DIFFERENT_SERVICES,
+        MAX_TOTAL_AMOUNT
+      });
+
       // Update checkboxes state
       elements.checkboxes.forEach(cb => {
         if (!cb.checked) {
@@ -699,9 +801,36 @@
         }
       });
 
-      // Update UI visibility
+      // Update UI visibility with smooth animations
       if (elements.notice) {
-        elements.notice.style.display = overLimits ? 'block' : 'none';
+        if (overLimits && elements.notice.style.display === 'none') {
+          // Show with animation
+          elements.notice.style.display = 'block';
+          elements.notice.classList.remove('sliding-out');
+        } else if (!overLimits && elements.notice.style.display !== 'none') {
+          // Hide with animation
+          elements.notice.classList.add('sliding-out');
+          setTimeout(() => {
+            elements.notice.style.display = 'none';
+            elements.notice.classList.remove('sliding-out');
+          }, 300);
+        }
+      }
+
+      // Update call us message with smooth animations
+      if (elements.callUsMsg) {
+        if (overLimits && elements.callUsMsg.style.display === 'none') {
+          // Show with animation
+          elements.callUsMsg.style.display = 'block';
+          elements.callUsMsg.classList.remove('sliding-out');
+        } else if (!overLimits && elements.callUsMsg.style.display !== 'none') {
+          // Hide with animation
+          elements.callUsMsg.classList.add('sliding-out');
+          setTimeout(() => {
+            elements.callUsMsg.style.display = 'none';
+            elements.callUsMsg.classList.remove('sliding-out');
+          }, 300);
+        }
       }
 
       // Update continue button and mobile bar button states
@@ -710,6 +839,15 @@
           if (hasSelections) {
             btn.style.display = '';
             btn.disabled = overLimits;
+            if (overLimits) {
+              btn.setAttribute('disabled', 'disabled');
+              btn.style.opacity = '0.5';
+              btn.style.cursor = 'not-allowed';
+            } else {
+              btn.removeAttribute('disabled');
+              btn.style.opacity = '1';
+              btn.style.cursor = 'pointer';
+            }
             if (btn === elements.continueBtn) {
               btn.classList.toggle('continue-fixed-btn-active', !overLimits);
             }
@@ -719,10 +857,29 @@
         }
       });
 
-      // Update call us message
-      if (elements.callUsMsg) {
-        elements.callUsMsg.style.display = overLimits ? 'block' : 'none';
-      }
+      // Also update any buttons that might be created by appointment-summary.js
+      setTimeout(() => {
+        ['continue-btn', 'summary-bar-next', 'summary-sheet-next'].forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) {
+            if (hasSelections) {
+              btn.style.display = '';
+              btn.disabled = overLimits;
+              if (overLimits) {
+                btn.setAttribute('disabled', 'disabled');
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+              } else {
+                btn.removeAttribute('disabled');
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+              }
+            } else {
+              btn.style.display = 'none';
+            }
+          }
+        });
+      }, 100);
 
       // Update mobile bottom bar visibility
       if (elements.bottomBar && hasSelections) {
@@ -730,6 +887,18 @@
       } else if (elements.bottomBar) {
         elements.bottomBar.classList.remove('show');
       }
+
+      // Dispatch custom event to notify appointment summary about limit changes
+      document.dispatchEvent(new CustomEvent('serviceLimitsChanged', {
+        detail: { 
+          hasSelections, 
+          overLimits, 
+          checkedCount: state.checkedCount, 
+          totalQty: state.totalQty,
+          maxServices: MAX_DIFFERENT_SERVICES,
+          maxTotal: MAX_TOTAL_AMOUNT
+        }
+      }));
     }
 
     function closeServiceDetail() {
@@ -771,6 +940,15 @@
       });
       
       enforceLimits();
+
+      // Ensure appointment summary is aware of initial state
+      setTimeout(() => {
+        enforceLimits();
+        // Trigger appointment summary update if available
+        if (typeof updateAppointmentSummary === 'function') {
+          updateAppointmentSummary();
+        }
+      }, 200);
 
       // Service detail modal handling
       document.querySelectorAll('.see-detail-link').forEach(function(link) {

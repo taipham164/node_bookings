@@ -30,6 +30,42 @@ document.addEventListener('DOMContentLoaded', function() {
   setupFormHandlers();
 });
 
+// Listen for quantity changes from the template's changeQty function
+document.addEventListener('quantityChanged', function(e) {
+  console.log('Quantity changed event received:', e.detail);
+  updateAppointmentSummary();
+  updateBarAndSheet();
+});
+
+// Listen for service limits changes from the services page
+document.addEventListener('serviceLimitsChanged', function(e) {
+  console.log('Service limits changed event received:', e.detail);
+  const { hasSelections, overLimits } = e.detail;
+  
+  // Update all appointment summary buttons based on limits
+  const buttonIds = ['continue-btn', 'summary-bar-next', 'summary-sheet-next'];
+  buttonIds.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      if (hasSelections) {
+        btn.style.display = '';
+        btn.disabled = overLimits;
+        if (overLimits) {
+          btn.setAttribute('disabled', 'disabled');
+          btn.style.opacity = '0.5';
+          btn.style.cursor = 'not-allowed';
+        } else {
+          btn.removeAttribute('disabled');
+          btn.style.opacity = '1';
+          btn.style.cursor = 'pointer';
+        }
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+  });
+});
+
 // Set up form submission handlers for appointment summary buttons
 function setupFormHandlers() {
   var staffForm = document.querySelector('form[id="staff-form"]');
@@ -70,6 +106,24 @@ function updateAppointmentSummary() {
   summaryItems.innerHTML = '';
   let hasItems = false;
   
+  // Check service limits
+  let checkedCount = 0;
+  let totalQty = 0;
+  const MAX_DIFFERENT_SERVICES = 3;
+  const MAX_TOTAL_AMOUNT = 3;
+  
+  checked.forEach(function(cb) {
+    checkedCount++;
+    var qtyInput = document.getElementById('quantity-' + cb.value);
+    var qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 1 : 1;
+    totalQty += qty;
+  });
+  
+  const overLimits = checkedCount > MAX_DIFFERENT_SERVICES || totalQty > MAX_TOTAL_AMOUNT;
+  console.log('DEBUG: updateAppointmentSummary limits check:', {
+    checkedCount, totalQty, overLimits, MAX_DIFFERENT_SERVICES, MAX_TOTAL_AMOUNT
+  });
+  
   checked.forEach(function(cb) {
     var label = cb.closest('.service-label');
     var name = label ? label.querySelector('h4')?.textContent?.trim() : '';
@@ -105,11 +159,23 @@ function updateAppointmentSummary() {
     if (btn) {
       if (hasItems) {
         btn.style.display = btn === continueBtn ? 'block' : '';
-        btn.disabled = false;
-        // Enhanced styling for inline continue button
-        if (btn === continueBtn) {
+        // Disable button if over limits, otherwise enable based on hasItems
+        btn.disabled = overLimits;
+        if (overLimits) {
+          btn.setAttribute('disabled', 'disabled');
+          btn.style.opacity = '0.5';
+          btn.style.cursor = 'not-allowed';
+          console.log('DEBUG: Button disabled due to limits:', btn.id || 'unknown');
+        } else {
+          btn.removeAttribute('disabled');
           btn.style.opacity = '1';
           btn.style.cursor = 'pointer';
+          console.log('DEBUG: Button enabled:', btn.id || 'unknown');
+        }
+        // Enhanced styling for inline continue button
+        if (btn === continueBtn) {
+          btn.style.opacity = overLimits ? '0.5' : '1';
+          btn.style.cursor = overLimits ? 'not-allowed' : 'pointer';
         }
       } else {
         btn.style.display = 'none'; // Hide the button completely when no items

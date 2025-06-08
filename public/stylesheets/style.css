@@ -1134,11 +1134,14 @@ aside#appointment-summary {
   
   /* Call us message mobile adjustment */
   #call-us-message {
-    bottom: 120px !important;
-    max-width: calc(100% - 32px);
-    margin: 0 16px;
-    width: auto;
-    white-space: normal;
+    position: fixed !important;
+    max-width: calc(100vw - 20px) !important;
+    width: auto !important;
+    white-space: normal !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    line-height: 1.4 !important;
   }
 }
 
