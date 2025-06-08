@@ -11,31 +11,66 @@
       },
       dateFormat: 'yy-mm-dd',
       minDate: 0,
-      maxDate: "30d"
+      maxDate: "30d",
+      showAnim: "fadeIn",
+      duration: 300,
+      changeMonth: false,
+      changeYear: false,
+      showButtonPanel: false,
+      firstDay: 0, // Start week on Sunday
+      dayNamesMin: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+      onSelect: function(dateText, inst) {
+        // Add a subtle animation when date is selected
+        $(this).addClass('date-selected');
+        setTimeout(() => {
+          $(this).removeClass('date-selected');
+        }, 300);
+      }
     });
+    
     $("#datepicker").on("change", function() {
       datePickerHandler.selectNewDate($(this).val());
-    })
+    });
+    
+    // Initialize datepicker visibility
+    $("#datepicker").show();
   } );
   </script>
   <script src="/js/date-picker-handler.js"></script>
+  <style>
+    .date-selected {
+      transform: scale(1.02);
+      transition: transform 0.3s ease;
+    }
+  </style>
 </head>
     
 <div class="availability">
-  <h4> Select appointment date </h4>
-  <div id="datepicker"></div>
-  <h4> Available Times </h4>
-
-  <p> You can schedule an appointment between 4 hours and 30 days ahead of time. </p>
-
-  <% if (getLocalTimezone() !== location.timezone) { %>
-    <div class="timezone-warning">
-      <span class="notify-icon"> &#9888; </span>
-      <span> <b>HEADS UP!</b> It looks like you're in a different timezone. Times below are shown in <%= location.timezone %> time.</span>
-    </div>
-  <% } %>
+  <div class="availability-header">
+    <h4 class="section-title">Select appointment date</h4>
+    <p class="section-subtitle">Choose your preferred date from the calendar below</p>
+  </div>
   
-  <div id="available-times">
+  <div class="datepicker-container">
+    <div id="datepicker"></div>
+  </div>
+  
+  <div class="times-section">
+    <h4 class="section-title">Available Times</h4>
+    <p class="availability-info">You can schedule an appointment between 4 hours and 30 days ahead of time.</p>
+
+    <% if (getLocalTimezone() !== location.timezone) { %>
+      <div class="timezone-warning">
+        <span class="notify-icon">⚠️</span>
+        <div class="warning-content">
+          <strong>HEADS UP!</strong> It looks like you're in a different timezone. Times below are shown in <strong><%= location.timezone %></strong> time.
+        </div>
+      </div>
+    <% } %>
+    
+    <div id="available-times" class="time-slots-container">
+      <!-- Available time slots will be populated here -->
+    </div>
   </div>
 </div>
 <script>

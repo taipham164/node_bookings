@@ -169,24 +169,40 @@ router.post("/select", async (req, res, next) => {
       req.session = {};
     }
     
-    // Store the selected staff in the session
-    req.session.selectedStaffId = selectedStaffId;
-    
-    // Get staff profile details to store in session
-    const { result: { teamMemberBookingProfile } } = await bookingsApi.retrieveTeamMemberBookingProfile(selectedStaffId);
-    
-    // Store the staff profile info in the session
-    req.session.teamMemberBookingProfile = teamMemberBookingProfile;
-    req.session.staffProfile = {
-      id: teamMemberBookingProfile.teamMemberId,
-      displayName: teamMemberBookingProfile.displayName,
-      description: teamMemberBookingProfile.description || "",
-      profileImageUrl: teamMemberBookingProfile.profileImageUrl || ""
-    };
-    
-    // Debug: Log the selected staff info
-    console.log('DEBUG: /staff/select session.selectedStaffId', req.session.selectedStaffId);
-    console.log('DEBUG: /staff/select session.staffProfile', req.session.staffProfile);
+    // Handle "Any Available Staff" selection
+    if (selectedStaffId === 'anyStaffMember') {
+      // Store special flag for any staff member selection
+      req.session.selectedStaffId = 'anyStaffMember';
+      req.session.staffProfile = {
+        id: 'anyStaffMember',
+        displayName: 'Any Available Staff Member',
+        description: "Looking for the earliest available appointment with any qualified staff member.",
+        profileImageUrl: ""
+      };
+      
+      // Debug: Log the any staff selection
+      console.log('DEBUG: /staff/select - Any Staff Member selected');
+      console.log('DEBUG: /staff/select session.staffProfile', req.session.staffProfile);
+    } else {
+      // Store the selected staff in the session
+      req.session.selectedStaffId = selectedStaffId;
+      
+      // Get staff profile details to store in session
+      const { result: { teamMemberBookingProfile } } = await bookingsApi.retrieveTeamMemberBookingProfile(selectedStaffId);
+      
+      // Store the staff profile info in the session
+      req.session.teamMemberBookingProfile = teamMemberBookingProfile;
+      req.session.staffProfile = {
+        id: teamMemberBookingProfile.teamMemberId,
+        displayName: teamMemberBookingProfile.displayName,
+        description: teamMemberBookingProfile.description || "",
+        profileImageUrl: teamMemberBookingProfile.profileImageUrl || ""
+      };
+      
+      // Debug: Log the selected staff info
+      console.log('DEBUG: /staff/select session.selectedStaffId', req.session.selectedStaffId);
+      console.log('DEBUG: /staff/select session.staffProfile', req.session.staffProfile);
+    }
     
     // Get services from session to pass to availability page
     const selectedServices = req.session.selectedServices || [];
