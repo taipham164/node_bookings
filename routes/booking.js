@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 const dateHelpers = require("../util/date-helpers");
-const { safeNumberConversion, safeJSONStringify, convertMsToMins, convertVersion } = require("../util/bigint-helpers");
+const { safeNumberConversion, safeJSONStringify, convertMsToMins, convertVersion, hasSquareError } = require("../util/bigint-helpers");
 const express = require("express");
 const router = express.Router();
 const {
@@ -85,7 +85,8 @@ router.post("/create", async (req, res, next) => {
     const serviceVariationVersion = req.query.version;
     const staffId = req.query.staffId;
     const startAt = req.query.startAt;
-    const customerNote = req.body.customerNote;
+    // Handle customerNote from either existing or new customer forms
+    const customerNote = req.body.existingCustomerNote || req.body.newCustomerNote || "";
     
     // Handle both new and existing customer data
     const customerId = req.body.customerId; // For existing customers
@@ -194,8 +195,8 @@ router.post("/create", async (req, res, next) => {
     
     res.redirect("/booking/" + booking.id);
   } catch (error) {
-    // Handle invalid email error gracefully
-    if (error.errors && error.errors.some(e => e.code === 'INVALID_VALUE' && e.field === 'email')) {
+    // Handle invalid email error gracefully using safe error checking
+    if (hasSquareError(error, 'INVALID_VALUE', 'email')) {
       // Fetch actual service details for better UX
       let serviceDetails = [];
       if (req.session?.selectedServices?.length) {

@@ -250,9 +250,12 @@ router.post("/select", async (req, res, next) => {
     }
   });
 
-  // For downstream compatibility, set all quantities to 1
+  // Create proper quantities object that reflects actual quantities
   let expandedQuantities = {};
-  expandedServiceIds.forEach(sid => { expandedQuantities[sid] = 1; });
+  serviceIds.forEach(sid => {
+    const qty = quantities[sid] ? parseInt(quantities[sid], 10) : 1;
+    expandedQuantities[sid] = qty;
+  });
 
   // After building expandedServiceIds, fetch all selected services and check for priceMoney
   const missingPriceIds = [];

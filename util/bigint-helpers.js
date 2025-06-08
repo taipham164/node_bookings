@@ -80,10 +80,31 @@ function convertVersion(version) {
   return safeNumberConversion(version);
 }
 
+/**
+ * Safe error checking for Square API errors
+ * @param {*} error - Error object that might have BigInt or non-array errors
+ * @param {string} code - Error code to check for
+ * @param {string} field - Field name to check for (optional)
+ * @returns {boolean} - True if error matches criteria
+ */
+function hasSquareError(error, code, field = null) {
+  if (!error || !error.errors) return false;
+  
+  // Ensure errors is an array
+  if (!Array.isArray(error.errors)) return false;
+  
+  return error.errors.some(e => {
+    if (e.code !== code) return false;
+    if (field && e.field !== field) return false;
+    return true;
+  });
+}
+
 module.exports = {
   safeNumberConversion,
   safeJSONStringify,
   convertPriceAmount,
   convertMsToMins,
-  convertVersion
+  convertVersion,
+  hasSquareError
 };
