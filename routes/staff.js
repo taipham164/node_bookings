@@ -53,9 +53,19 @@ router.get("/:serviceId", async (req, res, next) => {
   const serviceSessionDetails = req.session?.serviceDetails || {};
   
   try {
-    // Fetch all selected service variations for display
+    // Group services by ID and count quantities
+    const serviceGroups = {};
+    selectedServices.forEach(sid => {
+      if (serviceGroups[sid]) {
+        serviceGroups[sid].quantity += 1;
+      } else {
+        serviceGroups[sid] = { id: sid, quantity: 1 };
+      }
+    });
+
+    // Fetch all unique service variations for display
     const serviceDetails = [];
-    for (const sid of selectedServices) {
+    for (const sid of Object.keys(serviceGroups)) {
       const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
       const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
       
@@ -77,9 +87,10 @@ router.get("/:serviceId", async (req, res, next) => {
       
       serviceDetails.push({
         id: sid,
-        name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
+        // name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
+        name: item.itemData.name,
         duration: variation.itemVariationData.serviceDuration,
-        quantity: quantities[sid] ? parseInt(quantities[sid], 10) : 1,
+        quantity: serviceGroups[sid].quantity,
         price: price
       });
     }
