@@ -387,7 +387,16 @@ router.post("/select", async (req, res, next) => {
 
   const firstServiceId = expandedServiceIds[0];
   const version = req.body.version || '';
-  res.redirect(`/staff/${firstServiceId}?version=${version}`);
+  
+  // Save session before redirect to ensure persistence
+  req.session.save((err) => {
+    if (err) {
+      console.error('Session save error:', err);
+      return res.redirect('/services?error=session_error');
+    }
+    console.log('DEBUG: Session saved successfully, redirecting to staff page');
+    res.redirect(`/staff/${firstServiceId}?version=${version}`);
+  });
 });
 
 module.exports = router;

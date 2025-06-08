@@ -7,6 +7,7 @@
   <title>Select Staff - <%= location?.businessName || 'Booking System' %></title>
   <link rel="stylesheet" href="/stylesheets/style.css" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="/javascripts/appointment-summary.js" defer></script>
   <style>    .staff-container {
       max-width: 800px;
       margin: 0 auto;
@@ -616,6 +617,18 @@
     </div>
   </div>
 
+  <!-- Include the appointment summary partial -->
+  <%- include("../partials/appointment-summary") %>
+
+  <script>
+    // Make service details available to appointment summary JavaScript
+    <% if (typeof serviceDetails !== 'undefined' && serviceDetails) { %>
+      window.serviceDetails = <%- JSON.stringify(serviceDetails) %>;
+    <% } else { %>
+      window.serviceDetails = [];
+    <% } %>
+  </script>
+
   <!-- Staff Details Modal -->
   <div id="staffModal" class="modal">
     <div class="modal-content">
@@ -635,24 +648,9 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const form = document.getElementById('staff-form');
-      const continueBtn = document.getElementById('continue-btn');
       const staffCards = document.querySelectorAll('.staff-card');
-      const radioButtons = document.querySelectorAll('input[name="staffId"]');      // Enable continue button when staff is selected
-      function updateContinueButton() {
-        const selectedStaff = document.querySelector('input[name="staffId"]:checked');
-        if (selectedStaff) {
-          continueBtn.disabled = false;
-          continueBtn.style.opacity = '1';
-          continueBtn.style.cursor = 'pointer';
-        } else {
-          continueBtn.disabled = true;
-          continueBtn.style.opacity = '0.5';
-          continueBtn.style.cursor = 'not-allowed';
-        }
-      }
 
-      // Add click handlers to staff cards
+      // Add click handlers to staff cards for visual selection only
       staffCards.forEach(function(card, index) {
         card.addEventListener('click', function() {
           // Remove selected class from all cards
@@ -665,28 +663,10 @@
           const radio = this.querySelector('input[type="radio"]');
           if (radio) {
             radio.checked = true;
-            updateContinueButton();
+            // Trigger change event for appointment-summary.js to handle
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
           }
         });
-      });
-
-      // Add change listeners to radio buttons
-      radioButtons.forEach(function(radio) {
-        radio.addEventListener('change', updateContinueButton);
-      });
-
-      // Form submission handling
-      form.addEventListener('submit', function(e) {
-        const selectedStaff = document.querySelector('input[name="staffId"]:checked');
-        if (!selectedStaff) {
-          e.preventDefault();
-          alert('Please select a staff member to continue.');
-          return;
-        }
-
-        // Show loading state
-        continueBtn.disabled = true;
-        continueBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
       });
 
       // Add CSS for selected state
@@ -738,9 +718,6 @@
         }
       `;
       document.head.appendChild(style);
-
-      // Initialize
-      updateContinueButton();
 
       // Modal functionality
       const modal = document.getElementById('staffModal');

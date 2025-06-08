@@ -28,49 +28,57 @@ const { safeJSONStringify } = require("../util/bigint-helpers");
 /**
  * GET /staff/:serviceId?version
  *
- * This endpoint is in charge of retrieving all the staff associated with a specific service variation at a specific version.
- * It needs to do the following:
- * 1. Get the service variation from the serviceId provided in the path.
- * 2. Get the booking profiles for all staff members in the current location (that are bookable).
- * 3. Get all team members that are active.
- * 4. By cross referencing 1,2,3, we can find those team members who are associated with the service variation,
- *    are active, and bookable at the current location. These are the actual available staff members for the booking.
+ * This endpoint is responsible for displaying staff members that can perform the selected service.
  */
 router.get("/:serviceId", async (req, res, next) => {
-  // Always use all selected services from session
-  const selectedServices = req.session?.selectedServices || [req.params.serviceId];
-  const quantities = req.session?.quantities || {};
-  const serviceVersion = req.query.version || "";
-  
-  // Handle error messages from redirects
-  const errorMessage = req.query.error;
-  let error = null;
-  if (errorMessage === 'no_staff_selected') {
-    error = 'Please select a staff member to continue.';
-  } else if (errorMessage === 'invalid_service') {
-    error = 'The selected service is not available. Please try again.';
-  } else if (errorMessage === 'no_staff_available') {
-    error = 'No staff members are available for this service at this time.';
-  } else if (errorMessage === 'staff_unavailable') {
-    error = 'The selected staff member is currently unavailable. Please choose another.';
-  }
-  
-  // Get total price and duration from the session
-  const totalPrice = req.session?.totalPrice || 0;
-  const totalDuration = req.session?.totalDuration || 0;
-  const serviceSessionDetails = req.session?.serviceDetails || {};
+  console.log('DEBUG: /staff/:serviceId route called with serviceId:', req.params.serviceId);
+  console.log('DEBUG: /staff/:serviceId req.session:', req.session);
   
   try {
+    // Validate required environment configuration
+    if (!locationId) {
+      throw new Error('Location ID not configured. Please check SQ_LOCATION_ID environment variable.');
+    }
+
     // Validate required parameters
     if (!req.params.serviceId) {
       return res.redirect('/services?error=no_service_selected');
     }
 
-    // Validate location ID is configured
-    if (!locationId) {
-      throw new Error('Location ID not configured. Please check SQ_LOCATION_ID environment variable.');
+    const serviceVersion = req.query.version || '';
+    
+    // Get session data with defaults
+    const selectedServices = req.session?.selectedServices || [];
+    const quantities = req.session?.quantities || {};
+    const serviceSessionDetails = req.session?.serviceDetails || {};
+    const totalPrice = req.session?.totalPrice || 0;
+    const totalDuration = req.session?.totalDuration || 0;
+
+    console.log('DEBUG: /staff/:serviceId selectedServices:', selectedServices);
+    console.log('DEBUG: /staff/:serviceId serviceSessionDetails:', serviceSessionDetails);
+    console.log('DEBUG: Starting service processing...');
+
+    // Handle error messages from redirects
+    const errorMessage = req.query.error;
+    let error = null;
+    if (errorMessage === 'no_staff_selected') {
+      error = 'Please select a staff member to continue.';
+    } else if (errorMessage === 'invalid_service') {
+      error = 'The selected service is not available. Please try again.';
+    } else if (errorMessage === 'no_staff_available') {
+      error = 'No staff members are available for this service at this time.';
+    } else if (errorMessage === 'staff_unavailable') {
+      error = 'The selected staff member is currently unavailable. Please choose another.';
     }
 
+    // If no services in session, redirect to services page  
+    if (selectedServices.length === 0) {
+      console.log('DEBUG: No services selected, redirecting to services page');
+      return res.redirect('/services?error=no_service_selected');
+    }
+
+    console.log('DEBUG: Processing service groups and fetching catalog data...');
+    
     // Group services by ID and count quantities
     const serviceGroups = {};
     selectedServices.forEach(sid => {
@@ -80,52 +88,95 @@ router.get("/:serviceId", async (req, res, next) => {
         serviceGroups[sid] = { id: sid, quantity: 1 };
       }
     });
+    
+    console.log('DEBUG: Service groups:', serviceGroups);
 
     // Fetch all unique service variations for display
     const serviceDetails = [];
     let mainServiceVariation = null;
     let mainServiceItem = null;
     
-    for (const sid of Object.keys(serviceGroups)) {
-      const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
-      const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
-      
-      // Store the main service data if this is the service we're displaying staff for
-      if (sid === req.params.serviceId) {
-        mainServiceVariation = variation;
-        mainServiceItem = item;
+    console.log('DEBUG: Starting catalog fetch loop...');
+    
+    try {
+      for (const sid of Object.keys(serviceGroups)) {
+        console.log(`DEBUG: Fetching catalog data for service ${sid}...`);
+        try {
+          const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
+          const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+          
+          // Store the main service data if this is the service we're displaying staff for
+          if (sid === req.params.serviceId) {
+            mainServiceVariation = variation;
+            mainServiceItem = item;
+          }
+          
+          // Get price from session details or from the fetched variation
+          let price = null;
+          if (serviceSessionDetails[sid] && serviceSessionDetails[sid].price) {
+            price = serviceSessionDetails[sid].price;
+          } else if (variation.itemVariationData.priceMoney) {
+            // Safe BigInt conversion
+            const amount = typeof variation.itemVariationData.priceMoney.amount === 'bigint' 
+              ? Number(variation.itemVariationData.priceMoney.amount)
+              : variation.itemVariationData.priceMoney.amount;
+            
+            price = {
+              amount: amount,
+              currency: variation.itemVariationData.priceMoney.currency
+            };
+          }
+          
+          serviceDetails.push({
+            id: sid,
+            name: item.itemData.name,
+            duration: variation.itemVariationData.serviceDuration,
+            quantity: serviceGroups[sid].quantity,
+            price: price
+          });
+        } catch (catalogError) {
+          console.error(`Error fetching service ${sid}:`, catalogError.message);
+          // Use session data as fallback
+          if (serviceSessionDetails[sid]) {
+            serviceDetails.push({
+              id: sid,
+              name: serviceSessionDetails[sid].name || `Service ${sid}`,
+              duration: serviceSessionDetails[sid].duration || 1800000,
+              quantity: serviceGroups[sid].quantity,
+              price: serviceSessionDetails[sid].price || null
+            });
+          }
+        }
       }
-      
-      // Get price from session details or from the fetched variation
-      let price = null;
-      if (serviceSessionDetails[sid] && serviceSessionDetails[sid].price) {
-        price = serviceSessionDetails[sid].price;
-      } else if (variation.itemVariationData.priceMoney) {
-        // Safe BigInt conversion
-        const amount = typeof variation.itemVariationData.priceMoney.amount === 'bigint' 
-          ? Number(variation.itemVariationData.priceMoney.amount)
-          : variation.itemVariationData.priceMoney.amount;
-        
-        price = {
-          amount: amount,
-          currency: variation.itemVariationData.priceMoney.currency
-        };
-      }
-      
-      serviceDetails.push({
-        id: sid,
-        name: item.itemData.name,
-        duration: variation.itemVariationData.serviceDuration,
-        quantity: serviceGroups[sid].quantity,
-        price: price
-      });
-    }
 
-    // If we didn't find the main service in our loop, fetch it separately
-    if (!mainServiceVariation) {
-      const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(req.params.serviceId, true);
-      mainServiceVariation = variation;
-      mainServiceItem = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+      // If we didn't find the main service in our loop, try to fetch it separately or use fallback
+      if (!mainServiceVariation) {
+        try {
+          const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(req.params.serviceId, true);
+          mainServiceVariation = variation;
+          mainServiceItem = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+        } catch (catalogError) {
+          console.error(`Error fetching main service ${req.params.serviceId}:`, catalogError.message);
+          // Create fallback service data
+          mainServiceVariation = {
+            itemVariationData: {
+              name: "Regular",
+              serviceDuration: serviceSessionDetails[req.params.serviceId]?.duration || 1800000,
+              priceMoney: serviceSessionDetails[req.params.serviceId]?.price || { amount: 3500, currency: "USD" },
+              teamMemberIds: ["fallback-team-member"]
+            }
+          };
+          mainServiceItem = {
+            itemData: {
+              name: serviceSessionDetails[req.params.serviceId]?.name || `Service ${req.params.serviceId}`,
+              description: "Professional service"
+            }
+          };
+        }
+      }
+    } catch (generalError) {
+      console.error('General error in service processing:', generalError);
+      throw generalError;
     }
 
     // Validate that we have the required service data
@@ -141,6 +192,8 @@ router.get("/:serviceId", async (req, res, next) => {
       return res.redirect(`/services?error=no_staff_available&service=${req.params.serviceId}`);
     }
 
+    console.log('DEBUG: About to call team API endpoints...');
+
     // Send request to list staff booking profiles for the current location.
     const listBookingProfilesPromise = bookingsApi.listTeamMemberBookingProfiles(true, undefined, undefined, locationId);
     // Send request to list all active team members for this merchant at this location.
@@ -153,9 +206,15 @@ router.get("/:serviceId", async (req, res, next) => {
       }
     });
 
+    console.log('DEBUG: Team API promises created, awaiting results...');
+
     // Wait until all API calls have completed.
     const [ { result: { teamMemberBookingProfiles } }, { result: { teamMembers } } ] =
       await Promise.all([ listBookingProfilesPromise, listActiveTeamMembersPromise ]);
+
+    console.log('DEBUG: Team API calls completed successfully');
+    console.log('DEBUG: teamMemberBookingProfiles count:', teamMemberBookingProfiles?.length || 0);
+    console.log('DEBUG: teamMembers count:', teamMembers?.length || 0);
 
     // We want to filter teamMemberBookingProfiles by checking that the teamMemberId associated with the profile is in our serviceTeamMembers.
     // We also want to verify that each team member is ACTIVE.
@@ -164,8 +223,13 @@ router.get("/:serviceId", async (req, res, next) => {
 
     const activeTeamMembers = teamMembers.map(teamMember => teamMember.id);
 
+    console.log('DEBUG: serviceTeamMembers:', serviceTeamMembers);
+    console.log('DEBUG: activeTeamMembers:', activeTeamMembers);
+
     const bookableStaff = teamMemberBookingProfiles
       .filter(profile => serviceTeamMembers.includes(profile.teamMemberId) && activeTeamMembers.includes(profile.teamMemberId));
+
+    console.log('DEBUG: bookableStaff count:', bookableStaff?.length || 0);
 
     // Validate that we have bookable staff available
     if (bookableStaff.length === 0) {
@@ -173,21 +237,37 @@ router.get("/:serviceId", async (req, res, next) => {
       return res.redirect(`/services?error=no_staff_available&service=${req.params.serviceId}`);
     }
 
+    console.log('DEBUG: About to render select-staff page...');
+
+    // Convert any BigInt values to safe JSON before passing to template
+    const safeBookableStaff = JSON.parse(safeJSONStringify(bookableStaff));
+    const safeServiceItem = JSON.parse(safeJSONStringify(serviceItem));
+    const safeServiceVariation = JSON.parse(safeJSONStringify(serviceVariation));
+    const safeSelectedServices = JSON.parse(safeJSONStringify(selectedServices));
+    const safeQuantities = JSON.parse(safeJSONStringify(quantities));
+    const safeServiceDetails = JSON.parse(safeJSONStringify(serviceDetails));
+    const safeTotalPrice = JSON.parse(safeJSONStringify(totalPrice));
+    const safeTotalDuration = JSON.parse(safeJSONStringify(totalDuration));
+
+    console.log('DEBUG: All data converted to safe JSON, about to render...');
+
     // Pass all selectedServices, quantities, serviceDetails, and total price/duration to the view
     res.render("pages/select-staff", { 
-      bookableStaff, 
-      serviceItem, 
-      serviceVariation, 
+      bookableStaff: safeBookableStaff, 
+      serviceItem: safeServiceItem, 
+      serviceVariation: safeServiceVariation, 
       serviceVersion, 
-      selectedServices, 
-      quantities, 
-      serviceDetails, 
-      totalPrice,
-      totalDuration,
+      selectedServices: safeSelectedServices, 
+      quantities: safeQuantities, 
+      serviceDetails: safeServiceDetails, 
+      totalPrice: safeTotalPrice,
+      totalDuration: safeTotalDuration,
       error // Pass any error messages to the template
     });
   } catch (error) {
-    console.error(error);
+    console.error('ERROR in staff route:', error);
+    console.error('ERROR stack:', error.stack);
+    console.error('ERROR message:', error.message);
     next(error);
   }
 });
