@@ -18,7 +18,10 @@ class DatePickerHandler {
     this.bookingId = bookingId;
     // show the available times for today's date
     const now = new Date();
-    this.selectNewDate(new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split("T")[0]);
+    const today = now.getFullYear() + '-' + 
+      String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(now.getDate()).padStart(2, '0');
+    this.selectNewDate(today);
   }
 
   /**
@@ -99,21 +102,59 @@ class DatePickerHandler {
     availabilities.forEach((availability) => {
       // get start date
       const startAtDate = new Date(availability.startAt);
-      // convert dates to the business time zone
-      const businessTime = new Date(startAtDate.toLocaleString("en-US", { timeZone: businessTimeZone }));
-      const month = ("0" + (businessTime.getMonth() + 1)).slice(-2);
-      const date = ("0" + businessTime.getDate()).slice(-2);
-      const startDate = `${businessTime.getFullYear()}-${month}-${date}`;
+      
+      // Convert to business timezone using proper timezone conversion
+      // Create a date formatter for the business timezone
+      const dateFormatter = new Intl.DateTimeFormat('en-CA', { 
+        timeZone: businessTimeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      
+      const timeFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: businessTimeZone,
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
+      // Get the date in business timezone (YYYY-MM-DD format)
+      const startDate = dateFormatter.format(startAtDate);
+      
+      // Get the time components in business timezone
+      const timeString = timeFormatter.format(startAtDate);
+      const [hours, minutes] = timeString.split(':').map(Number);
+      
+      // Create a proper Date object in business timezone for display formatting
+      const businessTime = new Date(startAtDate);
+      businessTime.setTime(startAtDate.getTime()); // Keep original time for proper conversion
+      
       const availableTimes = dateAvailableTimesMap[startDate] || [];
       // add the available times as a value to the date
       availableTimes.push({
         date: availability.startAt, // keep date in same RFC 3339 format so it can be used in createBooking
         teamMemberId: availability.appointmentSegments[0].teamMemberId,
-        time: this.formatToAmPm(businessTime)
+        time: this.formatToAmPmFromComponents(hours, minutes)
       });
       dateAvailableTimesMap[startDate] = availableTimes;
     });
     return dateAvailableTimesMap;
+  }
+
+  /**
+   * Reformat time components to 12 hour am/pm format
+   * @param {Number} hours - hours in 24-hour format
+   * @param {Number} minutes - minutes
+   * @return {String} time in 12 hour format with am/pm
+   */
+  formatToAmPmFromComponents(hours, minutes) {
+    let ampm = hours >= 12 ? 'pm' : 'am';
+    let displayHours = hours % 12;
+    displayHours = displayHours ? displayHours : 12; // Handle midnight (0 hours)
+    const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+    return `${displayHours}:${displayMinutes} ${ampm}`;
   }
 
   /**
@@ -207,7 +248,9 @@ class DatePickerHandler {
    */
   isSelectable(date) {
     const now = new Date();
-    const today = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split("T")[0];
+    const today = now.getFullYear() + '-' + 
+      String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(now.getDate()).padStart(2, '0');
     const formattedDate = this.formatDate(date);
     // let date be selectable if there's availabilities for the date or if the date is today
     return [ this.availabilityMap[formattedDate] || formattedDate === today ];

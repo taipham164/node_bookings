@@ -306,10 +306,18 @@
                 minDate: 0,
                 maxDate: "30d",
                 onSelect: function(dateText) {
+                    console.log('Date selected:', dateText);
+                    
                     // Update selected date display
-                    const selectedDate = new Date(dateText);
+                    // Parse the date string safely to avoid timezone issues
+                    const [year, month, day] = dateText.split('-').map(num => parseInt(num, 10));
+                    const selectedDate = new Date(year, month - 1, day); // month is 0-indexed
+                    console.log('Parsed date object:', selectedDate);
+                    console.log('Selected day:', selectedDate.getDate());
+                    
                     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                     const formattedDate = selectedDate.toLocaleDateString('en-US', options);
+                    console.log('Formatted date:', formattedDate);
                     
                     document.getElementById('selected-date-text').textContent = formattedDate;
                     document.getElementById('selected-date-display').classList.add('show');

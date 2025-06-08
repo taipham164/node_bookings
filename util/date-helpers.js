@@ -17,9 +17,10 @@ module.exports = {
   // searchAvailability has a max query range of 32 days
   QUERY_RANGE_PERIOD_DAYS: 30,
 
-  // only show booking availability 4 hours from current time
+  // only show booking availability 1 hour from current time instead of 4
+  // This allows more flexibility for immediate bookings
   /* eslint-disable sort-keys */
-  MIN_BOOKING_START_TIME_HOURS: 4,
+  MIN_BOOKING_START_TIME_HOURS: 1,
 
   /**
    * Generate end date for search

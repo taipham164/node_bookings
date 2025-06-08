@@ -12,6 +12,7 @@ limitations under the License.
 */
 
 const dateHelpers = require("../util/date-helpers");
+const { safeNumberConversion } = require("../util/bigint-helpers");
 const express = require("express");
 const router = express.Router();
 require("dotenv").config();
@@ -87,6 +88,13 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
   
   const startAt = dateHelpers.getStartAtDate();
   
+  // Also create a more immediate start time for better availability search
+  const immediateStartAt = new Date();
+  // Start from current time to capture immediate availability
+  
+  // Use the earlier of the two times to maximize availability options
+  const searchStartAt = immediateStartAt < startAt ? immediateStartAt : startAt;
+  
   // Ensure session exists
   if (!req.session) {
     req.session = {};
@@ -114,6 +122,8 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       // Get quantity for this service (default 1)
       const quantity = quantities && quantities[sid] ? parseInt(quantities[sid], 10) : 1;
       
+      console.log(`DEBUG: availability - service ${sid} duration: ${duration} (type: ${typeof duration})`);
+      
       serviceDetails.push({
         id: sid,
         name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
@@ -121,12 +131,22 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
         quantity
       });
       
-      // For each quantity, push a segment
+      // For each quantity, push a segment with safe duration conversion
       for (let i = 0; i < quantity; i++) {
-        segmentFilters.push({
+        const durationMinutes = Math.round(safeNumberConversion(duration) / 1000 / 60);
+        console.log(`DEBUG: availability - segment ${i+1} for service ${sid}: durationMinutes=${durationMinutes}`);
+        
+        const segment = {
           serviceVariationId: sid,
-          durationMinutes: Math.round(Number(duration) / 1000 / 60)
-        });
+          durationMinutes: durationMinutes
+        };
+        
+        // Add service variation version if available for more precise matching
+        if (serviceVersion) {
+          segment.serviceVariationVersion = parseInt(serviceVersion, 10);
+        }
+        
+        segmentFilters.push(segment);
       }
     } catch (serviceError) {
       console.error(`Error fetching service details for ${sid}:`, serviceError);
@@ -146,57 +166,282 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     return res.redirect('/services?error=no_valid_services');
   }
 
-  const searchRequest = {
+  console.log('DEBUG: availability - segmentFilters:', JSON.stringify(segmentFilters, null, 2));
+
+  // Create multiple search requests to get comprehensive availability
+  const baseSearchRequest = {
     query: {
       filter: {
         locationId,
-        segmentFilters,
+        segmentFilters: segmentFilters.map(seg => ({ ...seg })), // Clone to avoid mutation
         startAtRange: {
-          endAt: dateHelpers.getEndAtDate(startAt).toISOString(),
-          startAt: startAt.toISOString(),
-        },
-        intervalMinutes: 30 // Show all possible start times at 30-min intervals
-      },
-      limit: 100 // Ensure all possible slots are returned
+          endAt: dateHelpers.getEndAtDate(searchStartAt).toISOString(),
+          startAt: searchStartAt.toISOString(),
+        }
+      }
     }
   };
+  
+  // Try with simpler segments for broader search
+  const simplifiedSegments = segmentFilters.map(seg => ({
+    serviceVariationId: seg.serviceVariationId,
+    // Remove durationMinutes to let Square determine optimal slots
+  }));
+  
+  const simplifiedSearchRequest = {
+    query: {
+      filter: {
+        locationId,
+        segmentFilters: simplifiedSegments,
+        startAtRange: {
+          endAt: dateHelpers.getEndAtDate(searchStartAt).toISOString(),
+          startAt: searchStartAt.toISOString(),
+        }
+      }
+    }
+  };
+  
+  // Create a minimal search request for maximum availability
+  const minimalSearchRequest = {
+    query: {
+      filter: {
+        locationId,
+        segmentFilters: [{
+          serviceVariationId: serviceId, // Use the primary service only
+        }],
+        startAtRange: {
+          endAt: dateHelpers.getEndAtDate(searchStartAt).toISOString(),
+          startAt: searchStartAt.toISOString(),
+        }
+      }
+    }
+  };
+  
+  console.log('DEBUG: availability - searchRequest:', JSON.stringify(baseSearchRequest, null, 2));
   
   try {
     // get service item - needed to display service details in left pane
     const retrieveServicePromise = catalogApi.retrieveCatalogObject(serviceId, true);
-    let availabilities;
+    let allAvailabilities = [];
     // additional data to send to template
     let additionalInfo;
+    
+    // Function to get all availability slots with comprehensive search strategies
+    const getAllAvailabilities = async (searchReq) => {
+      let availabilities = [];
+      let cursor = null;
+      let hasMore = true;
+      let pageCount = 0;
+      
+      console.log('DEBUG: Starting availability search with request:', JSON.stringify(searchReq, null, 2));
+      
+      while (hasMore && pageCount < 20) { // Increase page limit for more comprehensive search
+        pageCount++;
+        const requestWithCursor = { ...searchReq };
+        if (cursor) {
+          requestWithCursor.cursor = cursor;
+        }
+        
+        console.log(`DEBUG: Fetching availability page ${pageCount}${cursor ? ' with cursor' : ''}`);
+        
+        try {
+          const { result } = await bookingsApi.searchAvailability(requestWithCursor);
+          
+          console.log(`DEBUG: Page ${pageCount} returned:`, {
+            availabilitiesCount: result.availabilities?.length || 0,
+            hasCursor: !!result.cursor,
+            sampleTimes: result.availabilities?.slice(0, 3).map(a => a.startAt) || []
+          });
+          
+          if (result.availabilities && result.availabilities.length > 0) {
+            availabilities = availabilities.concat(result.availabilities);
+            console.log(`DEBUG: Retrieved ${result.availabilities.length} slots, total: ${availabilities.length}`);
+          }
+          
+          cursor = result.cursor;
+          hasMore = !!cursor;
+          
+          // If no new results, break to prevent infinite loop
+          if (!result.availabilities || result.availabilities.length === 0) {
+            hasMore = false;
+          }
+        } catch (error) {
+          console.error(`DEBUG: Error on page ${pageCount}:`, error.message);
+          hasMore = false;
+        }
+      }
+      
+      console.log(`DEBUG: Final availability count: ${availabilities.length} across ${pageCount} pages`);
+      return availabilities;
+    };
     
     // search availability for the specific staff member if staff id is passed as a param
     if (staffId === ANY_STAFF_PARAMS) {
       // For "any staff", get all team members who can perform the first service (for left pane info)
       const [ services, teamMembers ] = await searchActiveTeamMembers(serviceId);
       // Set all segmentFilters to allow any of these team members
-      for (const seg of searchRequest.query.filter.segmentFilters) {
+      for (const seg of baseSearchRequest.query.filter.segmentFilters) {
         seg.teamMemberIdFilter = { any: teamMembers };
       }
-      // get availability
-      const { result } = await bookingsApi.searchAvailability(searchRequest);
-      availabilities = result.availabilities;
+      for (const seg of simplifiedSearchRequest.query.filter.segmentFilters) {
+        seg.teamMemberIdFilter = { any: teamMembers };
+      }
+      for (const seg of minimalSearchRequest.query.filter.segmentFilters) {
+        seg.teamMemberIdFilter = { any: teamMembers };
+      }
+      
+      // Try multiple search approaches and combine results
+      let availabilities1, availabilities2, availabilities3;
+      try {
+        console.log('DEBUG: Trying detailed search...');
+        availabilities1 = await getAllAvailabilities(baseSearchRequest);
+        console.log(`DEBUG: Detailed search returned ${availabilities1.length} slots`);
+      } catch (error) {
+        console.warn('Detailed search failed:', error.message);
+        availabilities1 = [];
+      }
+      
+      try {
+        console.log('DEBUG: Trying simplified search...');
+        availabilities2 = await getAllAvailabilities(simplifiedSearchRequest);
+        console.log(`DEBUG: Simplified search returned ${availabilities2.length} slots`);
+      } catch (error) {
+        console.warn('Simplified search failed:', error.message);
+        availabilities2 = [];
+      }
+      
+      try {
+        console.log('DEBUG: Trying minimal search...');
+        availabilities3 = await getAllAvailabilities(minimalSearchRequest);
+        console.log(`DEBUG: Minimal search returned ${availabilities3.length} slots`);
+      } catch (error) {
+        console.warn('Minimal search failed:', error.message);
+        availabilities3 = [];
+      }
+      
+      // Combine and deduplicate results
+      const allSlotsMap = new Map();
+      [...availabilities1, ...availabilities2, ...availabilities3].forEach(slot => {
+        const key = `${slot.startAt}_${slot.appointmentSegments?.[0]?.teamMemberId || 'any'}`;
+        if (!allSlotsMap.has(key)) {
+          allSlotsMap.set(key, slot);
+        }
+      });
+      
+      allAvailabilities = Array.from(allSlotsMap.values()).sort((a, b) => 
+        new Date(a.startAt) - new Date(b.startAt)
+      );
+      
+      console.log(`DEBUG: availability - found ${allAvailabilities?.length || 0} total unique availability slots`);
+      if (allAvailabilities && allAvailabilities.length > 0) {
+        console.log('DEBUG: availability - first few slots:', allAvailabilities.slice(0, 3).map(a => ({
+          startAt: a.startAt,
+          segments: a.appointmentSegments?.length || 0
+        })));
+      }
+      
       additionalInfo = {
         serviceItem: services.relatedObjects.filter(relatedObject => relatedObject.type === "ITEM")[0],
         serviceVariation: services.object
       };
     } else {
       // Set all segmentFilters to require the selected staffId
-      for (const seg of searchRequest.query.filter.segmentFilters) {
+      for (const seg of baseSearchRequest.query.filter.segmentFilters) {
         seg.teamMemberIdFilter = { any: [staffId] };
       }
-      // get availability
-      const availabilityPromise = bookingsApi.searchAvailability(searchRequest);
+      for (const seg of simplifiedSearchRequest.query.filter.segmentFilters) {
+        seg.teamMemberIdFilter = { any: [staffId] };
+      }
+      for (const seg of minimalSearchRequest.query.filter.segmentFilters) {
+        seg.teamMemberIdFilter = { any: [staffId] };
+      }
+      
       // get team member booking profile - needed to display team member details in left pane
       const bookingProfilePromise = bookingsApi.retrieveTeamMemberBookingProfile(staffId);
       
-      const [ { result }, { result: services }, { result: { teamMemberBookingProfile } } ] = 
-        await Promise.all([ availabilityPromise, retrieveServicePromise, bookingProfilePromise ]);
+      const [ { result: services }, { result: { teamMemberBookingProfile } } ] = 
+        await Promise.all([ retrieveServicePromise, bookingProfilePromise ]);
       
-      availabilities = result.availabilities;
+      console.log(`DEBUG: services object structure:`, {
+        hasRelatedObjects: !!services?.relatedObjects,
+        relatedObjectsCount: services?.relatedObjects?.length || 0,
+        hasObject: !!services?.object,
+        objectType: services?.object?.type
+      });
+      console.log(`DEBUG: services type:`, typeof services);
+      console.log(`DEBUG: services.relatedObjects:`, services?.relatedObjects?.length || 'undefined');
+      
+      // Try multiple search approaches and combine results
+      let availabilities1, availabilities2, availabilities3;
+      try {
+        console.log(`DEBUG: Trying detailed search for staff ${staffId}...`);
+        availabilities1 = await getAllAvailabilities(baseSearchRequest);
+        console.log(`DEBUG: Detailed search returned ${availabilities1.length} slots for staff ${staffId}`);
+      } catch (error) {
+        console.warn('Detailed search failed:', error.message);
+        availabilities1 = [];
+      }
+      
+      try {
+        console.log(`DEBUG: Trying simplified search for staff ${staffId}...`);
+        availabilities2 = await getAllAvailabilities(simplifiedSearchRequest);
+        console.log(`DEBUG: Simplified search returned ${availabilities2.length} slots for staff ${staffId}`);
+      } catch (error) {
+        console.warn('Simplified search failed:', error.message);
+        availabilities2 = [];
+      }
+      
+      try {
+        console.log(`DEBUG: Trying minimal search for staff ${staffId}...`);
+        availabilities3 = await getAllAvailabilities(minimalSearchRequest);
+        console.log(`DEBUG: Minimal search returned ${availabilities3.length} slots for staff ${staffId}`);
+      } catch (error) {
+        console.warn('Minimal search failed:', error.message);
+        availabilities3 = [];
+      }
+      
+      // Combine and deduplicate results
+      const allSlotsMap = new Map();
+      [...availabilities1, ...availabilities2, ...availabilities3].forEach(slot => {
+        const key = slot.startAt;
+        if (!allSlotsMap.has(key)) {
+          allSlotsMap.set(key, slot);
+        }
+      });
+      
+      allAvailabilities = Array.from(allSlotsMap.values()).sort((a, b) => 
+        new Date(a.startAt) - new Date(b.startAt)
+      );
+      
+      console.log(`DEBUG: availability - found ${allAvailabilities?.length || 0} total unique availability slots for staff ${staffId}`);
+      
+      // Add detailed debugging for times
+      if (allAvailabilities && allAvailabilities.length > 0) {
+        console.log(`DEBUG: Sample availability times (first 10):`);
+        allAvailabilities.slice(0, 10).forEach((slot, index) => {
+          const startTime = new Date(slot.startAt);
+          console.log(`  ${index + 1}. ${slot.startAt} -> Local: ${startTime.toLocaleString()}`);
+        });
+        
+        // Check for evening slots specifically
+        const eveningSlots = allAvailabilities.filter(slot => {
+          const hour = new Date(slot.startAt).getHours();
+          return hour >= 17; // 5 PM and after
+        });
+        console.log(`DEBUG: Found ${eveningSlots.length} evening slots (5pm+) out of ${allAvailabilities.length} total`);
+        if (eveningSlots.length > 0) {
+          console.log('DEBUG: Evening slot examples:', eveningSlots.slice(0, 5).map(slot => ({
+            startAt: slot.startAt,
+            localTime: new Date(slot.startAt).toLocaleString()
+          })));
+        }
+      }
+      
+      if (!services || !services.relatedObjects) {
+        console.error('ERROR: services object or relatedObjects is missing:', services);
+        throw new Error('Failed to retrieve service information from Square API');
+      }
+      
       additionalInfo = {
         bookingProfile: teamMemberBookingProfile,
         serviceItem: services.relatedObjects.filter(relatedObject => relatedObject.type === "ITEM")[0],
@@ -215,7 +460,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     
     // send the serviceId & serviceVersion since it's needed to book an appointment in the next step
     res.render("pages/availability", { 
-      availabilities, 
+      availabilities: allAvailabilities, 
       serviceId, 
       serviceVersion, 
       ...additionalInfo, 
