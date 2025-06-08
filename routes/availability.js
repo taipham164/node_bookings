@@ -29,6 +29,47 @@ const {
 const ANY_STAFF_PARAMS = "anyStaffMember";
 
 /**
+ * Filter availability slots to only include those that have enough contiguous time
+ * for the total duration of all selected services
+ * @param {Array} availabilities - Array of availability objects from Square API
+ * @param {Number} totalDurationMinutes - Total duration needed in minutes
+ * @param {Array} segmentFilters - Array of segment filters used in the search
+ * @return {Array} Filtered array of availability objects
+ */
+function filterAvailabilitiesByTotalDuration(availabilities, totalDurationMinutes, segmentFilters) {
+  if (!availabilities || availabilities.length === 0) {
+    return [];
+  }
+  
+  // If we only have one segment or single service, no filtering needed
+  if (segmentFilters.length <= 1) {
+    return availabilities;
+  }
+  
+  console.log(`DEBUG: Filtering availabilities for total duration: ${totalDurationMinutes} minutes`);
+  
+  return availabilities.filter(availability => {
+    if (!availability.appointmentSegments || availability.appointmentSegments.length === 0) {
+      return false;
+    }
+    
+    // Check if this slot can accommodate all segments consecutively
+    // For now, we'll use a simple approach: if all segments are returned for the same start time,
+    // Square has verified that they can be scheduled consecutively
+    const segmentDurations = availability.appointmentSegments.map(seg => seg.durationMinutes || 0);
+    const availableSlotDuration = segmentDurations.reduce((sum, duration) => sum + duration, 0);
+    
+    const hasEnoughTime = availableSlotDuration >= totalDurationMinutes;
+    
+    if (!hasEnoughTime) {
+      console.log(`DEBUG: Rejecting slot ${availability.startAt}: available=${availableSlotDuration}min, needed=${totalDurationMinutes}min`);
+    }
+    
+    return hasEnoughTime;
+  });
+}
+
+/**
  * Retrieve all the staff that can perform a specific service variation.
  * 1. Get the service using catalog API.
  * 2. Get the booking profiles for all staff members in the current location (that are bookable).
@@ -107,8 +148,21 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
   // Build serviceDetails and segmentFilters for all selected services and their quantities
   const serviceDetails = [];
   const segmentFilters = [];
+  let totalDurationMinutes = 0;
   
-  for (const sid of selectedServices) {
+  // Check if selectedServices contains duplicates (expanded) or unique IDs
+  const uniqueServices = [...new Set(selectedServices)];
+  const isExpanded = selectedServices.length > uniqueServices.length;
+  
+  // If expanded, group by service ID and count occurrences
+  const serviceCountMap = {};
+  if (isExpanded) {
+    selectedServices.forEach(sid => {
+      serviceCountMap[sid] = (serviceCountMap[sid] || 0) + 1;
+    });
+  }
+  
+  for (const sid of uniqueServices) {
     try {
       const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
       const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
@@ -119,10 +173,10 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       }
       
       const duration = variation.itemVariationData.serviceDuration;
-      // Get quantity for this service (default 1)
-      const quantity = quantities && quantities[sid] ? parseInt(quantities[sid], 10) : 1;
+      // Get quantity: if expanded, use count from array; otherwise use quantities object
+      const quantity = isExpanded ? serviceCountMap[sid] : (quantities[sid] ? parseInt(quantities[sid], 10) : 1);
       
-      console.log(`DEBUG: availability - service ${sid} duration: ${duration} (type: ${typeof duration})`);
+      console.log(`DEBUG: availability - service ${sid} duration: ${duration}, quantity: ${quantity} (type: ${typeof duration})`);
       
       serviceDetails.push({
         id: sid,
@@ -131,9 +185,12 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
         quantity
       });
       
+      // Calculate total duration for all services
+      const durationMinutes = Math.round(safeNumberConversion(duration) / 1000 / 60);
+      totalDurationMinutes += durationMinutes * quantity;
+      
       // For each quantity, push a segment with safe duration conversion
       for (let i = 0; i < quantity; i++) {
-        const durationMinutes = Math.round(safeNumberConversion(duration) / 1000 / 60);
         console.log(`DEBUG: availability - segment ${i+1} for service ${sid}: durationMinutes=${durationMinutes}`);
         
         const segment = {
@@ -159,6 +216,8 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       });
     }
   }
+  
+  console.log(`DEBUG: availability - Total duration needed: ${totalDurationMinutes} minutes for ${segmentFilters.length} segments`);
 
   // If no valid services found, redirect back
   if (segmentFilters.length === 0) {
@@ -458,9 +517,13 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       return res.redirect('/services?error=service_not_found');
     }
     
+    // Filter availability slots to ensure they have enough total duration for all services
+    const filteredAvailabilities = filterAvailabilitiesByTotalDuration(allAvailabilities, totalDurationMinutes, segmentFilters);
+    console.log(`DEBUG: Filtered ${allAvailabilities.length} slots down to ${filteredAvailabilities.length} slots that have ${totalDurationMinutes} minutes available`);
+    
     // send the serviceId & serviceVersion since it's needed to book an appointment in the next step
     res.render("pages/availability", { 
-      availabilities: allAvailabilities, 
+      availabilities: filteredAvailabilities, 
       serviceId, 
       serviceVersion, 
       ...additionalInfo, 

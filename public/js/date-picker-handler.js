@@ -173,6 +173,64 @@ class DatePickerHandler {
   }
 
   /**
+   * Format a date string (YYYY-MM-DD) for display
+   * @param {String} dateStr date in format yyyy-mm-dd
+   * @returns {String} formatted date string
+   */
+  formatDateForDisplay(dateStr) {
+    const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10));
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    const formatted = date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    return formatted;
+  }
+
+  /**
+   * Find the next available date from the current selected date
+   * @param {String} currentDate current selected date in format yyyy-mm-dd
+   * @returns {String|null} next available date in format yyyy-mm-dd or null if none found
+   */
+  findNextAvailableDate(currentDate) {
+    const availableDates = Object.keys(this.availabilityMap).sort();
+    
+    // Find dates after the current date by string comparison (since dates are in YYYY-MM-DD format)
+    const futureDates = availableDates.filter(date => date > currentDate);
+    
+    const result = futureDates.length > 0 ? futureDates[0] : null;
+    return result;
+  }
+
+  /**
+   * Jump to next available date and update the datepicker
+   * @param {String} currentDate current selected date in format yyyy-mm-dd
+   */
+  goToNextAvailable(currentDate) {
+    const nextDate = this.findNextAvailableDate(currentDate);
+    if (nextDate) {
+      // Update the datepicker widget
+      $("#datepicker").datepicker("setDate", nextDate);
+      
+      // Update the date title display
+      const formattedDate = this.formatDateForDisplay(nextDate);
+      const selectedDateText = document.getElementById('selected-date-text');
+      if (selectedDateText) {
+        selectedDateText.textContent = formattedDate;
+      }
+      const selectedDateDisplay = document.getElementById('selected-date-display');
+      if (selectedDateDisplay) {
+        selectedDateDisplay.classList.add('show');
+      }
+      
+      // Trigger the date selection
+      this.selectNewDate(nextDate);
+    }
+  }
+
+  /**
    * Handler for when a date is selected on the datepicker widget
    * Show the available times for that date
    * @param {String} date ie. 2021-10-30
@@ -183,10 +241,40 @@ class DatePickerHandler {
     availableTimesDiv.innerHTML = "";
     const availabities = this.availabilityMap[date];
     if (!availabities) { // no available times for the date
+      const noTimesContainer = document.createElement("div");
+      noTimesContainer.className = "no-times-available-container";
+      
       const noTimesAvailable = document.createElement("p");
       noTimesAvailable.className = "no-times-available-msg";
-      noTimesAvailable.innerHTML = "There are no times available for this date - please select a new date.";
-      availableTimesDiv.appendChild(noTimesAvailable);
+      noTimesAvailable.innerHTML = "There are no times available for this date.";
+      
+      // Check if there's a next available date
+      const nextDate = this.findNextAvailableDate(date);
+      if (nextDate) {
+        const nextAvailableBtn = document.createElement("button");
+        nextAvailableBtn.className = "btn-next-available";
+        nextAvailableBtn.type = "button";
+        nextAvailableBtn.innerHTML = `
+          <i class="fas fa-arrow-right"></i>
+          Go to Next Available
+        `;
+        nextAvailableBtn.onclick = () => this.goToNextAvailable(date);
+        
+        const nextDateFormatted = this.formatDateForDisplay(nextDate);
+        
+        const nextDateInfo = document.createElement("p");
+        nextDateInfo.className = "next-date-info";
+        nextDateInfo.innerHTML = `Next available: ${nextDateFormatted}`;
+        
+        noTimesContainer.appendChild(noTimesAvailable);
+        noTimesContainer.appendChild(nextDateInfo);
+        noTimesContainer.appendChild(nextAvailableBtn);
+      } else {
+        noTimesAvailable.innerHTML = "There are no times available for this date - please select a new date.";
+        noTimesContainer.appendChild(noTimesAvailable);
+      }
+      
+      availableTimesDiv.appendChild(noTimesContainer);
       return;
     }
     // for each available time create a new element that directs user to the next step in booking

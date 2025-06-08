@@ -341,14 +341,44 @@
                 const availabilities = this.availabilityMap[date];
                 
                 if (!availabilities) {
+                    const noTimesContainer = document.createElement("div");
+                    noTimesContainer.className = "no-times-available-container";
+                    
                     const noTimesDiv = document.createElement("div");
                     noTimesDiv.className = "no-times";
                     noTimesDiv.innerHTML = `
                         <i class="fas fa-calendar-times"></i>
                         <h5>No Times Available</h5>
-                        <p>There are no available time slots for this date. Please select a different date.</p>
+                        <p>There are no available time slots for this date.</p>
                     `;
-                    availableTimesDiv.appendChild(noTimesDiv);
+                    
+                    // Check if there's a next available date
+                    const nextDate = this.findNextAvailableDate(date);
+                    if (nextDate) {
+                        const nextAvailableBtn = document.createElement("button");
+                        nextAvailableBtn.className = "btn-next-available";
+                        nextAvailableBtn.type = "button";
+                        nextAvailableBtn.innerHTML = `
+                            <i class="fas fa-arrow-right"></i>
+                            Go to Next Available
+                        `;
+                        nextAvailableBtn.onclick = () => this.goToNextAvailable(date);
+                        
+                        const nextDateFormatted = this.formatDateForDisplay(nextDate);
+                        
+                        const nextDateInfo = document.createElement("p");
+                        nextDateInfo.className = "next-date-info";
+                        nextDateInfo.innerHTML = `Next available: ${nextDateFormatted}`;
+                        
+                        noTimesContainer.appendChild(noTimesDiv);
+                        noTimesContainer.appendChild(nextDateInfo);
+                        noTimesContainer.appendChild(nextAvailableBtn);
+                    } else {
+                        noTimesDiv.querySelector('p').innerHTML = "There are no available time slots for this date. Please select a different date.";
+                        noTimesContainer.appendChild(noTimesDiv);
+                    }
+                    
+                    availableTimesDiv.appendChild(noTimesContainer);
                     return;
                 }
 
@@ -393,6 +423,28 @@
                 });
                 
                 availableTimesDiv.appendChild(timesGrid);
+            }
+            
+            goToNextAvailable(currentDate) {
+                const nextDate = this.findNextAvailableDate(currentDate);
+                if (nextDate) {
+                    // Update the datepicker widget
+                    $("#datepicker").datepicker("setDate", nextDate);
+                    
+                    // Update the date title display
+                    const formattedDate = this.formatDateForDisplay(nextDate);
+                    const selectedDateText = document.getElementById('selected-date-text');
+                    if (selectedDateText) {
+                        selectedDateText.textContent = formattedDate;
+                    }
+                    const selectedDateDisplay = document.getElementById('selected-date-display');
+                    if (selectedDateDisplay) {
+                        selectedDateDisplay.classList.add('show');
+                    }
+                    
+                    // Trigger the date selection
+                    this.selectNewDate(nextDate);
+                }
             }
         }
 
