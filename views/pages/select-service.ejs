@@ -525,12 +525,14 @@
 
       <!-- Service Limit Notice -->
       <div id="service-limit-notice" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;color:#d00;font-weight:bold;text-align:center;padding:1rem 1.5rem;background:#fff5f5;border:2px solid #fed7d7;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);animation:slideDown 0.3s ease-out;max-width:90vw;width:auto;white-space:nowrap;height:auto;min-height:auto;max-height:none;">
+        <button onclick="closeNotice('service-limit-notice')" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#d00;font-size:1.2rem;cursor:pointer;line-height:1;padding:4px;border-radius:50%;transition:background 0.2s;" onmouseover="this.style.background='rgba(215,53,39,0.1)'" onmouseout="this.style.background='none'">&times;</button>
         <i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>
         You can select up to 3 different services and a total of 3 items only.
       </div>
 
       <!-- Call Us Message -->
-      <div id="call-us-message" style="display:none;position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:1000;color:#666;text-align:center;padding:1rem 1.5rem;background:#f8f9fa;border:2px solid #dee2e6;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);animation:slideDown 0.3s ease-out;max-width:90vw;width:auto;white-space:nowrap;height:auto;min-height:auto;max-height:none;">
+      <div id="call-us-message" style="display:none;position:fixed;top:110px;left:50%;transform:translateX(-50%);z-index:999;color:#666;text-align:center;padding:1rem 1.5rem;background:#f8f9fa;border:2px solid #dee2e6;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);animation:slideDown 0.3s ease-out;max-width:90vw;width:auto;white-space:nowrap;height:auto;min-height:auto;max-height:none;">
+        <button onclick="closeNotice('call-us-message')" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#666;font-size:1.2rem;cursor:pointer;line-height:1;padding:4px;border-radius:50%;transition:background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.1)'" onmouseout="this.style.background='none'">&times;</button>
         <i class="fas fa-phone" style="margin-right:8px;"></i>
         Need more than 3 services? Please call us to book your appointment.
       </div>
@@ -584,7 +586,7 @@
           }
           
           #call-us-message {
-            top: 70px !important;
+            top: 85px !important;
           }
         }
         
@@ -597,7 +599,7 @@
           }
           
           #call-us-message {
-            top: 60px !important;
+            top: 75px !important;
           }
         }
       </style>
@@ -1067,6 +1069,21 @@
     if (typeof updateBarAndSheet === 'function') {
       window.updateBarAndSheet = updateBarAndSheet;
     }
+
+    // Function to close floating notices
+    function closeNotice(noticeId) {
+      const notice = document.getElementById(noticeId);
+      if (notice) {
+        notice.style.animation = 'slideUp 0.3s ease-in';
+        setTimeout(() => {
+          notice.style.display = 'none';
+          notice.style.animation = '';
+        }, 300);
+      }
+    }
+
+    // Make closeNotice globally available
+    window.closeNotice = closeNotice;
   </script>
 </body>
 </html>
