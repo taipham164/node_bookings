@@ -1173,10 +1173,12 @@ aside#appointment-summary {
   justify-content: space-between;
   gap: 16px;
   min-height: 72px;
-  padding: 12px 16px;
+  padding: 12px 16px; /* Equal left/right padding */
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
   border-top: 1px solid rgba(0,0,0,0.08);
+  margin: 0 auto; /* Center the content */
 }
 
 /* Bottom sheet styling */
@@ -1283,6 +1285,7 @@ aside#appointment-summary {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-right: 4px; /* Add margin to prevent touching window edge */
 }
 
 #summary-bar-expand {
@@ -1335,7 +1338,12 @@ aside#appointment-summary {
 /* Make the bottom bar more visible */
 @media (max-width: 900px) {
   #summary-bottom-bar {
-    padding: 14px 18px;
+    padding: 14px 16px; /* Keep equal left/right padding for centering */
+  }
+  
+  #summary-bottom-bar > div {
+    margin: 0 auto; /* Center the content */
+    max-width: 100%;
   }
   
   #summary-bar-next {
@@ -1343,6 +1351,7 @@ aside#appointment-summary {
     padding: 10px 14px;
     font-size: 0.95em;
     border-radius: 6px;
+    margin-right: 4px; /* Add space from window edge */
   }
   
   #summary-bar-expand {

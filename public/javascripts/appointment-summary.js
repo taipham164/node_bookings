@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function() {
   var staffForm = document.querySelector('form[id="staff-form"]');
   var servicesForm = document.querySelector('form[id="services-form"]');
   
+  // Update button text based on current page
+  updateButtonText();
+  
   if (staffForm) {
     initStaffPageSummary();
   } else if (servicesForm) {
@@ -85,6 +88,36 @@ function setupFormHandlers() {
         e.preventDefault();
         targetForm.submit();
       };
+    }
+  });
+}
+
+// Function to update button text based on current page
+function updateButtonText() {
+  var staffForm = document.querySelector('form[id="staff-form"]');
+  var servicesForm = document.querySelector('form[id="services-form"]');
+  
+  var buttonText = 'Next';
+  if (servicesForm) {
+    buttonText = 'Continue to Staff Select';
+  } else if (staffForm) {
+    buttonText = 'Continue to Date & Time';
+  }
+  
+  // Update all Next buttons
+  const buttons = [
+    { id: 'continue-btn', selector: 'span' },
+    { id: 'summary-bar-next', selector: 'span' },
+    { id: 'summary-sheet-next', selector: 'span' }
+  ];
+  
+  buttons.forEach(button => {
+    const btn = document.getElementById(button.id);
+    if (btn) {
+      const span = btn.querySelector(button.selector);
+      if (span) {
+        span.textContent = buttonText;
+      }
     }
   });
 }
@@ -592,6 +625,12 @@ function updateStaffPageSummary() {
       if (service.quantity > 1) {
         serviceName.textContent += ' (x' + service.quantity + ')';
       }
+      // Add staff name inline with service name
+      if (staffName) {
+        serviceName.innerHTML = service.name + 
+          (service.quantity > 1 ? ' (x' + service.quantity + ')' : '') + 
+          ' <span style="color: #667eea; font-weight: 500;">- with ' + staffName + '</span>';
+      }
       
       var serviceDetails = document.createElement('div');
       serviceDetails.style.fontSize = '0.85rem';
@@ -600,7 +639,9 @@ function updateStaffPageSummary() {
       
       var duration = '';
       if (service.duration) {
-        var minutes = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        // Convert duration from milliseconds to minutes
+        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var minutes = Math.round(durationMs / 60000); // Convert milliseconds to minutes
         var hours = Math.floor(minutes / 60);
         var mins = minutes % 60;
         if (hours > 0) {
@@ -629,20 +670,7 @@ function updateStaffPageSummary() {
       summaryItems.appendChild(li);
     });
     
-    // Add staff selection info if staff is selected
-    if (staffName) {
-      var staffLi = document.createElement('li');
-      staffLi.style.display = 'flex';
-      staffLi.style.alignItems = 'center';
-      staffLi.style.marginTop = '12px';
-      staffLi.style.padding = '8px 0';
-      staffLi.style.borderTop = '1px solid #e9ecef';
-      staffLi.style.fontWeight = '500';
-      staffLi.style.color = '#667eea';
-      
-      staffLi.innerHTML = '<i class="fas fa-user me-2"></i>- by ' + staffName;
-      summaryItems.appendChild(staffLi);
-    }
+    // Remove the separate staff section since it's now inline
     
   } else {
     summaryList.style.display = 'none';
@@ -715,8 +743,10 @@ function updateStaffBarAndSheet() {
         totalPrice += amount * (service.quantity || 1);
       }
       if (service.duration) {
-        var duration = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
-        totalDuration += duration * (service.quantity || 1);
+        // Convert duration from milliseconds to minutes
+        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMinutes = Math.round(durationMs / 60000); // Convert milliseconds to minutes
+        totalDuration += durationMinutes * (service.quantity || 1);
       }
     });
     
@@ -848,6 +878,12 @@ function updateStaffBottomSheetContent() {
       if (service.quantity > 1) {
         serviceName.textContent += ' (x' + service.quantity + ')';
       }
+      // Add staff name inline with service name
+      if (staffName) {
+        serviceName.innerHTML = service.name + 
+          (service.quantity > 1 ? ' (x' + service.quantity + ')' : '') + 
+          ' <span style="color: #667eea; font-weight: 500;">- with ' + staffName + '</span>';
+      }
       
       var serviceDetails = document.createElement('div');
       serviceDetails.style.fontSize = '0.92em';
@@ -856,7 +892,9 @@ function updateStaffBottomSheetContent() {
       
       var duration = '';
       if (service.duration) {
-        var minutes = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        // Convert duration from milliseconds to minutes
+        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var minutes = Math.round(durationMs / 60000); // Convert milliseconds to minutes
         var hours = Math.floor(minutes / 60);
         var mins = minutes % 60;
         if (hours > 0) {
@@ -884,13 +922,7 @@ function updateStaffBottomSheetContent() {
       sheetItems.appendChild(li);
     });
     
-    // Add staff selection info if staff is selected
-    if (staffName) {
-      var staffLi = document.createElement('li');
-      staffLi.style.cssText = 'display:flex;align-items:center;padding:12px 0;margin-top:8px;border-top:1px solid #e9ecef;font-weight:500;color:#667eea;';
-      staffLi.innerHTML = '<i class="fas fa-user" style="margin-right:8px;"></i>- by ' + staffName;
-      sheetItems.appendChild(staffLi);
-    }
+    // Remove the separate staff section since it's now inline
     
   } else {
     sheetItems.style.display = 'none';
