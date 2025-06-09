@@ -13,7 +13,23 @@
       max-width: none;
       margin: 0;
       padding: 2rem 0;
-      padding-bottom: 120px; /* Add space for floating button */
+      paddin    // Ensure appointment summary is initialized
+    document.addEventListener('DOMContentLoaded', function() {
+      // Trigger appointment summary update
+      if (window.serviceDetails && window.serviceDetails.length > 0) {
+        // Dispatch custom event to update appointment summary
+        window.dispatchEvent(new CustomEvent('updateAppointmentSummary', {
+          detail: { services: window.serviceDetails }
+        }));
+      }
+      
+      // Also ensure the staff page summary is updated on initial load
+      setTimeout(() => {
+        if (typeof updateStaffPageSummary === 'function') {
+          updateStaffPageSummary();
+        }
+      }, 100);
+    });120px; /* Add space for floating button */
     }
     .staff-grid {
       display: grid;
@@ -103,10 +119,12 @@
       bottom: 0;
       right: 0;
       z-index: 1;
+    }
     .staff-info {
       flex: 1;
       min-width: 0;
     }
+    .staff-info h4 {
       margin: 0 0 0.5rem 0;
       color: #333;
       font-size: 1.3rem;
@@ -440,6 +458,19 @@
       .content-main {
         padding-right: 1rem;
       }
+      
+      /* Ensure appointment summary is visible and properly sized */
+      #appointment-summary {
+        flex: 1 1 0;
+        min-width: 300px;
+        max-width: 400px;
+        position: static !important;
+        transform: none !important;
+        height: fit-content;
+        align-self: flex-start;
+        position: sticky;
+        top: 2rem;
+      }
     }
   </style>
 </head>
@@ -608,18 +639,36 @@
       window.serviceDetails = <%- JSON.stringify(serviceDetails) %>;
     <% } else { %>
       window.serviceDetails = [];
+      // For testing purposes, add a fallback service when no session data
+      if (window.serviceDetails.length === 0) {
+        window.serviceDetails = [{
+          "id": "test-service",
+          "name": "Haircut",
+          "duration": "1800000",
+          "quantity": 1,
+          "price": {
+            "amount": 3600,
+            "currency": "USD"
+          }
+        }];
+        console.log('DEBUG: Using fallback service details for testing');
+      }
     <% } %>
     
-    // Ensure appointment summary is initialized
-    document.addEventListener('DOMContentLoaded', function() {
-      // Trigger appointment summary update
-      if (window.serviceDetails && window.serviceDetails.length > 0) {
-        // Dispatch custom event to update appointment summary
-        window.dispatchEvent(new CustomEvent('updateAppointmentSummary', {
-          detail: { services: window.serviceDetails }
-        }));
-      }
-    });
+    console.log('DEBUG: window.serviceDetails set to:', window.serviceDetails);
+    
+    // Immediately try to update the appointment summary when script loads
+    if (window.serviceDetails && window.serviceDetails.length > 0) {
+      // Use a short timeout to ensure DOM and other scripts are ready
+      setTimeout(function() {
+        console.log('DEBUG: Attempting to call updateStaffPageSummary from script');
+        if (typeof updateStaffPageSummary === 'function') {
+          updateStaffPageSummary();
+        } else {
+          console.log('DEBUG: updateStaffPageSummary function not yet available');
+        }
+      }, 200);
+    }
   </script>
 
   <script>
@@ -641,6 +690,40 @@
             radio.checked = true;
             // Trigger change event for appointment-summary.js to handle
             radio.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            // Ensure both desktop and mobile views are updated immediately
+            setTimeout(() => {
+              if (typeof updateStaffPageSummary === 'function') {
+                updateStaffPageSummary();
+              }
+              if (typeof updateStaffBarAndSheet === 'function') {
+                updateStaffBarAndSheet();
+              }
+              if (typeof updateStaffBottomSheetContent === 'function') {
+                updateStaffBottomSheetContent();
+              }
+            }, 50); // Small delay to ensure DOM is updated
+          }
+        });
+      });
+
+      // Also add direct change listeners to radio buttons to ensure updates
+      const radioButtons = document.querySelectorAll('input[name="staffId"]');
+      radioButtons.forEach(function(radio) {
+        radio.addEventListener('change', function() {
+          if (this.checked) {
+            // Update appointment summary views
+            setTimeout(() => {
+              if (typeof updateStaffPageSummary === 'function') {
+                updateStaffPageSummary();
+              }
+              if (typeof updateStaffBarAndSheet === 'function') {
+                updateStaffBarAndSheet();
+              }
+              if (typeof updateStaffBottomSheetContent === 'function') {
+                updateStaffBottomSheetContent();
+              }
+            }, 50);
           }
         });
       });

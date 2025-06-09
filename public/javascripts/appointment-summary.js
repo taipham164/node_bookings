@@ -518,6 +518,8 @@ function initStaffPageSummary() {
 // Update appointment summary for staff page
 function updateStaffPageSummary() {
   console.log('DEBUG: updateStaffPageSummary called');
+  console.log('DEBUG: window.serviceDetails at function start:', window.serviceDetails);
+  
   var summaryList = document.getElementById('summary-list');
   var summaryItems = document.getElementById('summary-items');
   var summaryEmpty = document.getElementById('summary-empty');
@@ -534,7 +536,10 @@ function updateStaffPageSummary() {
     summarySheetNext: !!summarySheetNext
   });
   
-  if (!summaryList || !summaryItems || !summaryEmpty) return;
+  if (!summaryList || !summaryItems || !summaryEmpty) {
+    console.log('DEBUG: Missing required elements, returning early');
+    return;
+  }
   
   // Get selected staff
   var selectedStaff = document.querySelector('input[name="staffId"]:checked');
@@ -564,6 +569,7 @@ function updateStaffPageSummary() {
   if (hasItems) {
     summaryList.style.display = 'block';
     summaryEmpty.style.display = 'none';
+    summaryItems.style.display = 'block'; // Make sure the items list is visible
     
     summaryItems.innerHTML = '';
     
@@ -641,6 +647,7 @@ function updateStaffPageSummary() {
   } else {
     summaryList.style.display = 'none';
     summaryEmpty.style.display = 'block';
+    summaryItems.style.display = 'none'; // Hide the items list when no items
   }
   
   // Enable/disable continue buttons based on staff selection
