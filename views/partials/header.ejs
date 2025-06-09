@@ -15,7 +15,38 @@
     align-items: center;
     gap: 0.75rem;
   }
-  .phone-login-btn {
+  .expanded-logo {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    padding: 15px 20px;
+    position: relative;
+  }
+  .expanded-logo img {
+    height: 120px !important;
+    width: auto !important;
+    max-width: calc(100vw - 200px) !important;
+    object-fit: contain !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+  }
+  .header-right-actions {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .header-right-actions .header-menu-btn {
+    position: static;
+    transform: none;
+    right: auto;
+  }
+  .phone-login-btn,
+  .my-appointments-header-btn {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
     border: none;
@@ -29,37 +60,88 @@
     gap: 0.4rem;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .phone-login-btn:hover {
+  .phone-login-btn:hover,
+  .my-appointments-header-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
     color: white;
   }
   @media (max-width: 768px) {
+    .expanded-logo {
+      padding: 12px 15px;
+    }
+    .expanded-logo img {
+      height: 100px !important;
+      max-width: calc(100vw - 160px) !important;
+    }
     .header-actions {
       position: static;
       transform: none;
       justify-content: center;
       margin-top: 0.5rem;
     }
-    .phone-login-btn {
-      font-size: 0.8rem;
-      padding: 0.4rem 0.8rem;
+    .header-right-actions {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      gap: 0.5rem;
+    }
+    .phone-login-btn,
+    .my-appointments-header-btn {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
     }
   }
   @media (max-width: 600px) {
-    .header-actions {
-      right: 60px;
-      gap: 0.5rem;
+    .expanded-logo {
+      padding: 10px;
     }
-    .phone-login-btn span {
-      display: none;
+    .expanded-logo img {
+      height: 80px !important;
+      max-width: calc(100vw - 120px) !important;
+    }
+    .header-right-actions {
+      right: 5px;
+      gap: 0.3rem;
+    }
+    .phone-login-btn,
+    .my-appointments-header-btn {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.5rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .expanded-logo img {
+      height: 70px !important;
+      max-width: calc(100vw - 100px) !important;
+    }
+    .phone-login-btn,
+    .my-appointments-header-btn {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.4rem;
+      gap: 0.2rem;
+    }
+  }
+  
+  @media (max-width: 390px) {
+    .expanded-logo img {
+      height: 60px !important;
+      max-width: calc(100vw - 80px) !important;
+    }
+    .header-right-actions {
+      right: 3px;
+      gap: 0.2rem;
     }
   }
 </style>
 
 <div class="top-nav">
-    <div class="top-nav__logo">
+    <div class="top-nav__logo expanded-logo">
       <a href="/services">
         <%if (location.logoUrl) { %>
           <img src="<%= location.logoUrl %>">
@@ -68,27 +150,20 @@
         <% } %>
       </a>
     </div>
-    <div class="top-nav__name">
-      <a href="/services">
-        <%= location.businessName || location.name %>
-      </a>
-    </div>
     
-    <!-- Phone Login Button -->
-    <div class="header-actions">
-      <a href="/auth/login" class="phone-login-btn" title="View My Appointments">
+    <div class="header-right-actions">
+      <a href="/auth/login" class="my-appointments-header-btn" title="View My Appointments">
         <i class="fas fa-mobile-alt"></i>
         <span>My Appointments</span>
       </a>
+      <button id="sidebar-toggle-btn" class="header-menu-btn" aria-label="Menu">
+        <svg width="24" height="24" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="7" x2="20" y2="7"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="17" x2="20" y2="17"/>
+        </svg>
+      </button>
     </div>
-    
-    <button id="sidebar-toggle-btn" class="header-menu-btn" aria-label="Menu">
-      <svg width="24" height="24" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="4" y1="7" x2="20" y2="7"/>
-        <line x1="4" y1="12" x2="20" y2="12"/>
-        <line x1="4" y1="17" x2="20" y2="17"/>
-      </svg>
-    </button>
 </div>
 
 <!-- Sidebar Overlay -->
