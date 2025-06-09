@@ -184,6 +184,109 @@ function updateAppointmentSummary() {
     hasItems = true;
   });
   
+  // Calculate and display totals for services page
+  if (hasItems) {
+    var totalDuration = 0;
+    var totalPrice = 0;
+    
+    // Calculate totals from checked services (using same logic as updateBarAndSheet)
+    checked.forEach(function(cb) {
+      var label = cb.closest('.service-label');
+      if (!label) return;
+
+      var qtyInput = document.getElementById('quantity-' + cb.value);
+      var qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 1 : 1;
+
+      // Get price and duration using the same selectors as updateBarAndSheet
+      var priceSpan = label.querySelector('span[style*="color:#0070f3"]');
+      var durationSpan = label.querySelector('span[style*="color:#888"]');
+      
+      // Calculate duration
+      if (durationSpan) {
+        var durationText = durationSpan.textContent.trim().replace(/^•\s*/, '');
+        var minutes = 0;
+        if (durationText.includes('hr')) {
+          var parts = durationText.split('hr');
+          minutes = parseInt(parts[0].trim()) * 60;
+          if (parts[1] && parts[1].includes('min')) {
+            minutes += parseInt(parts[1].replace(/[^0-9]/g, ''));
+          }
+        } else if (durationText.includes('min')) {
+          minutes = parseInt(durationText);
+        }
+        totalDuration += minutes * qty;
+      }
+
+      // Calculate price
+      if (priceSpan) {
+        var price = parseFloat(priceSpan.textContent.replace(/[^0-9.]/g, ''));
+        if (!isNaN(price)) {
+          totalPrice += price * qty;
+        }
+      }
+    });
+    
+    // Add totals section to services page
+    if (totalDuration > 0 || totalPrice > 0) {
+      var totalsLi = document.createElement('li');
+      totalsLi.style.display = 'flex';
+      totalsLi.style.alignItems = 'center';
+      totalsLi.style.justifyContent = 'space-between';
+      totalsLi.style.marginTop = '16px';
+      totalsLi.style.padding = '12px 0';
+      totalsLi.style.borderTop = '2px solid #e9ecef';
+      totalsLi.style.fontWeight = '600';
+      totalsLi.style.fontSize = '1rem';
+      
+      var totalsInfo = document.createElement('div');
+      
+      var totalsTitle = document.createElement('div');
+      totalsTitle.style.fontWeight = '700';
+      totalsTitle.style.color = '#333';
+      totalsTitle.textContent = 'Total';
+      
+      var totalsDetails = document.createElement('div');
+      totalsDetails.style.fontSize = '0.9rem';
+      totalsDetails.style.color = '#666';
+      totalsDetails.style.marginTop = '4px';
+      
+      // Format total duration
+      var totalDurationText = '';
+      if (totalDuration > 0) {
+        var hours = Math.floor(totalDuration / 60);
+        var mins = totalDuration % 60;
+        if (hours > 0) {
+          totalDurationText = hours + 'h';
+          if (mins > 0) totalDurationText += ' ' + mins + 'min';
+        } else {
+          totalDurationText = mins + 'min';
+        }
+      }
+      
+      // Format total price
+      var totalPriceText = '';
+      if (totalPrice > 0) {
+        totalPriceText = '$' + totalPrice.toFixed(2);
+      }
+      
+      var detailsContent = '';
+      if (totalDurationText) {
+        detailsContent += totalDurationText;
+      }
+      if (totalPriceText) {
+        detailsContent += (detailsContent ? ' • ' : '') + '<span style="color: #28a745; font-weight: 600;">' + totalPriceText + '</span>';
+      }
+      
+      totalsDetails.innerHTML = detailsContent;
+      
+      totalsInfo.appendChild(totalsTitle);
+      totalsInfo.appendChild(totalsDetails);
+      
+      totalsLi.appendChild(totalsInfo);
+      summaryItems.appendChild(totalsLi);
+    }
+  }
+  
   // Update summary visibility
   summaryItems.style.display = hasItems ? 'block' : 'none';
   summaryEmpty.style.display = hasItems ? 'none' : 'block';  // Update all next buttons with enhanced styling for inline button
@@ -437,6 +540,60 @@ function updateBarAndSheet() {
     }
   });
 
+  // Add totals section to mobile bottom sheet for services page
+  if (sheetItems && totalItems > 0 && (totalDuration > 0 || totalPrice > 0)) {
+    var totalsLi = document.createElement('li');
+    totalsLi.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:16px 0;margin-top:12px;border-top:2px solid #e9ecef;font-weight:600;';
+    
+    var totalsInfo = document.createElement('div');
+    
+    var totalsTitle = document.createElement('div');
+    totalsTitle.style.fontWeight = '700';
+    totalsTitle.style.color = '#333';
+    totalsTitle.style.fontSize = '1.1em';
+    totalsTitle.textContent = 'Total';
+    
+    var totalsDetails = document.createElement('div');
+    totalsDetails.style.fontSize = '0.95em';
+    totalsDetails.style.color = '#666';
+    totalsDetails.style.marginTop = '4px';
+    
+    // Format total duration
+    var totalDurationText = '';
+    if (totalDuration > 0) {
+      var hours = Math.floor(totalDuration / 60);
+      var mins = totalDuration % 60;
+      if (hours > 0) {
+        totalDurationText = hours + 'h';
+        if (mins > 0) totalDurationText += ' ' + mins + 'min';
+      } else {
+        totalDurationText = mins + 'min';
+      }
+    }
+    
+    // Format total price
+    var totalPriceText = '';
+    if (totalPrice > 0) {
+      totalPriceText = '$' + totalPrice.toFixed(2);
+    }
+    
+    var detailsContent = '';
+    if (totalDurationText) {
+      detailsContent += totalDurationText;
+    }
+    if (totalPriceText) {
+      detailsContent += (detailsContent ? ' • ' : '') + '<span style="color: #28a745; font-weight: 600;">' + totalPriceText + '</span>';
+    }
+    
+    totalsDetails.innerHTML = detailsContent;
+    
+    totalsInfo.appendChild(totalsTitle);
+    totalsInfo.appendChild(totalsDetails);
+    
+    totalsLi.appendChild(totalsInfo);
+    sheetItems.appendChild(totalsLi);
+  }
+
   // Update bottom sheet visibility
   if (sheetItems && sheetEmpty) {
     sheetItems.style.display = totalItems > 0 ? 'block' : 'none';
@@ -669,6 +826,81 @@ function updateStaffPageSummary() {
       li.appendChild(serviceInfo);
       summaryItems.appendChild(li);
     });
+    
+    // Calculate and display totals
+    var totalDuration = 0;
+    var totalPrice = 0;
+    
+    window.serviceDetails.forEach(function(service) {
+      // Calculate total duration
+      if (service.duration) {
+        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMinutes = Math.round(durationMs / 60000);
+        totalDuration += durationMinutes * (service.quantity || 1);
+      }
+      
+      // Calculate total price
+      if (service.price && service.price.amount) {
+        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        totalPrice += amount * (service.quantity || 1);
+      }
+    });
+    
+    // Add totals section
+    if (window.serviceDetails.length > 0) {
+      var totalsLi = document.createElement('li');
+      totalsLi.style.display = 'flex';
+      totalsLi.style.alignItems = 'center';
+      totalsLi.style.justifyContent = 'space-between';
+      totalsLi.style.marginTop = '16px';
+      totalsLi.style.padding = '12px 0';
+      totalsLi.style.borderTop = '2px solid #e9ecef';
+      totalsLi.style.fontWeight = '600';
+      totalsLi.style.fontSize = '1rem';
+      
+      var totalsInfo = document.createElement('div');
+      totalsInfo.style.flex = '1';
+      
+      var totalsTitle = document.createElement('div');
+      totalsTitle.style.fontWeight = '700';
+      totalsTitle.style.color = '#333';
+      totalsTitle.textContent = 'Total';
+      
+      var totalsDetails = document.createElement('div');
+      totalsDetails.style.fontSize = '0.9rem';
+      totalsDetails.style.color = '#666';
+      totalsDetails.style.marginTop = '4px';
+      
+      // Format total duration
+      var totalDurationText = '';
+      if (totalDuration > 0) {
+        var hours = Math.floor(totalDuration / 60);
+        var mins = totalDuration % 60;
+        if (hours > 0) {
+          totalDurationText = hours + 'h';
+          if (mins > 0) totalDurationText += ' ' + mins + 'm';
+        } else {
+          totalDurationText = mins + 'm';
+        }
+      }
+      
+      // Format total price
+      var totalPriceText = '';
+      if (totalPrice > 0) {
+        totalPriceText = '$' + (totalPrice / 100).toFixed(2);
+      }
+      
+      totalsDetails.innerHTML = '<i class="fas fa-clock me-1"></i>' + totalDurationText;
+      if (totalPriceText) {
+        totalsDetails.innerHTML += ' • <span style="color: #28a745; font-weight: 600;">' + totalPriceText + '</span>';
+      }
+      
+      totalsInfo.appendChild(totalsTitle);
+      totalsInfo.appendChild(totalsDetails);
+      
+      totalsLi.appendChild(totalsInfo);
+      summaryItems.appendChild(totalsLi);
+    }
     
     // Remove the separate staff section since it's now inline
     
@@ -921,6 +1153,75 @@ function updateStaffBottomSheetContent() {
       li.appendChild(serviceInfo);
       sheetItems.appendChild(li);
     });
+    
+    // Calculate and display totals for mobile bottom sheet
+    var totalDuration = 0;
+    var totalPrice = 0;
+    
+    window.serviceDetails.forEach(function(service) {
+      // Calculate total duration
+      if (service.duration) {
+        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMinutes = Math.round(durationMs / 60000);
+        totalDuration += durationMinutes * (service.quantity || 1);
+      }
+      
+      // Calculate total price
+      if (service.price && service.price.amount) {
+        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        totalPrice += amount * (service.quantity || 1);
+      }
+    });
+    
+    // Add totals section to mobile bottom sheet
+    if (window.serviceDetails.length > 0) {
+      var totalsLi = document.createElement('li');
+      totalsLi.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:16px 0;margin-top:12px;border-top:2px solid #e9ecef;font-weight:600;';
+      
+      var totalsInfo = document.createElement('div');
+      totalsInfo.style.flex = '1';
+      
+      var totalsTitle = document.createElement('div');
+      totalsTitle.style.fontWeight = '700';
+      totalsTitle.style.color = '#333';
+      totalsTitle.style.fontSize = '1.1em';
+      totalsTitle.textContent = 'Total';
+      
+      var totalsDetails = document.createElement('div');
+      totalsDetails.style.fontSize = '0.95em';
+      totalsDetails.style.color = '#666';
+      totalsDetails.style.marginTop = '4px';
+      
+      // Format total duration
+      var totalDurationText = '';
+      if (totalDuration > 0) {
+        var hours = Math.floor(totalDuration / 60);
+        var mins = totalDuration % 60;
+        if (hours > 0) {
+          totalDurationText = hours + 'h';
+          if (mins > 0) totalDurationText += ' ' + mins + 'm';
+        } else {
+          totalDurationText = mins + 'm';
+        }
+      }
+      
+      // Format total price
+      var totalPriceText = '';
+      if (totalPrice > 0) {
+        totalPriceText = '$' + (totalPrice / 100).toFixed(2);
+      }
+      
+      totalsDetails.innerHTML = '<i class="fas fa-clock me-1"></i>' + totalDurationText;
+      if (totalPriceText) {
+        totalsDetails.innerHTML += ' • <span style="color: #28a745; font-weight: 600;">' + totalPriceText + '</span>';
+      }
+      
+      totalsInfo.appendChild(totalsTitle);
+      totalsInfo.appendChild(totalsDetails);
+      
+      totalsLi.appendChild(totalsInfo);
+      sheetItems.appendChild(totalsLi);
+    }
     
     // Remove the separate staff section since it's now inline
     
