@@ -6,12 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Select Staff - <%= location?.businessName || 'Booking System' %></title>
   <link rel="stylesheet" href="/stylesheets/style.css" />
+  <link rel="stylesheet" href="/stylesheets/sidebar.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <script src="/javascripts/appointment-summary.js" defer></script>
   <style>    .staff-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2rem;
+      max-width: none;
+      margin: 0;
+      padding: 2rem 0;
       padding-bottom: 120px; /* Add space for floating button */
     }
     .staff-grid {
@@ -277,8 +278,17 @@
       }
     }    /* Enhanced mobile responsive styles for staff page */
     @media (max-width: 768px) {
+      .content {
+        flex-direction: column !important;
+        gap: 1rem !important;
+      }
+      
+      .content-main {
+        flex: none !important;
+      }
+      
       .staff-container {
-        padding: 1rem !important;
+        padding: 1rem 0 !important;
         padding-bottom: 120px !important; /* Maintain space for floating button */
         max-width: 100% !important;
       }
@@ -329,7 +339,7 @@
       }
     }    @media (max-width: 480px) {
       .staff-container {
-        padding: 0.75rem !important;
+        padding: 0.75rem 0 !important;
         padding-bottom: 120px !important; /* Maintain space for floating button */
       }
       
@@ -379,7 +389,7 @@
       }
     }    @media (max-width: 360px) {
       .staff-container {
-        padding: 0.5rem !important;
+        padding: 0.5rem 0 !important;
         padding-bottom: 120px !important; /* Maintain space for floating button */
       }
       
@@ -419,6 +429,18 @@
         font-size: 0.9rem !important;
       }
     }
+    
+    /* Layout adjustments for the new flex structure */
+    .content {
+      min-height: calc(100vh - 200px);
+    }
+    
+    /* Desktop layout improvements */
+    @media (min-width: 769px) {
+      .content-main {
+        padding-right: 1rem;
+      }
+    }
   </style>
 </head>
 
@@ -427,75 +449,15 @@
     <%- include("../partials/header") %>
   </header>
 
-  <div class="content">
-    <div class="content-left">
-      <a class="button" href="/services">
-        <span class="icon back-arrow"></span> Back to Services
-      </a>
-      
-      <!-- Service Summary -->
-      <div class="steps">
-        <div class="steps__step">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Selected Services</span>
-              <a href="/services">Edit</a>
-            </div>
-            <div class="steps__step-body">
-              <% if (serviceDetails && serviceDetails.length > 0) { %>
-                <ul style="margin: 0; padding-left: 1rem;">
-                  <% serviceDetails.forEach(function(s) { %>
-                    <li style="margin-bottom: 0.5rem;">
-                      <strong><%= s.name %></strong>
-                      <% if (s.quantity > 1) { %> <span style="color: #667eea;">(x<%= s.quantity %>)</span><% } %>
-                      <div style="color: #6c757d; font-size: 0.9rem;">
-                        <i class="fas fa-clock me-1"></i><%= formatTime(s.duration) %>
-                        <% if (s.price) { %>
-                          • <span style="color: #28a745;"><%= formatMoney(s.price.amount, s.price.currency) %></span>
-                        <% } %>
-                      </div>
-                    </li>
-                  <% }); %>
-                </ul>
-                
-                <!-- Total Summary -->
-                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
-                  <% if (totalDuration) { %>
-                    <div style="color: #495057; font-weight: 500;">
-                      <i class="fas fa-clock me-1"></i>Total: <%= formatTime(totalDuration) %>
-                    </div>
-                  <% } %>
-                  <% if (totalPrice) { %>
-                    <div style="color: #28a745; font-weight: 600; margin-top: 0.25rem;">
-                      <i class="fas fa-dollar-sign me-1"></i>Total: <%= formatMoney(totalPrice, serviceDetails[0]?.price?.currency || 'USD') %>
-                    </div>
-                  <% } %>
-                </div>
-              <% } %>
-            </div>
-          </div>
-        </div>
-        
-        <div class="steps__step selected">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Select Staff Member</span>
-              <span class="icon side-caret-selected"></span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="steps__step">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Choose Date & Time</span>
-            </div>
-          </div>
-        </div>
+  <div class="content" style="display: flex; flex-direction: row; gap: 2.5em;">
+    <!-- Main staff selection -->
+    <div class="content-main" style="flex: 2 1 0;">
+      <!-- Back Button -->
+      <div style="margin-bottom: 2rem;">
+        <a class="button" href="/services">
+          <span class="icon back-arrow"></span> Back to Services
+        </a>
       </div>
-    </div>
-
-    <div class="content-main">
       <div class="staff-container">
         <!-- Error Message -->
         <% if (typeof error !== 'undefined' && error) { %>
@@ -582,13 +544,13 @@
               </label>
             <% }); %>          </div>
 
-          <!-- Submit Button - Fixed at bottom -->
+          <!-- Submit Button - Fixed at bottom
           <div class="continue-fixed-btn" style="position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 2100; min-width: 220px; max-width: 90vw;">
             <button type="submit" class="btn btn-primary" id="continue-btn" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1rem 2rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; opacity: 0.5; width: 100%;">
               <i class="fas fa-arrow-right me-2"></i>
               Continue to Date & Time
             </button>
-          </div>
+          </div> -->
         </form>
 
         <!-- No Staff Available -->
@@ -615,19 +577,13 @@
         <% } %>
       </div>
     </div>
+    <!-- Include the appointment summary partial -->
+  <%- include("../partials/appointment-summary") %>
   </div>
 
-  <!-- Include the appointment summary partial -->
-  <%- include("../partials/appointment-summary") %>
+  
 
-  <script>
-    // Make service details available to appointment summary JavaScript
-    <% if (typeof serviceDetails !== 'undefined' && serviceDetails) { %>
-      window.serviceDetails = <%- JSON.stringify(serviceDetails) %>;
-    <% } else { %>
-      window.serviceDetails = [];
-    <% } %>
-  </script>
+
 
   <!-- Staff Details Modal -->
   <div id="staffModal" class="modal">
@@ -645,6 +601,26 @@
       </div>
     </div>
   </div>
+
+  <script>
+    // Make service details available to appointment summary JavaScript
+    <% if (typeof serviceDetails !== 'undefined' && serviceDetails) { %>
+      window.serviceDetails = <%- JSON.stringify(serviceDetails) %>;
+    <% } else { %>
+      window.serviceDetails = [];
+    <% } %>
+    
+    // Ensure appointment summary is initialized
+    document.addEventListener('DOMContentLoaded', function() {
+      // Trigger appointment summary update
+      if (window.serviceDetails && window.serviceDetails.length > 0) {
+        // Dispatch custom event to update appointment summary
+        window.dispatchEvent(new CustomEvent('updateAppointmentSummary', {
+          detail: { services: window.serviceDetails }
+        }));
+      }
+    });
+  </script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
