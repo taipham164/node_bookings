@@ -5,9 +5,10 @@
 
 // Initialize appointment summary functionality
 document.addEventListener('DOMContentLoaded', function() {
-  // Check if we're on the staff page
+  // Check which page we're on
   var staffForm = document.querySelector('form[id="staff-form"]');
   var servicesForm = document.querySelector('form[id="services-form"]');
+  var availabilityPage = document.querySelector('.availability-container');
   
   // Update button text based on current page
   updateButtonText();
@@ -27,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     updateAppointmentSummary();
     updateBarAndSheet();
+  } else if (availabilityPage) {
+    // Availability page functionality
+    initAvailabilityPageSummary();
   }
   
   // Set up form handlers for appointment summary buttons
@@ -93,12 +97,15 @@ function setupFormHandlers() {
 }
 
 // Function to update button text based on current page
-function updateButtonText() {
+function updateButtonText(page) {
   var staffForm = document.querySelector('form[id="staff-form"]');
   var servicesForm = document.querySelector('form[id="services-form"]');
+  var availabilityPage = document.querySelector('.availability-container');
   
   var buttonText = 'Next';
-  if (servicesForm) {
+  if (page === 'availability' || availabilityPage) {
+    buttonText = 'Continue to Contact Details';
+  } else if (servicesForm) {
     buttonText = 'Continue to Staff Select';
   } else if (staffForm) {
     buttonText = 'Continue to Date & Time';
@@ -574,7 +581,7 @@ function updateBarAndSheet() {
     // Format total price
     var totalPriceText = '';
     if (totalPrice > 0) {
-      totalPriceText = '$' + totalPrice.toFixed(2);
+      totalPriceText = '$' + (totalPrice / 100).toFixed(2);
     }
     
     var detailsContent = '';
@@ -1073,123 +1080,268 @@ function updateStaffBottomSheetContent() {
   if (!sheetItems || !sheetEmpty) return;
   
   var hasItems = typeof window.serviceDetails !== 'undefined' && window.serviceDetails && window.serviceDetails.length > 0;
-  var selectedStaff = document.querySelector('input[name="staffId"]:checked');
-  var staffName = '';
   
-  if (selectedStaff) {
-    if (selectedStaff.value === 'anyStaffMember') {
-      staffName = 'Any Available Staff';
-    } else {
-      var staffCard = selectedStaff.closest('.staff-card');
-      var staffNameElement = staffCard ? staffCard.querySelector('.staff-info h4') : null;
-      if (staffNameElement) {
-        staffName = staffNameElement.textContent.trim();
-      }
-    }
-  }
-  
-  // Clear sheet items
   sheetItems.innerHTML = '';
   
   if (hasItems) {
-    sheetItems.style.display = 'block';
-    sheetEmpty.style.display = 'none';
+    var totalPrice = 0;
+    var totalDuration = 0;
     
     // Add service items
     window.serviceDetails.forEach(function(service) {
       var li = document.createElement('li');
-      li.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;';
+      li.style.padding = '12px 0';
+      li.style.borderBottom = '1px solid #f0f0f0';
       
       var serviceInfo = document.createElement('div');
-      serviceInfo.style.flex = '1';
+      serviceInfo.style.display = 'flex';
+      serviceInfo.style.justifyContent = 'space-between';
+      serviceInfo.style.alignItems = 'flex-start';
+      
+      var leftInfo = document.createElement('div');
+      leftInfo.style.flex = '1';
       
       var serviceName = document.createElement('div');
       serviceName.style.fontWeight = '600';
+      serviceName.style.fontSize = '15px';
       serviceName.style.color = '#333';
+      serviceName.style.marginBottom = '4px';
       serviceName.textContent = service.name;
-      if (service.quantity > 1) {
-        serviceName.textContent += ' (x' + service.quantity + ')';
+      
+      // Add staff info inline if available
+      if (window.selectedStaff && window.selectedStaff.name) {
+        serviceName.textContent += ' - by ' + window.selectedStaff.name;
       }
-      // Add staff name inline with service name
-      if (staffName) {
-        serviceName.innerHTML = service.name + 
-          (service.quantity > 1 ? ' (x' + service.quantity + ')' : '') + 
-          ' <span style="color: #667eea; font-weight: 500;">- with ' + staffName + '</span>';
+      
+      // Quantity
+      if (service.quantity && service.quantity > 1) {
+        serviceName.textContent += ' (x' + service.quantity + ')';
       }
       
       var serviceDetails = document.createElement('div');
-      serviceDetails.style.fontSize = '0.92em';
+      serviceDetails.style.fontSize = '13px';
       serviceDetails.style.color = '#666';
-      serviceDetails.style.marginTop = '4px';
       
-      var duration = '';
+      // Duration
       if (service.duration) {
-        // Convert duration from milliseconds to minutes
         var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
-        var minutes = Math.round(durationMs / 60000); // Convert milliseconds to minutes
-        var hours = Math.floor(minutes / 60);
-        var mins = minutes % 60;
+        var durationMinutes = Math.round(durationMs / 60000);
+        var durationText = durationMinutes + 'm';
+        serviceDetails.textContent = durationText;
+        totalDuration += durationMinutes * (service.quantity || 1);
+      }
+      
+      leftInfo.appendChild(serviceName);
+      leftInfo.appendChild(serviceDetails);
+      
+      var rightInfo = document.createElement('div');
+      rightInfo.style.textAlign = 'right';
+      rightInfo.style.marginLeft = '12px';
+      
+      // Price
+      if (service.price && service.price.amount) {
+        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        var price = amount / 100;
+        var priceDiv = document.createElement('div');
+        priceDiv.style.fontWeight = '600';
+        priceDiv.style.fontSize = '15px';
+        priceDiv.style.color = '#28a745';
+        priceDiv.textContent = '$' + price.toFixed(2);
+        rightInfo.appendChild(priceDiv);
+        totalPrice += amount * (service.quantity || 1);
+      }
+      
+      serviceInfo.appendChild(leftInfo);
+      serviceInfo.appendChild(rightInfo);
+      li.appendChild(serviceInfo);
+      sheetItems.appendChild(li);
+    });
+    
+    // Add totals section if multiple services
+    if (window.serviceDetails.length > 1) {
+      var totalsLi = document.createElement('li');
+      totalsLi.style.padding = '16px 0 8px 0';
+      totalsLi.style.borderTop = '2px solid #eee';
+      totalsLi.style.marginTop = '8px';
+      
+      var totalsInfo = document.createElement('div');
+      totalsInfo.style.display = 'flex';
+      totalsInfo.style.justifyContent = 'space-between';
+      totalsInfo.style.alignItems = 'center';
+      
+      var totalsTitle = document.createElement('div');
+      totalsTitle.style.fontWeight = '700';
+      totalsTitle.style.fontSize = '16px';
+      totalsTitle.style.color = '#333';
+      totalsTitle.textContent = 'Total';
+      
+      var totalsDetails = document.createElement('div');
+      totalsDetails.style.textAlign = 'right';
+      
+      // Format total duration and price
+      var totalDurationText = '';
+      if (totalDuration > 0) {
+        var hours = Math.floor(totalDuration / 60);
+        var mins = totalDuration % 60;
         if (hours > 0) {
-          duration = hours + 'h';
-          if (mins > 0) duration += ' ' + mins + 'm';
+          totalDurationText = hours + 'h';
+          if (mins > 0) totalDurationText += ' ' + mins + 'm';
         } else {
-          duration = mins + 'm';
+          totalDurationText = mins + 'm';
         }
       }
       
-      var price = '';
-      if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
-        price = '$' + (amount / 100).toFixed(2);
+      var totalPriceText = '';
+      if (totalPrice > 0) {
+        totalPriceText = '$' + (totalPrice / 100).toFixed(2);
       }
       
-      serviceDetails.innerHTML = '<i class="fas fa-clock me-1"></i>' + duration;
-      if (price) {
-        serviceDetails.innerHTML += ' • <span style="color: #28a745;">' + price + '</span>';
+      var durationDiv = document.createElement('div');
+      durationDiv.style.fontSize = '13px';
+      durationDiv.style.color = '#666';
+      durationDiv.style.marginBottom = '4px';
+      durationDiv.innerHTML = '<i class="fas fa-clock me-1"></i>' + totalDurationText;
+      
+      var priceDiv = document.createElement('div');
+      priceDiv.style.fontWeight = '600';
+      priceDiv.style.fontSize = '16px';
+      priceDiv.style.color = '#28a745';
+      priceDiv.textContent = totalPriceText;
+      
+      totalsDetails.appendChild(durationDiv);
+      totalsDetails.appendChild(priceDiv);
+      
+      totalsInfo.appendChild(totalsTitle);
+      totalsInfo.appendChild(totalsDetails);
+      
+      totalsLi.appendChild(totalsInfo);
+      sheetItems.appendChild(totalsLi);
+    }
+    
+    sheetItems.style.display = 'block';
+    sheetEmpty.style.display = 'none';
+  } else {
+    sheetItems.style.display = 'none';
+    sheetEmpty.style.display = 'block';
+  }
+}
+
+// Availability page specific functionality
+function initAvailabilityPageSummary() {
+  console.log('DEBUG: initAvailabilityPageSummary called');
+  var availabilityPage = document.querySelector('.availability-container');
+  console.log('DEBUG: availabilityPage found:', !!availabilityPage);
+  if (!availabilityPage) return; // Not on availability page
+  
+  // Initial load - populate with session data
+  updateAvailabilityPageSummary();
+  
+  // Initialize mobile bottom sheet for availability page
+  initAvailabilityBottomSheet();
+  
+  // Handle mobile bottom bar for availability page
+  updateAvailabilityBarAndSheet();
+  
+  // Update on window resize
+  window.addEventListener('resize', function() {
+    updateAvailabilityBarAndSheet();
+  });
+}
+
+// Update appointment summary for availability page
+function updateAvailabilityPageSummary() {
+  console.log('DEBUG: updateAvailabilityPageSummary called');
+  console.log('DEBUG: window.serviceDetails:', window.serviceDetails);
+  console.log('DEBUG: window.selectedStaff:', window.selectedStaff);
+  
+  var summaryList = document.getElementById('summary-list');
+  var summaryItems = document.getElementById('summary-items');
+  var summaryEmpty = document.getElementById('summary-empty');
+  var continueBtn = document.getElementById('continue-btn');
+  var summaryBarNext = document.getElementById('summary-bar-next');
+  var summarySheetNext = document.getElementById('summary-sheet-next');
+  
+  if (!summaryList || !summaryItems || !summaryEmpty) {
+    console.log('DEBUG: Missing required elements, returning early');
+    return;
+  }
+  
+  // Clear items
+  summaryItems.innerHTML = '';
+  var hasItems = typeof window.serviceDetails !== 'undefined' && window.serviceDetails && window.serviceDetails.length > 0;
+  
+  if (hasItems) {
+    var totalPrice = 0;
+    var totalDuration = 0;
+    
+    // Add service items
+    window.serviceDetails.forEach(function(service) {
+      var li = document.createElement('li');
+      li.className = 'summary-item';
+      
+      var serviceInfo = document.createElement('div');
+      serviceInfo.className = 'summary-item-info';
+      
+      var serviceName = document.createElement('div');
+      serviceName.className = 'summary-item-name';
+      serviceName.textContent = service.name;
+      
+      // Add staff info inline if available
+      if (window.selectedStaff && window.selectedStaff.name) {
+        serviceName.textContent += ' - by ' + window.selectedStaff.name;
+      }
+      
+      var serviceDetails = document.createElement('div');
+      serviceDetails.className = 'summary-item-details';
+      
+      // Duration
+      if (service.duration) {
+        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMinutes = Math.round(durationMs / 60000);
+        var durationText = durationMinutes + 'm';
+        serviceDetails.textContent = durationText;
+        totalDuration += durationMinutes * (service.quantity || 1);
+      }
+      
+      // Price
+      if (service.price && service.price.amount) {
+        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        var price = amount / 100;
+        if (serviceDetails.textContent) serviceDetails.textContent += ' • ';
+        serviceDetails.textContent += '$' + price.toFixed(2);
+        totalPrice += amount * (service.quantity || 1);
+      }
+      
+      // Quantity
+      if (service.quantity && service.quantity > 1) {
+        serviceName.textContent += ' (x' + service.quantity + ')';
       }
       
       serviceInfo.appendChild(serviceName);
       serviceInfo.appendChild(serviceDetails);
       li.appendChild(serviceInfo);
-      sheetItems.appendChild(li);
+      summaryItems.appendChild(li);
     });
     
-    // Calculate and display totals for mobile bottom sheet
-    var totalDuration = 0;
-    var totalPrice = 0;
-    
-    window.serviceDetails.forEach(function(service) {
-      // Calculate total duration
-      if (service.duration) {
-        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
-        var durationMinutes = Math.round(durationMs / 60000);
-        totalDuration += durationMinutes * (service.quantity || 1);
-      }
-      
-      // Calculate total price
-      if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
-        totalPrice += amount * (service.quantity || 1);
-      }
-    });
-    
-    // Add totals section to mobile bottom sheet
-    if (window.serviceDetails.length > 0) {
+    // Add totals section
+    if (window.serviceDetails.length > 1) {
       var totalsLi = document.createElement('li');
-      totalsLi.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:16px 0;margin-top:12px;border-top:2px solid #e9ecef;font-weight:600;';
+      totalsLi.className = 'summary-item summary-totals';
+      totalsLi.style.borderTop = '1px solid #eee';
+      totalsLi.style.paddingTop = '12px';
+      totalsLi.style.marginTop = '8px';
       
       var totalsInfo = document.createElement('div');
-      totalsInfo.style.flex = '1';
+      totalsInfo.className = 'summary-item-info';
       
       var totalsTitle = document.createElement('div');
-      totalsTitle.style.fontWeight = '700';
-      totalsTitle.style.color = '#333';
-      totalsTitle.style.fontSize = '1.1em';
+      totalsTitle.className = 'summary-item-name';
       totalsTitle.textContent = 'Total';
+      totalsTitle.style.fontWeight = '600';
+      totalsTitle.style.color = '#333';
       
       var totalsDetails = document.createElement('div');
-      totalsDetails.style.fontSize = '0.95em';
-      totalsDetails.style.color = '#666';
+      totalsDetails.className = 'summary-item-details';
       totalsDetails.style.marginTop = '4px';
       
       // Format total duration
@@ -1220,11 +1372,277 @@ function updateStaffBottomSheetContent() {
       totalsInfo.appendChild(totalsDetails);
       
       totalsLi.appendChild(totalsInfo);
+      summaryItems.appendChild(totalsLi);
+    }
+    
+    summaryItems.style.display = 'block';
+    summaryEmpty.style.display = 'none';
+    
+    // Always enable continue button on availability page (time slot selection will handle validation)
+    if (continueBtn) {
+      continueBtn.style.opacity = '1';
+      continueBtn.removeAttribute('disabled');
+    }
+    if (summaryBarNext) {
+      summaryBarNext.style.opacity = '1';
+      summaryBarNext.removeAttribute('disabled');
+    }
+    if (summarySheetNext) {
+      summarySheetNext.style.opacity = '1';
+      summarySheetNext.removeAttribute('disabled');
+    }
+  } else {
+    summaryItems.style.display = 'none';
+    summaryEmpty.style.display = 'block';
+  }
+}
+
+// Update mobile bar and bottom sheet for availability page
+function updateAvailabilityBarAndSheet() {
+  var bar = document.getElementById('summary-bottom-bar');
+  var barCount = document.getElementById('summary-bar-count');
+  var barTotal = document.getElementById('summary-bar-total');
+  var barDuration = document.getElementById('summary-bar-duration');
+  
+  if (!bar) return;
+  
+  var hasItems = typeof window.serviceDetails !== 'undefined' && window.serviceDetails && window.serviceDetails.length > 0;
+  
+  if (hasItems) {
+    var totalItems = 0;
+    var totalPrice = 0;
+    var totalDuration = 0;
+    
+    window.serviceDetails.forEach(function(service) {
+      totalItems += service.quantity || 1;
+      if (service.price && service.price.amount) {
+        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        totalPrice += amount * (service.quantity || 1);
+      }
+      if (service.duration) {
+        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMinutes = Math.round(durationMs / 60000);
+        totalDuration += durationMinutes * (service.quantity || 1);
+      }
+    });
+    
+    if (barCount) {
+      barCount.textContent = totalItems + ' service' + (totalItems !== 1 ? 's' : '');
+      if (window.selectedStaff && window.selectedStaff.name) {
+        barCount.textContent += ' • ' + window.selectedStaff.name;
+      }
+    }
+    
+    if (barTotal && totalPrice > 0) {
+      barTotal.textContent = '$' + (totalPrice / 100).toFixed(2);
+    }
+    
+    if (barDuration && totalDuration > 0) {
+      var hours = Math.floor(totalDuration / 60);
+      var mins = totalDuration % 60;
+      var durationText = '';
+      if (hours > 0) {
+        durationText = hours + 'h';
+        if (mins > 0) durationText += ' ' + mins + 'm';
+      } else {
+        durationText = mins + 'm';
+      }
+      barDuration.textContent = durationText;
+    }
+    
+    bar.style.display = 'block';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+// Initialize availability bottom sheet
+function initAvailabilityBottomSheet() {
+  var sheet = document.getElementById('summary-bottom-sheet');
+  var overlay = document.getElementById('summary-sheet-overlay');
+  var barExpand = document.getElementById('summary-bar-expand');
+  var sheetClose = document.getElementById('summary-sheet-close');
+  
+  if (!sheet) return;
+  
+  function openBottomSheet() {
+    updateAvailabilityBottomSheetContent();
+    sheet.style.display = 'block';
+    if (overlay) overlay.style.display = 'block';
+    
+    setTimeout(function() {
+      sheet.classList.add('open');
+      if (overlay) overlay.classList.add('open');
+    }, 10);
+    if (barExpand) barExpand.classList.add('sheet-open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeBottomSheet() {
+    sheet.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+    if (barExpand) barExpand.classList.remove('sheet-open');
+    document.body.style.overflow = '';
+    
+    setTimeout(function() {
+      sheet.style.display = 'none';
+      if (overlay) overlay.style.display = 'none';
+    }, 300);
+  }
+
+  if (barExpand) barExpand.addEventListener('click', openBottomSheet);
+  if (sheetClose) sheetClose.addEventListener('click', closeBottomSheet);
+  if (overlay) overlay.addEventListener('click', closeBottomSheet);
+}
+
+// Update availability bottom sheet content
+function updateAvailabilityBottomSheetContent() {
+  var sheetItems = document.getElementById('summary-sheet-items');
+  var sheetEmpty = document.getElementById('summary-sheet-empty');
+  
+  if (!sheetItems || !sheetEmpty) return;
+  
+  var hasItems = typeof window.serviceDetails !== 'undefined' && window.serviceDetails && window.serviceDetails.length > 0;
+  
+  sheetItems.innerHTML = '';
+  
+  if (hasItems) {
+    var totalPrice = 0;
+    var totalDuration = 0;
+    
+    // Add service items
+    window.serviceDetails.forEach(function(service) {
+      var li = document.createElement('li');
+      li.style.padding = '12px 0';
+      li.style.borderBottom = '1px solid #f0f0f0';
+      
+      var serviceInfo = document.createElement('div');
+      serviceInfo.style.display = 'flex';
+      serviceInfo.style.justifyContent = 'space-between';
+      serviceInfo.style.alignItems = 'flex-start';
+      
+      var leftInfo = document.createElement('div');
+      leftInfo.style.flex = '1';
+      
+      var serviceName = document.createElement('div');
+      serviceName.style.fontWeight = '600';
+      serviceName.style.fontSize = '15px';
+      serviceName.style.color = '#333';
+      serviceName.style.marginBottom = '4px';
+      serviceName.textContent = service.name;
+      
+      // Add staff info inline if available
+      if (window.selectedStaff && window.selectedStaff.name) {
+        serviceName.textContent += ' - by ' + window.selectedStaff.name;
+      }
+      
+      // Quantity
+      if (service.quantity && service.quantity > 1) {
+        serviceName.textContent += ' (x' + service.quantity + ')';
+      }
+      
+      var serviceDetails = document.createElement('div');
+      serviceDetails.style.fontSize = '13px';
+      serviceDetails.style.color = '#666';
+      
+      // Duration
+      if (service.duration) {
+        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMinutes = Math.round(durationMs / 60000);
+        var durationText = durationMinutes + 'm';
+        serviceDetails.textContent = durationText;
+        totalDuration += durationMinutes * (service.quantity || 1);
+      }
+      
+      leftInfo.appendChild(serviceName);
+      leftInfo.appendChild(serviceDetails);
+      
+      var rightInfo = document.createElement('div');
+      rightInfo.style.textAlign = 'right';
+      rightInfo.style.marginLeft = '12px';
+      
+      // Price
+      if (service.price && service.price.amount) {
+        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        var price = amount / 100;
+        var priceDiv = document.createElement('div');
+        priceDiv.style.fontWeight = '600';
+        priceDiv.style.fontSize = '15px';
+        priceDiv.style.color = '#28a745';
+        priceDiv.textContent = '$' + price.toFixed(2);
+        rightInfo.appendChild(priceDiv);
+        totalPrice += amount * (service.quantity || 1);
+      }
+      
+      serviceInfo.appendChild(leftInfo);
+      serviceInfo.appendChild(rightInfo);
+      li.appendChild(serviceInfo);
+      sheetItems.appendChild(li);
+    });
+    
+    // Add totals section if multiple services
+    if (window.serviceDetails.length > 1) {
+      var totalsLi = document.createElement('li');
+      totalsLi.style.padding = '16px 0 8px 0';
+      totalsLi.style.borderTop = '2px solid #eee';
+      totalsLi.style.marginTop = '8px';
+      
+      var totalsInfo = document.createElement('div');
+      totalsInfo.style.display = 'flex';
+      totalsInfo.style.justifyContent = 'space-between';
+      totalsInfo.style.alignItems = 'center';
+      
+      var totalsTitle = document.createElement('div');
+      totalsTitle.style.fontWeight = '700';
+      totalsTitle.style.fontSize = '16px';
+      totalsTitle.style.color = '#333';
+      totalsTitle.textContent = 'Total';
+      
+      var totalsDetails = document.createElement('div');
+      totalsDetails.style.textAlign = 'right';
+      
+      // Format total duration and price
+      var totalDurationText = '';
+      if (totalDuration > 0) {
+        var hours = Math.floor(totalDuration / 60);
+        var mins = totalDuration % 60;
+        if (hours > 0) {
+          totalDurationText = hours + 'h';
+          if (mins > 0) totalDurationText += ' ' + mins + 'm';
+        } else {
+          totalDurationText = mins + 'm';
+        }
+      }
+      
+      var totalPriceText = '';
+      if (totalPrice > 0) {
+        totalPriceText = '$' + (totalPrice / 100).toFixed(2);
+      }
+      
+      var durationDiv = document.createElement('div');
+      durationDiv.style.fontSize = '13px';
+      durationDiv.style.color = '#666';
+      durationDiv.style.marginBottom = '4px';
+      durationDiv.innerHTML = '<i class="fas fa-clock me-1"></i>' + totalDurationText;
+      
+      var priceDiv = document.createElement('div');
+      priceDiv.style.fontWeight = '600';
+      priceDiv.style.fontSize = '16px';
+      priceDiv.style.color = '#28a745';
+      priceDiv.textContent = totalPriceText;
+      
+      totalsDetails.appendChild(durationDiv);
+      totalsDetails.appendChild(priceDiv);
+      
+      totalsInfo.appendChild(totalsTitle);
+      totalsInfo.appendChild(totalsDetails);
+      
+      totalsLi.appendChild(totalsInfo);
       sheetItems.appendChild(totalsLi);
     }
     
-    // Remove the separate staff section since it's now inline
-    
+    sheetItems.style.display = 'block';
+    sheetEmpty.style.display = 'none';
   } else {
     sheetItems.style.display = 'none';
     sheetEmpty.style.display = 'block';

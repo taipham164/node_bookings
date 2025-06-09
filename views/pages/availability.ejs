@@ -6,12 +6,15 @@
     <title>Select Date & Time - <%= location?.businessName || 'Booking System' %></title>
     <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
     <link href="/stylesheets/datepicker.css" rel="stylesheet" type="text/css">
+    <link href="/stylesheets/sidebar.css" rel="stylesheet" type="text/css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="/javascripts/appointment-summary.js" defer></script>
     <style>
         .availability-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem;
+            max-width: none;
+            margin: 0;
+            padding: 2rem 0;
+            padding-bottom: 120px; /* Add space for floating button */
         }
         .calendar-section {
             background: white;
@@ -137,9 +140,35 @@
         .selected-date-display.show {
             display: block;
         }
+        
+        /* Layout adjustments for the new flex structure */
+        .content {
+            min-height: calc(100vh - 200px);
+        }
+        
+        /* Desktop layout improvements */
+        @media (min-width: 769px) {
+            .content-main {
+                padding-right: 1rem;
+            }
+            
+            /* Ensure appointment summary is visible and properly sized */
+            #appointment-summary {
+                flex: 1 1 0;
+                min-width: 300px;
+                max-width: 400px;
+                position: static !important;
+                transform: none !important;
+                height: fit-content;
+                align-self: flex-start;
+                position: sticky;
+                top: 2rem;
+            }
+        }
+        
         @media (max-width: 768px) {
             .availability-container {
-                padding: 1rem;
+                padding: 1rem 0;
             }
             .calendar-section, .times-section {
                 padding: 1.5rem;
@@ -161,78 +190,16 @@
         <%- include("../partials/header") %>
     </header>
     
-    <div class="content">
-        <div class="content-left">
-            <a class="button" href="/staff/<%= serviceId %>?version=<%= serviceVersion %>">
-                <span class="icon back-arrow"></span> Back
-            </a>
-            <div class="steps">
-                <div class="steps__step">
-                    <div class="steps__step-wrapper">
-                        <div class="steps__step-title">
-                            <span>Services</span>
-                            <a href="/services">Edit</a>
-                        </div>
-                        <div class="steps__step-body">
-                            <% if (serviceDetails && serviceDetails.length > 0) { %>
-                                <ul>
-                                    <% serviceDetails.forEach(function(s) { %>
-                                        <li>
-                                            <%= s.name %><% if (s.quantity > 1) { %> (x<%= s.quantity %>)<% } %> - <%= formatTime(s.duration) %>
-                                        </li>
-                                    <% }); %>
-                                </ul>
-                            <% } %>
-                        </div>
-                    </div>
-                </div>
-                <div class="steps__step">
-                    <div class="steps__step-wrapper">
-                        <div class="steps__step-title">
-                            <span>Select staff</span>
-                            <a href="/staff/<%= serviceId %>?version=<%= serviceVersion %>">Edit</a>
-                        </div>
-                        <div class="availability-staff__card-wrapper">
-                            <div class="staff__card-picture-wrapper">
-                                <% if (locals.bookingProfile && bookingProfile.profileImageUrl) { %>
-                                    <img src="<%= bookingProfile.profileImageUrl %>" />
-                                <% } else if (locals.bookingProfile) { %>
-                                    <%= getStaffInitials(bookingProfile.displayName) %>
-                                <% } else { %>
-                                    <%= getStaffInitials("any") %>
-                                <% } %>
-                            </div>
-                            <div class="steps__staff-step-body">
-                                <div class="steps__step-name">
-                                    <% if (locals.bookingProfile) { %>
-                                        <%= bookingProfile.displayName %>
-                                    <% } else { %>
-                                        Any staff member
-                                    <% } %>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="steps__step selected">
-                    <div class="steps__step-wrapper">
-                        <div class="steps__step-title">
-                            <span>Appointment time</span>
-                            <span class="icon side-caret-selected"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="steps__step">
-                    <div class="steps__step-wrapper">
-                        <div class="steps__step-title">
-                            <span>Enter your details</span>
-                        </div>
-                    </div>
-                </div>
+    <div class="content" style="display: flex; flex-direction: row; gap: 2.5em;">
+        <!-- Main availability selection -->
+        <div class="content-main" style="flex: 2 1 0;">
+            <!-- Back Button -->
+            <div style="margin-bottom: 2rem;">
+                <a class="button" href="/staff/<%= serviceId %>?version=<%= serviceVersion %>">
+                    <span class="icon back-arrow"></span> Back
+                </a>
             </div>
-        </div>
-        
-        <div class="content-main">
+            
             <div class="availability-container">
                 <!-- Timezone Warning -->
                 <% if (getLocalTimezone() !== location.timezone) { %>
@@ -288,6 +255,8 @@
                 </div>
             </div>
         </div>
+        <!-- Include the appointment summary partial -->
+        <%- include("../partials/appointment-summary") %>
     </div>
 
     <!-- Scripts -->
@@ -450,7 +419,7 @@
 
         // Initialize enhanced date picker handler
         const datePickerHandler = new EnhancedDatePickerHandler(
-            <%- stringifyJSON(availabilities) %>, 
+            <%- JSON.stringify(availabilities) %>, 
             "<%- serviceId %>", 
             "<%- serviceVersion %>", 
             "<%- locals.bookingId %>", 
@@ -471,6 +440,17 @@
                     });
                 }, 100);
             };
+        });
+    </script>
+    
+    <script>
+        // Make service details available to appointment summary JavaScript
+        window.serviceDetails = [];
+        window.selectedStaff = null;
+        
+        // Ensure appointment summary is initialized
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Availability page loaded');
         });
     </script>
 </body>

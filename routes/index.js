@@ -29,6 +29,13 @@ router.use("/booking", bookingRoute);
 router.use("/auth", authRoute); // Add auth routes
 router.use("/customer", customerRoute); // Add customer routes
 
+// Test route for availability layout
+router.get('/test-availability', (req, res) => {
+  res.render('pages/availability-test', {
+    location: { businessName: 'Test Business' }
+  });
+});
+
 /**
  * GET /
  *

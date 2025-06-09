@@ -29,6 +29,35 @@ const {
 const ANY_STAFF_PARAMS = "anyStaffMember";
 
 /**
+ * Recursively convert BigInt values to regular numbers in an object
+ * @param {any} obj - The object to convert
+ * @return {any} The object with BigInt values converted to numbers
+ */
+function convertBigIntToNumber(obj) {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (typeof obj === 'bigint') {
+    return safeNumberConversion(obj);
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(convertBigIntToNumber);
+  }
+  
+  if (typeof obj === 'object') {
+    const converted = {};
+    for (const [key, value] of Object.entries(obj)) {
+      converted[key] = convertBigIntToNumber(value);
+    }
+    return converted;
+  }
+  
+  return obj;
+}
+
+/**
  * Filter availability slots to only include those that have enough contiguous time
  * for the total duration of all selected services
  * @param {Array} availabilities - Array of availability objects from Square API
@@ -521,15 +550,31 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     const filteredAvailabilities = filterAvailabilitiesByTotalDuration(allAvailabilities, totalDurationMinutes, segmentFilters);
     console.log(`DEBUG: Filtered ${allAvailabilities.length} slots down to ${filteredAvailabilities.length} slots that have ${totalDurationMinutes} minutes available`);
     
+    // Debug the data being passed to template
+    console.log('DEBUG: Template data being passed:', {
+      availabilities: filteredAvailabilities.length + ' slots',
+      serviceId,
+      serviceVersion,
+      additionalInfo,
+      selectedServices,
+      quantities,
+      serviceDetails
+    });
+    
+    // Convert BigInt values to regular numbers to prevent EJS template errors
+    const safeAdditionalInfo = convertBigIntToNumber(additionalInfo);
+    const safeServiceDetails = convertBigIntToNumber(serviceDetails);
+    const safeAvailabilities = convertBigIntToNumber(filteredAvailabilities);
+    
     // send the serviceId & serviceVersion since it's needed to book an appointment in the next step
     res.render("pages/availability", { 
-      availabilities: filteredAvailabilities, 
+      availabilities: safeAvailabilities, 
       serviceId, 
       serviceVersion, 
-      ...additionalInfo, 
+      ...safeAdditionalInfo, 
       selectedServices, 
       quantities, 
-      serviceDetails 
+      serviceDetails: safeServiceDetails 
     });
   } catch (error) {
     console.error('Error in availability search:', error);
