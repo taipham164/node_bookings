@@ -290,7 +290,7 @@
               id="phoneNumber"
               name="phoneNumber" 
               required
-              placeholder="(555) 123-4567"
+              placeholder="(916) 123-4567"
               autocomplete="tel"
             />
             <div class="helper-text">
@@ -442,18 +442,69 @@
       const verifiedPhoneInput = document.getElementById('verifiedPhone');
       
       if (phoneInput) {
+        let lastValue = '';
+        
         phoneInput.addEventListener('input', function(e) {
-          let value = e.target.value.replace(/\D/g, '');
-          if (value.length >= 6) {
-            value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-          } else if (value.length >= 3) {
-            value = value.replace(/(\d{3})(\d{0,3})/, '($1) $2');
+          const currentValue = e.target.value;
+          const cursorPos = e.target.selectionStart;
+          const isDeleting = currentValue.length < lastValue.length;
+          
+          // Get just the digits
+          let digits = currentValue.replace(/\D/g, '');
+          
+          // Don't format if user is deleting and would result in same formatted value
+          if (isDeleting && digits.length <= 3) {
+            e.target.value = digits;
+            lastValue = digits;
+            if (verifyPhoneBtn) {
+              verifyPhoneBtn.disabled = true;
+            }
+            return;
           }
-          e.target.value = value;
+          
+          // Format the number
+          let formatted = '';
+          if (digits.length >= 10) {
+            formatted = digits.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+          } else if (digits.length >= 6) {
+            formatted = digits.replace(/(\d{3})(\d{3})(\d{0,4})/, '($1) $2-$3');
+          } else if (digits.length >= 3) {
+            formatted = digits.replace(/(\d{3})(\d{0,3})/, '($1) $2');
+          } else {
+            formatted = digits;
+          }
+          
+          e.target.value = formatted;
+          lastValue = formatted;
+          
+          // Restore cursor position intelligently
+          let newCursorPos = cursorPos;
+          if (!isDeleting && formatted.length > currentValue.length) {
+            // If we added formatting characters, adjust cursor
+            const addedChars = formatted.length - currentValue.length;
+            newCursorPos = cursorPos + addedChars;
+          }
+          e.target.setSelectionRange(newCursorPos, newCursorPos);
           
           // Enable/disable verify button based on phone length
           if (verifyPhoneBtn) {
-            verifyPhoneBtn.disabled = value.replace(/\D/g, '').length < 10;
+            verifyPhoneBtn.disabled = digits.length < 10;
+          }
+        });
+        
+        // Handle backspace and delete keys specifically
+        phoneInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Backspace' || e.key === 'Delete') {
+            const cursorPos = e.target.selectionStart;
+            const currentValue = e.target.value;
+            
+            // If cursor is after a formatting character, skip over it
+            if (e.key === 'Backspace' && cursorPos > 0) {
+              const charBefore = currentValue[cursorPos - 1];
+              if (charBefore === '(' || charBefore === ')' || charBefore === ' ' || charBefore === '-') {
+                e.target.setSelectionRange(cursorPos - 1, cursorPos - 1);
+              }
+            }
           }
         });
       }
