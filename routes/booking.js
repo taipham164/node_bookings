@@ -19,6 +19,7 @@ const {
   bookingsApi,
   catalogApi,
   customersApi,
+  cardsApi,
 } = require("../util/square-client");
 const crypto = require("crypto");
 
@@ -87,13 +88,18 @@ router.post("/create", async (req, res, next) => {
     const startAt = req.query.startAt;
     // Handle customerNote from either existing or new customer forms
     const customerNote = req.body.existingCustomerNote || req.body.newCustomerNote || "";
-    
-    // Handle both new and existing customer data
+      // Handle both new and existing customer data
     const customerId = req.body.customerId; // For existing customers
     const emailAddress = req.body.emailAddress;
     const familyName = req.body.familyName;
     const givenName = req.body.givenName;
     const phoneNumber = req.body.phoneNumber; // This should always be present now
+    
+    // Handle card information for new customers
+    const cardNumber = req.body.cardNumber;
+    const expiryDate = req.body.expiryDate;
+    const cvv = req.body.cvv;
+    const cardholderName = req.body.cardholderName;
 
     // Validate phone number (required in new flow)
     if (!phoneNumber || !phoneNumber.trim()) {
@@ -111,9 +117,8 @@ router.post("/create", async (req, res, next) => {
         return res.render("pages/formatted-error", { 
           error: "Please enter a valid phone number." 
         });
-      }
-    } else {
-      // For new customers, validate all required fields
+      }    } else {
+      // For new customers, validate all required fields including card information
       if (!emailAddress || !familyName || !givenName) {
         return res.render("pages/formatted-error", { 
           error: "Please fill in all required fields: name and email address." 
@@ -128,7 +133,37 @@ router.post("/create", async (req, res, next) => {
         });
       }
       
-      console.log('Processing booking for new customer');
+      // Card validation for new customers
+      if (!cardNumber || !expiryDate || !cvv || !cardholderName) {
+        return res.render("pages/formatted-error", { 
+          error: "Please fill in all payment information fields." 
+        });
+      }
+      
+      // Basic card number validation (remove spaces and check length)
+      const cleanCardNumber = cardNumber.replace(/\s/g, '');
+      if (cleanCardNumber.length < 13 || cleanCardNumber.length > 19) {
+        return res.render("pages/formatted-error", { 
+          error: "Please enter a valid card number." 
+        });
+      }
+      
+      // Expiry date validation (MM/YY format)
+      const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
+      if (!expiryRegex.test(expiryDate)) {
+        return res.render("pages/formatted-error", { 
+          error: "Please enter expiry date in MM/YY format." 
+        });
+      }
+      
+      // CVV validation
+      if (cvv.length < 3 || cvv.length > 4) {
+        return res.render("pages/formatted-error", { 
+          error: "Please enter a valid CVV." 
+        });
+      }
+      
+      console.log('Processing booking for new customer with card information');
     }
 
     // Phone number validation and normalization

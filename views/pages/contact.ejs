@@ -3,18 +3,22 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Checkout - <%= location?.businessName || 'Booking System' %></title>
-    <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
+    <title>Checkout - <%= location?.businessName || 'Booking System' %></title>    <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
     <link href="/stylesheets/sidebar.css" rel="stylesheet" type="text/css">
     <link href="/stylesheets/progress-indicator.css" rel="stylesheet" type="text/css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
     <script src="/javascripts/appointment-summary.js?v=<%= Date.now() %>" defer></script>
     <style>
         .contact-container {
             max-width: none;
             margin: 0;
             padding: 2rem 0;
-            padding-bottom: 120px; /* Add space for floating button */
+            padding-bottom: 120px;
             width: 100%;
             box-sizing: border-box;
             overflow-x: hidden;
@@ -173,136 +177,27 @@
             line-height: 1.4;
             margin-top: 0.5rem;
         }
-        .card-notice {
-            color: #6c757d;
-            font-size: 0.95rem;
-            margin-bottom: 1.5rem;
-            line-height: 1.4;
-        }
-        .card-input-container {
-            margin-bottom: 1.5rem;
-        }
-        .card-input-group {
-            display: flex;
-            align-items: center;
-            border: 2px solid #e9ecef;
+        .customer-info-display {
+            background: #e8f5e8;
+            border: 1px solid #c3e6c3;
             border-radius: 8px;
-            padding: 0;
-            transition: border-color 0.2s ease;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
-        .card-input-group:focus-within {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        .customer-info-display h6 {
+            margin: 0 0 1rem 0;
+            color: #155724;
+            font-weight: 600;
         }
-        .card-icon {
-            padding: 12px 16px;
-            background: #f8f9fa;
-            border-right: 1px solid #e9ecef;
-            color: #6c757d;
-        }
-        .card-input {
-            border: none;
-            padding: 12px 16px;
-            font-size: 16px;
-            background: transparent;
-            flex: 1;
-        }
-        .card-input:focus {
-            outline: none;
-        }
-        .card-number {
-            flex: 2;
-            border-right: 1px solid #e9ecef;
-        }
-        .card-expiry {
-            max-width: 100px;
-            border-right: 1px solid #e9ecef;
-        }
-        .card-cvv {
-            max-width: 80px;
-        }
-        .card-consent {
-            margin-top: 1rem;
-        }
-        .cancellation-timeline {
+        .customer-info-display .info-item {
             display: flex;
             align-items: center;
-            margin: 1.5rem 0;
-            position: relative;
-        }
-        .timeline-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 2;
-        }
-        .timeline-marker {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
             margin-bottom: 0.5rem;
         }
-        .timeline-marker.today {
-            background: #28a745;
-        }
-        .timeline-marker.appointment {
-            background: #6c757d;
-        }
-        .timeline-line {
-            flex: 1;
-            height: 2px;
-            background: #e9ecef;
-            margin: 0 1rem;
-            position: relative;
-            top: -16px;
-        }
-        .timeline-label {
-            font-size: 0.875rem;
-            color: #6c757d;
-            font-weight: 500;
-        }
-        .cancellation-notice {
-            margin: 1.5rem 0;
-            text-align: center;
-        }
-        .cancel-deadline-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin: 0 auto;
-        }
-        .policy-details {
-            color: #333;
-            line-height: 1.5;
-            margin-bottom: 1.5rem;
-        }
-        .policy-details p {
-            margin-bottom: 0.5rem;
-        }
-        .policy-consent {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        .booking-notice {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 1rem;
-            color: #6c757d;
-            font-size: 0.875rem;
-            text-align: center;
-            line-height: 1.4;
-        }
-        .booking-notice p {
-            margin: 0;
+        .customer-info-display .info-item i {
+            width: 20px;
+            margin-right: 0.5rem;
+            color: #28a745;
         }
         .loading-spinner {
             display: inline-block;
@@ -317,6 +212,15 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .step-indicator {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .step-indicator strong {
+            color: #667eea;
+        }
         
         /* Layout adjustments for the new flex structure */
         .content {
@@ -329,7 +233,6 @@
                 padding-right: 1rem;
             }
             
-            /* Ensure appointment summary is visible and properly sized */
             #appointment-summary {
                 flex: 1 1 0;
                 min-width: 300px;
@@ -386,25 +289,118 @@
             }
         }
         
-        @media (max-width: 360px) {
-            .contact-container {
-                padding: 0.5rem !important;
-                padding-bottom: 120px !important;
-            }
-            .contact-section {
-                padding: 0.75rem;
-                border-radius: 10px;
-            }
-            .section-header {
-                gap: 0.5rem;
-                margin-bottom: 1rem;
-            }
-            .section-header h4 {
-                font-size: 1rem;
-            }
-            .section-header i {
-                font-size: 1.1rem;
-            }
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 5% auto;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-header {
+            padding: 1.5rem 1.5rem 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .modal-header h3 i {
+            color: #667eea;
+            margin-right: 0.5rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+        
+        .modal-body {
+            padding: 0 1.5rem 1.5rem 1.5rem;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem 1.5rem 1.5rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .modal .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .modal .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .modal .helper-text {
+            margin-top: 0.5rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            width: 100%;
+            transition: background-color 0.2s ease;
+        }
+        
+        .cancel-btn:hover {
+            background: #5a6268;
         }
     </style>
 </head>
@@ -439,12 +435,178 @@
                     </div>
                 <% } %>
 
-                <!-- Contact Information Section -->
-                <div class="contact-section">
-                    <div class="section-header">
-                        <i class="fas fa-user-circle"></i>
-                        <h4>Contact info</h4>
+                <!-- Step 1: Phone Number Entry -->
+                <div id="phoneStep" class="contact-section">                    <div class="step-indicator">
+                        <strong>Step 1 of 2:</strong> Phone Number Lookup
                     </div>
+                    
+                    <div class="section-header">
+                        <i class="fas fa-phone"></i>
+                        <h4>Phone Number</h4>
+                    </div>
+                      <p style="color: #6c757d; margin-bottom: 1.5rem;">
+                        Enter your phone number to check if you're an existing customer or to create a new account.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone number *</label>
+                        <div class="phone-input-group">
+                           <div class="country-code">
+                                <img 
+                                    src="https://flagcdn.com/us.svg"
+                                    width="24"
+                                    height="18"
+                                    alt="USA Flag"
+                                    class="country-flag"
+                                    style="margin-right:0.3em;"
+                                />
+                                <span>+1</span>
+                            </div>
+
+                            <input 
+                                type="tel" 
+                                id="phoneNumber"
+                                class="phone-number-input"
+                                required
+                                placeholder="(916) 123-4567"
+                                autocomplete="tel"
+                            />
+                        </div>
+                        <div class="helper-text">
+                            We'll check if you're an existing customer to streamline your booking.
+                        </div>
+                    </div>                    <!-- Customer lookup results will appear here -->
+                    <div id="customerLookupResult" style="display: none; margin-top: 1rem;">
+                        <!-- Dynamic content populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Step 2: SMS Verification -->
+                <div id="smsStep" class="contact-section" style="display: none;">
+                    <div class="step-indicator">
+                        <strong>Step 2 of 3:</strong> Phone Verification
+                    </div>
+                    
+                    <div class="section-header">
+                        <i class="fas fa-sms"></i>
+                        <h4>Verify Your Phone Number</h4>
+                    </div>
+                    
+                    <p style="color: #6c757d; margin-bottom: 1.5rem;">
+                        We've sent a 6-digit verification code to <strong id="phoneDisplay"></strong>. 
+                        Please enter it below to continue.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label for="verificationCode">Verification Code *</label>
+                        <input 
+                            type="text" 
+                            id="verificationCode"
+                            placeholder="Enter 6-digit code"
+                            maxlength="6"
+                            style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2rem;"
+                        />
+                        <div class="helper-text">
+                            Didn't receive the code? <a href="#" id="resendCode" style="color: #667eea;">Resend code</a>
+                        </div>
+                    </div>
+
+                    <button type="button" id="verifyCodeBtn" class="submit-btn" disabled>
+                        <i class="fas fa-check"></i>
+                        Verify Code
+                    </button>
+                    
+                    <button type="button" id="changePhoneBtn" style="background: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; margin-top: 1rem; width: 100%;">
+                        <i class="fas fa-arrow-left"></i>
+                        Use Different Phone Number
+                    </button>
+                </div>
+
+                <!-- Step 3A: Existing Customer Booking -->
+                <div id="existingCustomerStep" class="contact-section" style="display: none;">                    <div class="step-indicator">
+                        <strong>Step 2 of 2:</strong> Complete Your Booking
+                    </div>
+                    
+                    <div class="section-header">
+                        <i class="fas fa-user-check"></i>
+                        <h4>Welcome Back!</h4>
+                    </div>
+                    
+                    <div id="existingCustomerInfo" class="customer-info-display">
+                        <!-- Customer info will be populated here -->
+                    </div>
+                    
+                    <p style="color: #6c757d; margin-bottom: 1.5rem;">
+                        Your information has been verified. You can now complete your booking.
+                    </p>
+
+                    <form id="existingCustomerForm" method="POST" action="/booking/create?serviceId=<%= serviceVariation.id %>&staffId=<%= teamMemberBookingProfile.teamMemberId %>&version=<%= serviceVersion %>&startAt=<%= startAt %>">
+                        <!-- Hidden fields for multi-service support -->
+                        <% if (selectedServices && selectedServices.length > 1) { %>
+                            <% selectedServices.forEach(function(sid) { %>
+                                <input type="hidden" name="services[]" value="<%= sid %>">
+                                <% if (quantities && quantities[sid]) { %>
+                                    <input type="hidden" name="quantities[<%= sid %>]" value="<%= quantities[sid] %>">
+                                <% } %>
+                            <% }); %>
+                        <% } %>
+                        
+                        <!-- Hidden fields for customer info -->
+                        <input type="hidden" id="existingCustomerId" name="customerId" value="">
+                        <input type="hidden" id="existingPhoneNumber" name="phoneNumber" value="">
+                        <input type="hidden" id="existingGivenName" name="givenName" value="">
+                        <input type="hidden" id="existingFamilyName" name="familyName" value="">
+                        <input type="hidden" id="existingEmailAddress" name="emailAddress" value="">
+
+                        <div class="form-group">
+                            <label for="existingCustomerNote">Special requests or notes (optional)</label>
+                            <textarea 
+                                id="existingCustomerNote"
+                                name="serviceNote"
+                                placeholder="Any special requests for your appointment..."
+                                maxlength="1500" 
+                                rows="3"
+                            ></textarea>
+                        </div>
+
+                        <!-- Marketing Consent -->
+                        <div class="marketing-consent">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="existingMarketingConsent" name="marketingConsent" value="true">
+                                <label for="existingMarketingConsent">
+                                    Text me marketing and loyalty offers from <%= location?.businessName || 'this business' %>.
+                                </label>
+                            </div>
+                            <div class="consent-details">
+                                You consent to receive marketing texts, including Loyalty messages, coupons, and discounts, via the phone number you provided from this business. Text STOP to unsubscribe from texts from this business at any time, or HELP for more information. MSG and data rates may apply. Joining this program is not a condition of purchase. You certify that you are at least 18 years of age.
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="existingCustomerSubmitBtn">
+                            <i class="fas fa-calendar-check"></i>
+                            Book Appointment
+                        </button>
+                    </form>
+                    
+                    <button type="button" id="changePhoneExistingBtn" style="background: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; margin-top: 1rem; width: 100%;">
+                        <i class="fas fa-arrow-left"></i>
+                        Use Different Phone Number
+                    </button>
+                </div>
+
+                <!-- Step 3B: New Customer Information -->
+                <div id="newCustomerStep" class="contact-section" style="display: none;">                    <div class="step-indicator">
+                        <strong>Step 2 of 2:</strong> Create Your Profile & Book
+                    </div>
+                    
+                    <div class="section-header">
+                        <i class="fas fa-user-plus"></i>
+                        <h4>Contact Information</h4>
+                    </div>
+                    
+                    <p style="color: #6c757d; margin-bottom: 1.5rem;">
+                        Welcome! Please provide your information to create your customer profile and complete your booking.
+                    </p>
                     
                     <form id="bookingForm" method="POST" action="/booking/create?serviceId=<%= serviceVariation.id %>&staffId=<%= teamMemberBookingProfile.teamMemberId %>&version=<%= serviceVersion %>&startAt=<%= startAt %>">
                         <!-- Hidden fields for multi-service support -->
@@ -457,33 +619,13 @@
                             <% }); %>
                         <% } %>
                         
-                        <!-- Phone Number Field -->
-                        <div class="form-group">
-                            <label for="phoneNumber">Phone number</label>
-                            <div class="phone-input-group">
-                                <div class="country-code">
-                                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTUiIHZpZXdCb3g9IjAgMCAyMCAxNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjE1IiBmaWxsPSIjQjIyMjM0Ii8+CjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSI3LjUiIGZpbGw9IndoaXRlIi8+CjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSI1IiBmaWxsPSIjM0M0Qjk1Ii8+Cjwvc3ZnPgo=" alt="US Flag" class="country-flag" />
-                                    <span>+1</span>
-                                </div>
-                                <input 
-                                    type="tel" 
-                                    id="phoneNumber"
-                                    name="phoneNumber" 
-                                    class="phone-number-input"
-                                    required
-                                    placeholder="Phone number"
-                                    autocomplete="tel"
-                                />
-                            </div>
-                            <div class="helper-text">
-                                By providing your phone number you acknowledge you will receive occasional informational messages, including automated messages, on your mobile device from this merchant. Text STOP to opt out at any time, and text HELP to get HELP Message and data rates may apply.
-                            </div>
-                        </div>
+                        <!-- Hidden field for verified phone -->
+                        <input type="hidden" id="verifiedPhoneNumber" name="phoneNumber" value="">
 
                         <!-- Name Fields -->
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="givenName">First name</label>
+                                <label for="givenName">First name *</label>
                                 <input 
                                     type="text" 
                                     id="givenName"
@@ -496,7 +638,7 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="familyName">Last name</label>
+                                <label for="familyName">Last name *</label>
                                 <input 
                                     type="text" 
                                     id="familyName"
@@ -511,7 +653,7 @@
 
                         <!-- Email Field -->
                         <div class="form-group">
-                            <label for="emailAddress">Email</label>
+                            <label for="emailAddress">Email *</label>
                             <input 
                                 type="email" 
                                 id="emailAddress"
@@ -523,9 +665,7 @@
                                 title="Please enter a valid email address"
                                 autocomplete="email"
                             />
-                        </div>
-
-                        <!-- Service Request Field -->
+                        </div>                        <!-- Service Request Field -->
                         <div class="form-group">
                             <label for="serviceNote">
                                 <% if (serviceDetails && serviceDetails.length > 0) { %>
@@ -537,10 +677,164 @@
                             <textarea 
                                 id="serviceNote"
                                 name="serviceNote" 
-                                placeholder="Enter a response"
+                                placeholder="Any special requests for your appointment..."
                                 maxlength="1500" 
                                 rows="4"
-                            ></textarea>
+                            ></textarea>                        </div>                        <!-- Cancellation Policy Section -->
+                        <div class="form-group">
+                            <div class="section-header" style="margin-bottom: 1rem;">
+                                <i class="fas fa-calendar-times"></i>
+                                <h5 style="margin: 0; color: #333; font-size: 1.1rem;">Cancellation Policy</h5>
+                            </div>
+                            
+                            <div style="background: #fff8e5; border: 1px solid #ffeaa7; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                                <div style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem;">
+                                    <i class="fas fa-exclamation-triangle" style="color: #f39c12; margin-top: 0.25rem;"></i>
+                                    <span style="color: #856404; font-weight: 600; font-size: 1rem;">Important Cancellation Terms</span>
+                                </div>
+                                
+                                <div style="color: #856404; line-height: 1.5; margin-bottom: 1rem;">
+                                    <p style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">
+                                        <strong>Appointment Reservation:</strong> We’ll save your spot by keeping your payment info on file. This helps us protect against last-minute cancellations or no-shows.
+                                    </p>
+                                    <p style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">
+                                        <strong>Service Payment:</strong> You’ll pay for your haircut or service <strong>in person</strong> after your appointment.
+                                    </p>
+                                    <p style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">
+                                        <strong>Cancellation Policy:</strong>
+                                    </p>
+                                    <!-- Clean 2-Hour Cancellation Policy -->
+                                    <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                                        <li style="margin-bottom: 0.5rem;">Cancel 2+ hours before: <strong>No charge</strong></li>
+                                        <li style="margin-bottom: 0.5rem;">Cancel within 2 hours: <strong>50% of service fee charged</strong></li>
+                                        <li style="margin-bottom: 0.5rem;">No-show: <strong>50% of service fee charged</strong></li>
+                                    </ul>
+                                    <!-- Policy Description -->
+                                    <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(52, 152, 219, 0.1); border-radius: 4px; border-left: 3px solid #3498db;">
+                                        <p style="margin: 0; font-size: 0.85rem; color: #2c3e50; font-style: italic;">
+                                            <strong>Please reschedule or cancel at least 2 hours before your appointment. If you cancel late or don’t show up, you may be charged a cancellation fee.</strong>
+                                        </p>
+                                    </div>
+                                    <!-- Card Authorization -->
+                                    <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(243, 156, 18, 0.1); border-radius: 4px; border-left: 3px solid #f39c12;">
+                                        <p style="margin: 0; font-size: 0.85rem; color: #856404;">
+                                            <i class="fas fa-credit-card" style="color: #f39c12; margin-right: 0.5rem;"></i>
+                                            <strong>Card Authorization:</strong> We’ll place a hold on your card to secure your spot and protect against no-shows.<br>
+                                            By booking, you agree to our cancellation policy and understand that late cancellations may result in charges.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                
+                                <!-- Booking Approval Policy -->
+                                <% if (typeof bookingConfig !== 'undefined' && bookingConfig && bookingConfig.booking.requiresApproval) { %>
+                                    <div style="background: rgba(52, 152, 219, 0.1); border-radius: 6px; padding: 1rem; margin-top: 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                            <i class="fas fa-clock" style="color: #3498db; font-size: 0.875rem;"></i>
+                                            <span style="color: #2c3e50; font-size: 0.875rem; font-weight: 500;">
+                                                <strong>Approval Required:</strong>
+                                            </span>
+                                        </div>
+                                        <p style="margin: 0; color: #34495e; font-size: 0.85rem; line-height: 1.4;">
+                                            Your booking request will be reviewed and you'll receive confirmation within 24 hours. 
+                                            We'll contact you via email or phone to confirm your appointment.
+                                        </p>
+                                    </div>
+                               
+                                <% } %>
+                                
+                                <div style="background: rgba(243, 156, 18, 0.1); border-radius: 6px; padding: 1rem; margin-top: 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-info-circle" style="color: #f39c12; font-size: 0.875rem;"></i>
+                                        <span style="color: #856404; font-size: 0.875rem; font-weight: 500;">
+                                            By proceeding, you agree to our cancellation policy and understand that late cancellations may result in charges.
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card on File Section -->
+                        <div class="form-group">
+                            <div class="section-header" style="margin-bottom: 1rem;">
+                                <i class="fas fa-credit-card"></i>
+                                <h5 style="margin: 0; color: #333; font-size: 1.1rem;">Payment Information</h5>
+                            </div>
+                            
+                            <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                                    <i class="fas fa-info-circle" style="color: #667eea;"></i>
+                                    <span style="color: #495057; font-weight: 500;">Secure Payment Setup</span>
+                                </div>
+                                <p style="margin: 0 0 1rem 0; color: #6c757d; font-size: 0.95rem; line-height: 1.4;">
+                                    A valid payment method is required to secure your appointment. Your card will not be charged until your appointment is completed.
+                                </p>
+                                
+                                <!-- Card Number -->
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label for="cardNumber">Card Number *</label>
+                                    <input 
+                                        type="text" 
+                                        id="cardNumber"
+                                        name="cardNumber"
+                                        placeholder="1234 5678 9012 3456"
+                                        maxlength="19"
+                                        autocomplete="cc-number"
+                                        required
+                                        style="font-family: 'Courier New', monospace;"
+                                    />
+                                </div>
+                                
+                                <!-- Card Details Row -->
+                                <div class="form-row" style="margin-bottom: 1rem;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="expiryDate">Expiry Date *</label>
+                                        <input 
+                                            type="text" 
+                                            id="expiryDate"
+                                            name="expiryDate"
+                                            placeholder="MM/YY"
+                                            maxlength="5"
+                                            autocomplete="cc-exp"
+                                            required
+                                            style="font-family: 'Courier New', monospace;"
+                                        />
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="cvv">CVV *</label>
+                                        <input 
+                                            type="text" 
+                                            id="cvv"
+                                            name="cvv"
+                                            placeholder="123"
+                                            maxlength="4"
+                                            autocomplete="cc-csc"
+                                            required
+                                            style="font-family: 'Courier New', monospace;"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <!-- Cardholder Name -->
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="cardholderName">Cardholder Name *</label>
+                                    <input 
+                                        type="text" 
+                                        id="cardholderName"
+                                        name="cardholderName"
+                                        placeholder="Name as it appears on card"
+                                        maxlength="100"
+                                        autocomplete="cc-name"
+                                        required
+                                    />
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
+                                    <i class="fas fa-lock" style="color: #28a745; font-size: 0.875rem;"></i>
+                                    <span style="color: #6c757d; font-size: 0.875rem;">Your payment information is encrypted and secure</span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Marketing Consent -->
@@ -559,151 +853,382 @@
                         <!-- Submit Button -->
                         <button type="submit" class="submit-btn" id="submitBtn">
                             <i class="fas fa-calendar-check"></i>
-                            Book appointment
+                            Book Appointment
                         </button>
                     </form>
-                </div>
-
-                <!-- Card on File Section -->
-                <div class="contact-section">
-                    <div class="section-header">
-                        <i class="fas fa-credit-card"></i>
-                        <h4>Card on file</h4>
-                    </div>
                     
-                    <p class="card-notice">
-                        A credit or debit card is required to book and may be charged in the case of a late cancellation. Protected and encrypted by Square.
-                    </p>
-
-                    <div class="card-input-container">
-                        <div class="card-input-group">
-                            <div class="card-icon">
-                                <i class="fas fa-credit-card"></i>
-                            </div>
-                            <input type="text" placeholder="Card number" class="card-input card-number" />
-                            <input type="text" placeholder="MM/YY" class="card-input card-expiry" />
-                            <input type="text" placeholder="CVV" class="card-input card-cvv" />
-                        </div>
-                    </div>
-
-                    <div class="card-consent">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="cardConsent" name="cardConsent">
-                            <label for="cardConsent">
-                                I authorize <%= location?.businessName || "this business" %> to save this card on file for future purchases. 
-                                <a href="#" style="color: #667eea; text-decoration: none;">More info</a>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cancellation Policy Section -->
-                <div class="contact-section">
-                    <div class="section-header">
-                        <i class="fas fa-calendar-times"></i>
-                        <h4>Cancellation policy</h4>
-                    </div>
-
-                    <!-- Cancellation Timeline -->
-                    <div class="cancellation-timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-marker today"></div>
-                            <div class="timeline-content">
-                                <div class="timeline-label">Today</div>
-                            </div>
-                        </div>
-                        <div class="timeline-line"></div>
-                        <div class="timeline-item">
-                            <div class="timeline-marker appointment"></div>
-                            <div class="timeline-content">
-                                <div class="timeline-label">Appointment</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="cancellation-notice">
-                        <button type="button" class="cancel-deadline-btn">
-                            <i class="fas fa-clock"></i>
-                            Cancel before 
-                            <% if (typeof startAt !== 'undefined' && startAt && typeof location !== 'undefined' && location) { %>
-                                <%= convertDateToText(startAt, location.timezone).split(',')[1].trim() %>
-                            <% } else { %>
-                                appointment date
-                            <% } %>
-                        </button>
-                    </div>
-
-                    <div class="policy-details">
-                        <% if (typeof startAt !== 'undefined' && startAt && typeof location !== 'undefined' && location) { %>
-                            <p>Please cancel or reschedule before 8:30 AM on <%= convertDateToText(startAt, location.timezone) %>. After that, you may be charged a cancellation fee of $18.00.</p>
-                        <% } else { %>
-                            <p>Please cancel or reschedule before the specified time. After that, you may be charged a cancellation fee.</p>
-                        <% } %>
-                        <a href="#" style="color: #667eea; text-decoration: none; font-weight: 500;">See full policy</a>
-                    </div>
-
-                    <div class="policy-consent">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="policyConsent" name="policyConsent" required>
-                            <label for="policyConsent">
-                                I have read and agreed to the cancellation policy of <%= location?.businessName || "this business" %>.
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="booking-notice">
-                        <p>Upon booking, Square will automatically create an account for you with Square Appointments. You can sign back in using your mobile number at any time. You may also receive promotional emails from Square.</p>
-                    </div>
+                    <button type="button" id="changePhoneNewBtn" style="background: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; margin-top: 1rem; width: 100%;">
+                        <i class="fas fa-arrow-left"></i>
+                        Use Different Phone Number
+                    </button>
                 </div>
             </div>
         </div>
-        
-        <!-- Include the appointment summary partial -->
+          <!-- Include the appointment summary partial -->
         <%- include("../partials/appointment-summary") %>
     </div>
 
-    <script>
+    <!-- SMS Verification Modal -->
+    <div id="smsVerificationModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sms"></i> Verify Your Phone Number</h3>
+                <button type="button" class="modal-close" onclick="closeSMSModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #6c757d; margin-bottom: 1.5rem;">
+                    We've sent a 6-digit verification code to <strong id="modalPhoneDisplay"></strong>. 
+                    Please enter it below to continue creating your account.
+                </p>
+                
+                <div class="form-group">
+                    <label for="modalVerificationCode">Verification Code *</label>
+                    <input 
+                        type="text" 
+                        id="modalVerificationCode"
+                        placeholder="Enter 6-digit code"
+                        maxlength="6"
+                        style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2rem; width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px;"
+                    />
+                    <div class="helper-text" style="margin-top: 0.5rem; color: #6c757d; font-size: 0.9rem;">
+                        Didn't receive the code? <a href="#" id="modalResendCode" style="color: #667eea;">Resend code</a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="modalVerifyCodeBtn" class="submit-btn" disabled>
+                    <i class="fas fa-check"></i>
+                    Verify & Create Account
+                </button>                <button type="button" class="cancel-btn" onclick="closeSMSModal()" style="background: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; margin-top: 0.5rem; width: 100%;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invisible reCAPTCHA container for Firebase -->
+    <div id="recaptcha-container"></div><script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "<%= process.env.FIREBASE_API_KEY %>",
+            authDomain: "<%= process.env.FIREBASE_AUTH_DOMAIN %>",
+            projectId: "<%= process.env.FIREBASE_PROJECT_ID %>",
+            storageBucket: "<%= process.env.FIREBASE_STORAGE_BUCKET %>",
+            messagingSenderId: "<%= process.env.FIREBASE_MESSAGING_SENDER_ID %>",
+            appId: "<%= process.env.FIREBASE_APP_ID %>"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        
+        // Firebase variables
+        let recaptchaVerifier;
+        let confirmationResult;
+
+        // Global state variables
+        let currentPhoneNumber = '';
+        let customerExists = false;
+        let customerData = null;
+        let isCheckingPhone = false;
+          // Modal JavaScript Functions
+          // Setup reCAPTCHA verifier for Firebase
+        function setupRecaptcha() {
+            if (!recaptchaVerifier) {
+                recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                    'size': 'invisible',
+                    'callback': function(response) {
+                        console.log('reCAPTCHA verified');
+                    },
+                    'expired-callback': function() {
+                        console.log('reCAPTCHA expired');
+                    }
+                });
+            }
+        }
+        
+        // Send SMS verification using Firebase
+        async function sendSMSVerification(phoneNumber) {
+            try {
+                setupRecaptcha();
+                
+                // Format phone number for Firebase (must include country code)
+                const formattedPhone = phoneNumber.startsWith('+1') ? phoneNumber : '+1' + phoneNumber.replace(/\D/g, '');
+                
+                console.log('Sending SMS to:', formattedPhone);
+                
+                // Send SMS via Firebase
+                confirmationResult = await auth.signInWithPhoneNumber(formattedPhone, recaptchaVerifier);
+                console.log('SMS sent successfully');
+                
+                return true;
+            } catch (error) {
+                console.error('Error sending SMS:', error);
+                throw error;
+            }
+        }
+        
+        // Show SMS verification modal
+        window.showSMSModal = async function() {
+            try {
+                // Send SMS verification
+                await sendSMSVerification(currentPhoneNumber);
+                
+                // Show modal
+                const modal = document.getElementById('smsVerificationModal');
+                const phoneDisplay = document.getElementById('modalPhoneDisplay');
+                const verificationInput = document.getElementById('modalVerificationCode');
+                
+                phoneDisplay.textContent = currentPhoneNumber;
+                modal.style.display = 'block';
+                
+                // Focus on verification code input
+                setTimeout(() => {
+                    verificationInput.focus();
+                }, 300);
+                
+            } catch (error) {
+                console.error('Error sending verification code:', error);
+                alert('Error sending verification code. Please try again.');
+            }
+        }
+        
+        // Close SMS verification modal
+        window.closeSMSModal = function() {
+            const modal = document.getElementById('smsVerificationModal');
+            modal.style.display = 'none';
+            
+            // Clear the input
+            document.getElementById('modalVerificationCode').value = '';
+            document.getElementById('modalVerifyCodeBtn').disabled = true;
+        }
+        
+        // Handle modal verification code input
+        function setupModalVerificationHandlers() {
+            const modalVerificationCode = document.getElementById('modalVerificationCode');
+            const modalVerifyCodeBtn = document.getElementById('modalVerifyCodeBtn');
+            const modalResendCode = document.getElementById('modalResendCode');
+            
+            if (modalVerificationCode) {
+                modalVerificationCode.addEventListener('input', function(e) {
+                    const code = e.target.value.replace(/\D/g, '');
+                    e.target.value = code;
+                    
+                    // Enable verify button when 6 digits entered
+                    modalVerifyCodeBtn.disabled = code.length !== 6;
+                });
+            }
+            
+            if (modalVerifyCodeBtn) {
+                modalVerifyCodeBtn.addEventListener('click', async function() {
+                    const code = modalVerificationCode.value;
+                    
+                    if (code.length !== 6) {
+                        alert('Please enter the 6-digit verification code');
+                        return;
+                    }
+                    
+                    // Show loading state
+                    const originalText = modalVerifyCodeBtn.innerHTML;
+                    modalVerifyCodeBtn.innerHTML = '<span class="loading-spinner"></span> Verifying...';
+                    modalVerifyCodeBtn.disabled = true;
+                      try {
+                        // Verify code using Firebase confirmationResult
+                        if (confirmationResult) {
+                            const result = await confirmationResult.confirm(code);
+                            const user = result.user;
+                            console.log('Phone verification successful:', user);
+                            
+                            // Code is correct, close modal and show new customer step
+                            closeSMSModal();
+                            showNewCustomerStep();
+                        } else {
+                            alert('No verification in progress. Please try again.');
+                            modalVerifyCodeBtn.innerHTML = originalText;
+                            modalVerifyCodeBtn.disabled = false;
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error verifying code:', error);
+                        if (error.code === 'auth/invalid-verification-code') {
+                            alert('Invalid verification code. Please try again.');
+                        } else {
+                            alert('Error verifying code. Please try again.');
+                        }
+                        modalVerifyCodeBtn.innerHTML = originalText;
+                        modalVerifyCodeBtn.disabled = false;
+                    }
+                });
+            }
+            
+            if (modalResendCode) {
+                modalResendCode.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    
+                    try {
+                        await sendSMSVerification(currentPhoneNumber);
+                        alert('Verification code resent!');
+                    } catch (error) {
+                        console.error('Error resending code:', error);
+                        alert('Error resending code. Please try again.');
+                    }
+                });
+            }        }
+
         // Make service details and booking info available to appointment summary JavaScript
+    </script>
+    
+    <script>
+        // Initialize global variables
         <% if (typeof serviceDetails !== 'undefined' && serviceDetails) { %>
-            window.serviceDetails = <%- JSON.stringify(serviceDetails) %>;
+        window.serviceDetails = <%- JSON.stringify(serviceDetails) %>;
         <% } else { %>
-            window.serviceDetails = [];
+        window.serviceDetails = [];
         <% } %>
         
         <% if (typeof teamMemberBookingProfile !== 'undefined' && teamMemberBookingProfile) { %>
-            window.selectedStaff = {
-                id: "<%= teamMemberBookingProfile.teamMemberId %>",
-                name: "<%= teamMemberBookingProfile.displayName %>",
-                description: <%- JSON.stringify(teamMemberBookingProfile.description || '') %>
-            };
+        window.selectedStaff = {
+            id: "<%= teamMemberBookingProfile.teamMemberId %>",
+            name: "<%= teamMemberBookingProfile.displayName.replace(/"/g, '\\"') %>",
+            description: <%- JSON.stringify(teamMemberBookingProfile.description || '') %>
+        };
         <% } else { %>
-            window.selectedStaff = {
-                id: "anyStaffMember",
-                name: "Any Available Staff",
-                description: ""
-            };
+        window.selectedStaff = {
+            id: "anyStaffMember",
+            name: "Any Available Staff",
+            description: ""
+        };
         <% } %>
 
         <% if (typeof startAt !== 'undefined' && startAt && typeof location !== 'undefined' && location) { %>
-            window.selectedDateTime = {
-                startAt: "<%= startAt %>",
-                timezone: "<%= location.timezone %>",
-                formattedDate: "<%= convertDateToText(startAt, location.timezone) %>",
-                formattedTime: "<%= convertTimeToText(startAt, location.timezone) %>"
-            };
+        window.selectedDateTime = {
+            startAt: "<%= startAt %>",
+            timezone: "<%= location.timezone %>",
+            formattedDate: "<%= convertDateToText(startAt, location.timezone).replace(/"/g, '\\"') %>",
+            formattedTime: "<%= convertTimeToText(startAt, location.timezone).replace(/"/g, '\\"') %>"
+        };
         <% } else { %>
-            window.selectedDateTime = null;
+        window.selectedDateTime = null;
         <% } %>
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Phone number formatting
+        document.addEventListener('DOMContentLoaded', function() {// Get DOM elements
             const phoneInput = document.getElementById('phoneNumber');
-            const submitBtn = document.getElementById('submitBtn');
+            const customerLookupResult = document.getElementById('customerLookupResult');
+            
+            // Step containers
+            const phoneStep = document.getElementById('phoneStep');
+            const existingCustomerStep = document.getElementById('existingCustomerStep');
+            const newCustomerStep = document.getElementById('newCustomerStep');
+            
+            // Forms
+            const existingCustomerForm = document.getElementById('existingCustomerForm');
             const bookingForm = document.getElementById('bookingForm');
             
-            if (phoneInput) {
-                let lastValue = '';
+            // Change phone buttons
+            const changePhoneExistingBtn = document.getElementById('changePhoneExistingBtn');
+            const changePhoneNewBtn = document.getElementById('changePhoneNewBtn');            // Setup modal verification handlers
+            setupModalVerificationHandlers();
+            
+            // Show new customer step function
+            window.showNewCustomerStep = function() {
+                phoneStep.style.display = 'none';
+                newCustomerStep.style.display = 'block';
                 
+                // Set verified phone number
+                document.getElementById('verifiedPhoneNumber').value = currentPhoneNumber;
+                
+                // Focus on first name field
+                setTimeout(() => {
+                    document.getElementById('givenName').focus();
+                }, 100);
+            }
+
+            // Function to check phone number
+            async function checkPhoneNumber(phoneValue) {
+                if (isCheckingPhone) return;
+                
+                const phone = phoneValue.replace(/\D/g, '');
+                if (phone.length !== 10) return;
+                
+                isCheckingPhone = true;
+                currentPhoneNumber = phoneValue;
+                
+                // Show loading state
+                customerLookupResult.style.display = 'block';
+                customerLookupResult.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 1rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
+                        <span class="loading-spinner"></span>
+                        <span>Checking phone number...</span>
+                    </div>
+                `;
+                
+                try {
+                    // Check if customer exists
+                    const checkResponse = await fetch('/customer/check-phone', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ phoneNumber: phoneValue })
+                    });
+                    
+                    const checkResult = await checkResponse.json();
+                    customerExists = checkResult.exists;
+                    customerData = checkResult.customer || null;
+                      // Show results
+                    if (customerExists && customerData) {
+                        customerLookupResult.innerHTML = `
+                            <div class="customer-info-display">
+                                <h6><i class="fas fa-user-check"></i> Welcome back!</h6>
+                                <div class="info-item">
+                                    <i class="fas fa-user"></i>
+                                    <span><strong>Name:</strong> ${customerData.givenName || ''} ${customerData.familyName || ''}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-envelope"></i>
+                                    <span><strong>Email:</strong> ${customerData.emailAddress || 'Not provided'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-phone"></i>
+                                    <span><strong>Phone:</strong> ${phoneValue}</span>
+                                </div>
+                                <button type="button" class="submit-btn" onclick="showExistingCustomerStep()" style="margin-top: 1rem;">
+                                    <i class="fas fa-arrow-right"></i> Continue with this account
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        customerLookupResult.innerHTML = `
+                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 1.5rem;">
+                                <h6 style="margin: 0 0 1rem 0; color: #856404; font-weight: 600;">
+                                    <i class="fas fa-user-plus"></i> New Customer
+                                </h6>
+                                <p style="margin: 0 0 1rem 0; color: #856404;">
+                                    No account found with this phone number. We'll create a new account for you.
+                                </p>                                <button type="button" class="submit-btn" onclick="showSMSModal()" style="background: #28a745;">
+                                    <i class="fas fa-user-plus"></i> Create new account
+                                </button>
+                            </div>
+                        `;
+                    }
+                    
+                } catch (error) {
+                    console.error('Error checking phone number:', error);
+                    customerLookupResult.innerHTML = `
+                        <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 1rem;">
+                            <i class="fas fa-exclamation-triangle" style="color: #721c24;"></i>
+                            <span style="color: #721c24; margin-left: 0.5rem;">Error checking phone number. Please try again.</span>
+                        </div>
+                    `;
+                } finally {
+                    isCheckingPhone = false;
+                }
+            }
+            
+            // Phone number formatting
+            let lastValue = '';
+            
+            if (phoneInput) {
                 phoneInput.addEventListener('input', function(e) {
                     const currentValue = e.target.value;
                     const cursorPos = e.target.selectionStart;
@@ -711,11 +1236,12 @@
                     
                     // Get just the digits
                     let digits = currentValue.replace(/\D/g, '');
-                    
-                    // Don't format if user is deleting and would result in same formatted value
+                      // Don't format if user is deleting and would result in same formatted value
                     if (isDeleting && digits.length <= 3) {
                         e.target.value = digits;
                         lastValue = digits;
+                        // Hide lookup result if less than 10 digits
+                        customerLookupResult.style.display = 'none';
                         return;
                     }
                     
@@ -741,6 +1267,14 @@
                         newCursorPos = cursorPos + addedChars;
                     }
                     e.target.setSelectionRange(newCursorPos, newCursorPos);
+                      // Enable/disable auto-lookup based on phone length
+                    if (digits.length === 10) {
+                        // Auto-check phone number when 10 digits are entered
+                        setTimeout(() => checkPhoneNumber(formatted), 500);
+                    } else if (digits.length < 10) {
+                        // Hide lookup result if less than 10 digits
+                        customerLookupResult.style.display = 'none';
+                    }
                 });
                 
                 // Handle backspace and delete keys specifically
@@ -748,8 +1282,7 @@
                     if (e.key === 'Backspace' || e.key === 'Delete') {
                         const cursorPos = e.target.selectionStart;
                         const currentValue = e.target.value;
-                        
-                        // If cursor is after a formatting character, skip over it
+                          // If cursor is after a formatting character, skip over it
                         if (e.key === 'Backspace' && cursorPos > 0) {
                             const charBefore = currentValue[cursorPos - 1];
                             if (charBefore === '(' || charBefore === ')' || charBefore === ' ' || charBefore === '-') {
@@ -759,27 +1292,98 @@
                     }
                 });
             }
-
-            // Form submission handler
+            
+            // Change phone number handlers
+            function resetToPhoneStep() {
+                phoneStep.style.display = 'block';
+                existingCustomerStep.style.display = 'none';
+                newCustomerStep.style.display = 'none';
+                
+                // Reset form state
+                phoneInput.value = '';
+                customerLookupResult.style.display = 'none';
+                
+                // Focus on phone input
+                setTimeout(() => {
+                    phoneInput.focus();
+                }, 100);
+            }
+            
+            if (changePhoneExistingBtn) {
+                changePhoneExistingBtn.addEventListener('click', resetToPhoneStep);
+            }
+            
+            if (changePhoneNewBtn) {
+                changePhoneNewBtn.addEventListener('click', resetToPhoneStep);            }
+            
+            // Show existing customer step (make global for onclick)
+            window.showExistingCustomerStep = function() {
+                phoneStep.style.display = 'none';
+                existingCustomerStep.style.display = 'block';
+                
+                // Populate customer info
+                const customerInfo = document.getElementById('existingCustomerInfo');
+                customerInfo.innerHTML = `
+                    <h6><i class="fas fa-user-check"></i> Customer Information</h6>
+                    <div class="info-item">
+                        <i class="fas fa-user"></i>
+                        <span><strong>Name:</strong> ${customerData.givenName || ''} ${customerData.familyName || ''}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <span><strong>Email:</strong> ${customerData.emailAddress || 'Not provided'}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-phone"></i>
+                        <span><strong>Phone:</strong> ${currentPhoneNumber}</span>
+                    </div>
+                `;
+                
+                // Set hidden fields
+                document.getElementById('existingCustomerId').value = customerData.id || '';
+                document.getElementById('existingPhoneNumber').value = currentPhoneNumber;
+                document.getElementById('existingGivenName').value = customerData.givenName || '';
+                document.getElementById('existingFamilyName').value = customerData.familyName || '';
+                document.getElementById('existingEmailAddress').value = customerData.emailAddress || '';
+            }
+            
+            // Show new customer step (make global for onclick)
+            window.showNewCustomerStep = function() {
+                phoneStep.style.display = 'none';
+                newCustomerStep.style.display = 'block';
+                
+                // Set verified phone number
+                document.getElementById('verifiedPhoneNumber').value = currentPhoneNumber;
+                
+                // Focus on first name field
+                setTimeout(() => {
+                    document.getElementById('givenName').focus();
+                }, 100);
+            }
+            
+            // Form submission handlers
+            if (existingCustomerForm) {
+                existingCustomerForm.addEventListener('submit', function(e) {
+                    const submitBtn = document.getElementById('existingCustomerSubmitBtn');
+                    
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Booking...';
+                    }
+                });
+            }
+            
             if (bookingForm) {
                 bookingForm.addEventListener('submit', function(e) {
                     const email = document.getElementById('emailAddress');
                     const firstName = document.getElementById('givenName');
                     const lastName = document.getElementById('familyName');
-                    const phone = document.getElementById('phoneNumber');
+                    const submitBtn = document.getElementById('submitBtn');
                     
                     // Validate required fields
-                    if (!firstName.value.trim() || !lastName.value.trim() || !email.value.trim() || !phone.value.trim()) {
+                    if (!firstName.value.trim() || !lastName.value.trim() || !email.value.trim()) {
                         e.preventDefault();
                         alert('Please fill in all required fields.');
-                        return;
-                    }
-                    
-                    // Phone validation (should be at least 10 digits)
-                    const phoneDigits = phone.value.replace(/\D/g, '');
-                    if (phoneDigits.length < 10) {
-                        e.preventDefault();
-                        alert('Please enter a valid 10-digit phone number.');
                         return;
                     }
                     
@@ -794,663 +1398,11 @@
                     // Show loading state
                     if (submitBtn) {
                         submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Booking appointment...';
+                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating Booking...';
                     }
-                });
-            }
-
-            // Initialize contact page appointment summary
-            if (typeof initContactPageSummary === 'function') {
-                setTimeout(function() {
-                    initContactPageSummary();
-                }, 100);
-            }
-
-            // Card input formatting
-            const cardNumberInput = document.querySelector('.card-number');
-            const cardExpiryInput = document.querySelector('.card-expiry');
-            const cardCvvInput = document.querySelector('.card-cvv');
-
-            if (cardNumberInput) {
-                cardNumberInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    let formattedValue = '';
-                    
-                    for (let i = 0; i < value.length; i++) {
-                        if (i > 0 && i % 4 === 0) {
-                            formattedValue += ' ';
-                        }
-                        formattedValue += value[i];
-                    }
-                    
-                    e.target.value = formattedValue;
-                });
-            }
-
-            if (cardExpiryInput) {
-                cardExpiryInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    if (value.length >= 2) {
-                        value = value.substring(0, 2) + '/' + value.substring(2, 4);
-                    }
-                    e.target.value = value;
-                });
-            }
-
-            if (cardCvvInput) {
-                cardCvvInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    e.target.value = value.substring(0, 4);
                 });
             }
         });
     </script>
-</body>
-</html>
-      border-radius: 8px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      width: 100%;
-      margin-top: 1rem;
-    }
-    .submit-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
-    }
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-left: 1rem;
-    }
-    .btn-secondary:hover {
-      background: #5a6268;
-      transform: translateY(-1px);
-    }
-    .button-group {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-    .customer-info-display {
-      background: #e8f5e8;
-      border: 1px solid #c3e6c3;
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin: 1rem 0;
-    }
-    .customer-info-display h6 {
-      margin: 0 0 1rem 0;
-      color: #155724;
-      font-weight: 600;
-    }
-    .customer-info-display .info-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
-    .customer-info-display .info-item i {
-      width: 20px;
-      margin-right: 0.5rem;
-      color: #28a745;
-    }
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #667eea;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .hidden {
-      display: none !important;
-    }
-    @media (max-width: 768px) {
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-      .contact-container {
-        padding: 1rem;
-      }
-    }
-  </style>
-</head>
-
-<body>
-  <header>
-    <%- include("../partials/header") %>
-  </header>
-
-  <div class="content">
-    <div class="content-left">
-      <a class="button" href="/availability/<%= teamMemberBookingProfile.teamMemberId %>/<%= serviceVariation.id %>?version=<%= serviceVersion %>">
-        <span class="icon back-arrow"></span> Back
-      </a>
-      <div class="steps">
-        <div class="steps__step">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Services</span>
-              <a href="/services">Edit</a>
-            </div>
-            <div class="steps__step-body">
-              <% if (serviceDetails && serviceDetails.length > 0) { %>
-                <ul>
-                  <% serviceDetails.forEach(function(s) { %>
-                    <li>
-                      <%= s.name %><% if (s.quantity > 1) { %> (x<%= s.quantity %>)<% } %> - <%= formatTime(s.duration) %>
-                    </li>
-                  <% }); %>
-                </ul>
-              <% } %>
-            </div>
-          </div>
-        </div>
-        <div class="steps__step">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Select staff</span>
-              <a href="/staff/<%= serviceVariation.id %>?version=<%= serviceVersion %>">Edit</a>
-            </div>
-            <div class="availability-staff__card-wrapper">
-              <div class="staff__card-picture-wrapper">
-                <% if (teamMemberBookingProfile.profileImageUrl) { %>
-                  <img src="<%= teamMemberBookingProfile.profileImageUrl %>" />
-                <% } else { %>
-                  <%= getStaffInitials(teamMemberBookingProfile.displayName) %>
-                <% } %>
-              </div>
-              <div class="steps__staff-step-body">
-                <div class="steps__step-name">
-                  <%= teamMemberBookingProfile.displayName %>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="steps__step">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Appointment time</span>
-              <a href="/availability/<%= teamMemberBookingProfile.teamMemberId %>/<%= serviceVariation.id %>?version=<%= serviceVersion %>">Edit</a>
-            </div>
-            <div class="steps__step-body">
-              <div class="steps__step-name">
-                <%= convertDateToText(startAt, location.timezone) %>
-              </div>
-              <div class="steps__step-description">
-                <%= convertTimeToText(startAt, location.timezone) %>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="steps__step selected">
-          <div class="steps__step-wrapper">
-            <div class="steps__step-title">
-              <span>Enter your details</span>
-              <span class="icon side-caret-selected"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="content-main">
-      <div class="contact-container">
-        <% if (typeof error !== 'undefined' && error) { %>
-          <div class="popup-error-overlay">
-            <div class="popup-error-dialog">
-              <span class="popup-error-close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
-              <h5>Notice</h5>
-              <span><%= error %></span>
-            </div>
-          </div>
-        <% } %>
-        
-        <h4><i class="fas fa-phone me-2"></i>Complete Your Booking</h4>
-        <p class="text-muted">Please provide your phone number to continue with your booking.</p>
-        
-        <!-- Phone Number Verification Step -->
-        <div id="phoneStep" class="form-step active">
-          <h6><i class="fas fa-mobile-alt me-2"></i>Phone Number Verification</h6>
-          <p class="text-muted">Enter your phone number to check if you're an existing customer.</p>
-          
-          <div class="form-group phone-field">
-            <label for="phoneNumber">
-              <i class="fas fa-phone me-1"></i>Phone Number *
-            </label>
-            <input 
-              type="tel" 
-              id="phoneNumber"
-              name="phoneNumber" 
-              required
-              placeholder="(916) 123-4567"
-              autocomplete="tel"
-            />
-            <div class="helper-text">
-              <i class="fas fa-info-circle text-primary"></i>
-              We'll check if you're an existing customer to streamline your booking
-            </div>
-          </div>
-          
-          <button type="button" id="verifyPhoneBtn" class="submit-btn">
-            <i class="fas fa-search me-2"></i>
-            Check Phone Number
-          </button>
-        </div>
-        
-        <!-- Customer Information Form (Hidden Initially) -->
-        <form id="bookingForm" class="contact-form" method="POST" action="/booking/create?serviceId=<%= serviceVariation.id %>&staffId=<%= teamMemberBookingProfile.teamMemberId %>&version=<%= serviceVersion %>&startAt=<%= startAt %>" style="display: none;">
-          <!-- Hidden fields for multi-service support -->
-          <% if (selectedServices && selectedServices.length > 1) { %>
-            <% selectedServices.forEach(function(sid) { %>
-              <input type="hidden" name="services[]" value="<%= sid %>">
-              <% if (quantities && quantities[sid]) { %>
-                <input type="hidden" name="quantities[<%= sid %>]" value="<%= quantities[sid] %>">
-              <% } %>
-            <% }); %>
-          <% } %>
-          
-          <!-- Hidden phone field to pass verified phone -->
-          <input type="hidden" id="verifiedPhone" name="phoneNumber" value="">
-          
-          <!-- Existing Customer Confirmation (Hidden Initially) -->
-          <div id="existingCustomerStep" class="form-step" style="display: none;">
-            <h6><i class="fas fa-user-check me-2"></i>Welcome Back!</h6>
-            <div id="customerInfo" class="customer-info-display">
-              <!-- Customer info will be populated here -->
-            </div>
-            <p class="text-muted">Is this information correct?</p>
-            
-            <div class="form-group">
-              <label for="existingCustomerNote">
-                <i class="fas fa-comment me-1"></i>Appointment Notes (Optional)
-              </label>
-              <textarea 
-                id="existingCustomerNote"
-                name="existingCustomerNote" 
-                placeholder="Any special requests or notes for your appointment..."
-                maxlength="1500" 
-                rows="4"
-              ></textarea>
-            </div>
-            
-            <div class="button-group">
-              <button type="button" id="confirmExistingBtn" class="submit-btn">
-                <i class="fas fa-calendar-check me-2"></i>
-                Confirm & Book Appointment
-              </button>
-              <button type="button" id="updateInfoBtn" class="btn btn-secondary">
-                <i class="fas fa-edit me-2"></i>
-                Update My Information
-              </button>
-            </div>
-          </div>
-          
-          <!-- New Customer Form (Hidden Initially) -->
-          <div id="newCustomerStep" class="form-step" style="display: none;">
-            <h6><i class="fas fa-user-plus me-2"></i>New Customer Information</h6>
-            <p class="text-muted">Please provide your details to create your customer profile.</p>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="givenName">
-                  <i class="fas fa-user me-1"></i>First Name *
-                </label>
-                <input 
-                  type="text" 
-                  id="givenName"
-                  name="givenName" 
-                  required 
-                  maxlength="50" 
-                  placeholder="Enter your first name"
-                  autocomplete="given-name"
-                />
-              </div>
-              
-              <div class="form-group">
-                <label for="familyName">
-                  <i class="fas fa-user me-1"></i>Last Name *
-                </label>
-                <input 
-                  type="text" 
-                  id="familyName"
-                  name="familyName" 
-                  required 
-                  maxlength="50" 
-                  placeholder="Enter your last name"
-                  autocomplete="family-name"
-                />
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="emailAddress">
-                <i class="fas fa-envelope me-1"></i>Email Address *
-              </label>
-              <input 
-                type="email" 
-                id="emailAddress"
-                name="emailAddress" 
-                required 
-                maxlength="320" 
-                placeholder="Enter your email address"
-                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" 
-                title="Please enter a valid email address"
-                autocomplete="email"
-              />
-            </div>
-            
-            <div class="form-group">
-              <label for="newCustomerNote">
-                <i class="fas fa-comment me-1"></i>Appointment Notes (Optional)
-              </label>
-              <textarea 
-                id="newCustomerNote"
-                name="newCustomerNote" 
-                placeholder="Any special requests or notes for your appointment..."
-                maxlength="1500" 
-                rows="4"
-              ></textarea>
-            </div>
-            
-            <button type="submit" class="submit-btn">
-              <i class="fas fa-calendar-check me-2"></i>
-              Create Account & Book Appointment
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Phone number formatting
-      const phoneInput = document.getElementById('phoneNumber');
-      const verifyPhoneBtn = document.getElementById('verifyPhoneBtn');
-      const phoneStep = document.getElementById('phoneStep');
-      const bookingForm = document.getElementById('bookingForm');
-      const existingCustomerStep = document.getElementById('existingCustomerStep');
-      const newCustomerStep = document.getElementById('newCustomerStep');
-      const verifiedPhoneInput = document.getElementById('verifiedPhone');
-      
-      if (phoneInput) {
-        let lastValue = '';
-        
-        phoneInput.addEventListener('input', function(e) {
-          const currentValue = e.target.value;
-          const cursorPos = e.target.selectionStart;
-          const isDeleting = currentValue.length < lastValue.length;
-          
-          // Get just the digits
-          let digits = currentValue.replace(/\D/g, '');
-          
-          // Don't format if user is deleting and would result in same formatted value
-          if (isDeleting && digits.length <= 3) {
-            e.target.value = digits;
-            lastValue = digits;
-            if (verifyPhoneBtn) {
-              verifyPhoneBtn.disabled = true;
-            }
-            return;
-          }
-          
-          // Format the number
-          let formatted = '';
-          if (digits.length >= 10) {
-            formatted = digits.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-          } else if (digits.length >= 6) {
-            formatted = digits.replace(/(\d{3})(\d{3})(\d{0,4})/, '($1) $2-$3');
-          } else if (digits.length >= 3) {
-            formatted = digits.replace(/(\d{3})(\d{0,3})/, '($1) $2');
-          } else {
-            formatted = digits;
-          }
-          
-          e.target.value = formatted;
-          lastValue = formatted;
-          
-          // Restore cursor position intelligently
-          let newCursorPos = cursorPos;
-          if (!isDeleting && formatted.length > currentValue.length) {
-            // If we added formatting characters, adjust cursor
-            const addedChars = formatted.length - currentValue.length;
-            newCursorPos = cursorPos + addedChars;
-          }
-          e.target.setSelectionRange(newCursorPos, newCursorPos);
-          
-          // Enable/disable verify button based on phone length
-          if (verifyPhoneBtn) {
-            verifyPhoneBtn.disabled = digits.length < 10;
-          }
-        });
-        
-        // Handle backspace and delete keys specifically
-        phoneInput.addEventListener('keydown', function(e) {
-          if (e.key === 'Backspace' || e.key === 'Delete') {
-            const cursorPos = e.target.selectionStart;
-            const currentValue = e.target.value;
-            
-            // If cursor is after a formatting character, skip over it
-            if (e.key === 'Backspace' && cursorPos > 0) {
-              const charBefore = currentValue[cursorPos - 1];
-              if (charBefore === '(' || charBefore === ')' || charBefore === ' ' || charBefore === '-') {
-                e.target.setSelectionRange(cursorPos - 1, cursorPos - 1);
-              }
-            }
-          }
-        });
-      }
-      
-      // Phone verification handler
-      if (verifyPhoneBtn) {
-        verifyPhoneBtn.addEventListener('click', async function() {
-          const phone = phoneInput.value.replace(/\D/g, '');
-          
-          if (phone.length < 10) {
-            alert('Please enter a valid 10-digit phone number');
-            return;
-          }
-          
-          // Show loading state
-          const originalText = verifyPhoneBtn.innerHTML;
-          verifyPhoneBtn.innerHTML = '<span class="loading-spinner"></span> Checking...';
-          verifyPhoneBtn.disabled = true;
-          
-          try {
-            // Check if customer exists
-            const response = await fetch('/customer/check-phone', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ phoneNumber: phoneInput.value })
-            });
-            
-            const result = await response.json();
-            
-            // Store verified phone number
-            verifiedPhoneInput.value = phoneInput.value;
-            
-            // Hide phone step and show booking form
-            phoneStep.style.display = 'none';
-            bookingForm.style.display = 'block';
-            
-            if (result.exists) {
-              // Show existing customer flow
-              showExistingCustomer(result.customer);
-            } else {
-              // Show new customer flow
-              showNewCustomer();
-            }
-            
-          } catch (error) {
-            console.error('Error checking phone:', error);
-            alert('Error checking phone number. Please try again.');
-            
-            // Reset button state on error
-            verifyPhoneBtn.innerHTML = originalText;
-            verifyPhoneBtn.disabled = phone.replace(/\D/g, '').length < 10;
-          }
-        });
-      }
-      
-      function showExistingCustomer(customer) {
-        existingCustomerStep.style.display = 'block';
-        newCustomerStep.style.display = 'none';
-        
-        // Populate customer info
-        const customerInfo = document.getElementById('customerInfo');
-        customerInfo.innerHTML = `
-          <h6><i class="fas fa-user-check me-2"></i>Customer Information</h6>
-          <div class="info-item">
-            <i class="fas fa-user"></i>
-            <span><strong>Name:</strong> ${customer.givenName || ''} ${customer.familyName || ''}</span>
-          </div>
-          <div class="info-item">
-            <i class="fas fa-envelope"></i>
-            <span><strong>Email:</strong> ${customer.emailAddress || 'Not provided'}</span>
-          </div>
-          <div class="info-item">
-            <i class="fas fa-phone"></i>
-            <span><strong>Phone:</strong> ${phoneInput.value}</span>
-          </div>
-        `;
-        
-        // Store customer info in hidden fields
-        addHiddenField('customerId', customer.id);
-        addHiddenField('givenName', customer.givenName || '');
-        addHiddenField('familyName', customer.familyName || '');
-        addHiddenField('emailAddress', customer.emailAddress || '');
-      }
-      
-      function showNewCustomer() {
-        existingCustomerStep.style.display = 'none';
-        newCustomerStep.style.display = 'block';
-      }
-      
-      function addHiddenField(name, value) {
-        // Remove existing field if it exists
-        const existing = bookingForm.querySelector(`input[name="${name}"]`);
-        if (existing) {
-          existing.remove();
-        }
-        
-        // Add new hidden field
-        const hiddenField = document.createElement('input');
-        hiddenField.type = 'hidden';
-        hiddenField.name = name;
-        hiddenField.value = value;
-        bookingForm.appendChild(hiddenField);
-      }
-      
-      // Confirm existing customer handler
-      const confirmExistingBtn = document.getElementById('confirmExistingBtn');
-      if (confirmExistingBtn) {
-        confirmExistingBtn.addEventListener('click', function() {
-          // Submit the form for existing customer
-          confirmExistingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Booking...';
-          confirmExistingBtn.disabled = true;
-          bookingForm.submit();
-        });
-      }
-      
-      // Update info handler
-      const updateInfoBtn = document.getElementById('updateInfoBtn');
-      if (updateInfoBtn) {
-        updateInfoBtn.addEventListener('click', function() {
-          // Switch to new customer form to update info
-          showNewCustomer();
-        });
-      }
-
-      // Form submission handler for new customers
-      if (bookingForm) {
-        bookingForm.addEventListener('submit', function(e) {
-          const email = document.getElementById('emailAddress');
-          const firstName = document.getElementById('givenName');
-          const lastName = document.getElementById('familyName');
-          const submitBtn = bookingForm.querySelector('button[type="submit"]');
-          
-          // Only validate if new customer form is visible
-          if (newCustomerStep.style.display !== 'none') {
-            if (!firstName.value.trim() || !lastName.value.trim() || !email.value.trim()) {
-              e.preventDefault();
-              alert('Please fill in all required fields.');
-              return;
-            }
-            
-            // Email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email.value)) {
-              e.preventDefault();
-              alert('Please enter a valid email address.');
-              return;
-            }
-          }
-          
-          // Show loading state
-          if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Booking...';
-          }
-        });
-      }
-      
-      // Session restoration for back navigation
-      <% if (typeof preservedSession !== 'undefined' && preservedSession && isBackNavigation && preservedSession.contactInfo) { %>
-        console.log('DEBUG: Back navigation detected - restoring contact form data');
-        
-        // Restore form fields
-        <% if (preservedSession.contactInfo.phoneNumber) { %>
-          const phoneField = document.getElementById('phoneNumber');
-          if (phoneField) {
-            phoneField.value = '<%= preservedSession.contactInfo.phoneNumber %>';
-            console.log('DEBUG: Restored phone number');
-          }
-        <% } %>
-        
-        <% if (preservedSession.contactInfo.givenName) { %>
-          const firstNameField = document.getElementById('givenName');
-          if (firstNameField) {
-            firstNameField.value = '<%= preservedSession.contactInfo.givenName %>';
-            console.log('DEBUG: Restored first name');
-          }
-        <% } %>
-        
-        <% if (preservedSession.contactInfo.familyName) { %>
-          const lastNameField = document.getElementById('familyName');
-          if (lastNameField) {
-            lastNameField.value = '<%= preservedSession.contactInfo.familyName %>';
-            console.log('DEBUG: Restored last name');
-          }
-        <% } %>
-        
-        <% if (preservedSession.contactInfo.emailAddress) { %>
-          const emailField = document.getElementById('emailAddress');
-          if (emailField) {
-            emailField.value = '<%= preservedSession.contactInfo.emailAddress %>';
-            console.log('DEBUG: Restored email address');
-          }
-        <% } %>
-      <% } %>
-    });
-  </script>
 </body>
 </html>

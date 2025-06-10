@@ -19,6 +19,9 @@ const {
   catalogApi,
 } = require("../util/square-client");
 
+const { getCancellationPolicy, getPolicyTerms } = require("../util/cancellation-policy");
+const { getBookingConfiguration } = require("../util/booking-policy");
+
 /**
  * GET /contact
  *
@@ -88,9 +91,22 @@ router.get("/", async (req, res, next) => {
   if (errorMessage === 'invalid_email') {
     error = 'The provided email address is invalid. Please enter a valid email address.';
   }
-  
-  try {
+    try {
     console.log('Starting contact route - using fallback data to avoid API issues...');
+    
+    // Fetch cancellation policy from Square API
+    let cancellationPolicy = null;
+    let policyTerms = null;
+    
+    try {
+      console.log('Fetching cancellation policy from Square API...');
+      cancellationPolicy = await getCancellationPolicy();
+      policyTerms = getPolicyTerms(cancellationPolicy);
+      console.log('Successfully loaded cancellation policy:', policyTerms);
+    } catch (policyError) {
+      console.warn('Failed to load cancellation policy from API, using default:', policyError.message);
+      // Policy will be null and template will use default hardcoded policy
+    }
     
     // Create fallback data to ensure page renders successfully
     const serviceDetails = [];
@@ -128,9 +144,24 @@ router.get("/", async (req, res, next) => {
     req.session.serviceId = serviceId;
     req.session.staffId = staffId;
     req.session.startAt = startAt;
-    req.session.serviceVersion = serviceVersion;
+    req.session.serviceVersion = serviceVersion;      console.log('Rendering contact page with fallback data...');
     
-    console.log('Rendering contact page with fallback data...');
+    // Fetch booking configuration
+    let bookingConfig = null;
+    try {
+      bookingConfig = await getBookingConfiguration();
+    } catch (configError) {
+      console.warn('Failed to load booking configuration, using defaults:', configError.message);
+      bookingConfig = {
+        booking: { requiresApproval: false },
+        flow: { 
+          requiresApproval: false,
+          confirmationMessage: 'Your booking has been confirmed! You will receive a confirmation email shortly.',
+          nextSteps: ['Prepare for your appointment', 'Add to your calendar', 'Contact us if you need to reschedule']
+        }
+      };
+    }
+    
     res.render("pages/contact", { 
       serviceItem, 
       serviceVariation, 
@@ -142,7 +173,12 @@ router.get("/", async (req, res, next) => {
       serviceDetails,
       error, // Pass any error messages to the template
       preservedSession,
-      isBackNavigation
+      isBackNavigation,
+      cancellationPolicy,
+      policyTerms,
+      bookingConfig,
+      requiresApproval: bookingConfig.booking.requiresApproval,
+      bookingFlow: bookingConfig.flow
     });
   } catch (error) {
     console.error('Error in contact route:', error.message || error);
@@ -171,8 +207,7 @@ router.get("/", async (req, res, next) => {
       familyName: 'Member',
       teamMemberId: staffId
     };
-    
-    console.log('Rendering contact page with emergency fallback data...');
+      console.log('Rendering contact page with emergency fallback data...');
     
     res.render("pages/contact", { 
       serviceItem: fallbackServiceItem, 
@@ -185,7 +220,9 @@ router.get("/", async (req, res, next) => {
       serviceDetails: [],
       error: 'Service details temporarily unavailable. You can still proceed with your booking.',
       preservedSession,
-      isBackNavigation
+      isBackNavigation,
+      cancellationPolicy: null,
+      policyTerms: null
     });
   }
 });

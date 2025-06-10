@@ -20,6 +20,9 @@ const servicesRoute = require("./services");
 const staffRoute = require("./staff");
 const authRoute = require("./auth"); // Add the new auth route
 const customerRoute = require("./customer"); // Add the new customer route
+const testPolicyRoute = require("./test-policy"); // Add the test policy route
+const paymentRoute = require("./payment"); // Add the payment route
+const testBookingPolicyRoute = require("./test-booking-policy"); // Add booking policy test route
 
 router.use("/availability", availabilityRoute);
 router.use("/contact", contactRoute);
@@ -28,6 +31,9 @@ router.use("/staff", staffRoute);
 router.use("/booking", bookingRoute);
 router.use("/auth", authRoute); // Add auth routes
 router.use("/customer", customerRoute); // Add customer routes
+router.use("/test-policy", testPolicyRoute); // Add test policy route
+router.use("/payment", paymentRoute); // Add payment routes
+router.use("/test-booking-policy", testBookingPolicyRoute); // Add booking policy test route
 
 // Test route for availability layout
 router.get('/test-availability', (req, res) => {
