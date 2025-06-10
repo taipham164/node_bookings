@@ -1546,6 +1546,23 @@
         console.log('DEBUG: Array.isArray(window.serviceDetails):', Array.isArray(window.serviceDetails));
         console.log('DEBUG: window.serviceDetails.length:', window.serviceDetails ? window.serviceDetails.length : 'undefined');
         
+        // Session restoration for back navigation
+        <% if (typeof preservedSession !== 'undefined' && preservedSession && isBackNavigation) { %>
+            console.log('DEBUG: Back navigation detected - restoring session data');
+            
+            // Restore date and time selection if available
+            <% if (preservedSession.selectedDateTime) { %>
+                console.log('DEBUG: Restoring selected date/time:', '<%= preservedSession.selectedDateTime %>');
+                // Store for restoration after DOM loads
+                window.preservedDateTime = '<%= preservedSession.selectedDateTime %>';
+            <% } %>
+            
+            <% if (preservedSession.selectedSlot) { %>
+                console.log('DEBUG: Restoring selected slot:', <%- JSON.stringify(preservedSession.selectedSlot) %>);
+                window.preservedSlot = <%- JSON.stringify(preservedSession.selectedSlot) %>;
+            <% } %>
+        <% } %>
+        
         // Ensure appointment summary is initialized
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Availability page loaded');
@@ -1553,6 +1570,46 @@
             // Additional debugging for appointment summary initialization
             console.log('DEBUG: DOM loaded - window.serviceDetails:', window.serviceDetails);
             console.log('DEBUG: DOM loaded - window.selectedStaff:', window.selectedStaff);
+            
+            // Restore preserved session data for back navigation
+            if (window.preservedDateTime || window.preservedSlot) {
+                console.log('DEBUG: Restoring preserved session data');
+                
+                // Restore date selection
+                if (window.preservedDateTime) {
+                    console.log('DEBUG: Attempting to restore date:', window.preservedDateTime);
+                    // Try to find and click the date if it exists in the calendar
+                    const dateStr = window.preservedDateTime.split('T')[0]; // Get just the date part
+                    const dateElements = document.querySelectorAll('.date-option[data-date]');
+                    dateElements.forEach(el => {
+                        if (el.getAttribute('data-date') === dateStr) {
+                            console.log('DEBUG: Found matching date element, clicking');
+                            el.click();
+                        }
+                    });
+                }
+                
+                // Restore time slot selection
+                if (window.preservedSlot) {
+                    console.log('DEBUG: Attempting to restore time slot:', window.preservedSlot);
+                    setTimeout(() => {
+                        // Look for time slot buttons with matching time
+                        const timeButtons = document.querySelectorAll('.time-option');
+                        timeButtons.forEach(btn => {
+                            const timeText = btn.textContent.trim();
+                            const slotTime = new Date(window.preservedSlot.startAt).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            });
+                            if (timeText.includes(slotTime)) {
+                                console.log('DEBUG: Found matching time slot, selecting');
+                                btn.click();
+                            }
+                        });
+                    }, 500); // Wait for time slots to load
+                }
+            }
             
             // Initialize availability page appointment summary
             if (typeof initAvailabilityPageSummary === 'function') {

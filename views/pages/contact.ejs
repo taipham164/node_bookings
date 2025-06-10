@@ -1412,6 +1412,44 @@
           }
         });
       }
+      
+      // Session restoration for back navigation
+      <% if (typeof preservedSession !== 'undefined' && preservedSession && isBackNavigation && preservedSession.contactInfo) { %>
+        console.log('DEBUG: Back navigation detected - restoring contact form data');
+        
+        // Restore form fields
+        <% if (preservedSession.contactInfo.phoneNumber) { %>
+          const phoneField = document.getElementById('phoneNumber');
+          if (phoneField) {
+            phoneField.value = '<%= preservedSession.contactInfo.phoneNumber %>';
+            console.log('DEBUG: Restored phone number');
+          }
+        <% } %>
+        
+        <% if (preservedSession.contactInfo.givenName) { %>
+          const firstNameField = document.getElementById('givenName');
+          if (firstNameField) {
+            firstNameField.value = '<%= preservedSession.contactInfo.givenName %>';
+            console.log('DEBUG: Restored first name');
+          }
+        <% } %>
+        
+        <% if (preservedSession.contactInfo.familyName) { %>
+          const lastNameField = document.getElementById('familyName');
+          if (lastNameField) {
+            lastNameField.value = '<%= preservedSession.contactInfo.familyName %>';
+            console.log('DEBUG: Restored last name');
+          }
+        <% } %>
+        
+        <% if (preservedSession.contactInfo.emailAddress) { %>
+          const emailField = document.getElementById('emailAddress');
+          if (emailField) {
+            emailField.value = '<%= preservedSession.contactInfo.emailAddress %>';
+            console.log('DEBUG: Restored email address');
+          }
+        <% } %>
+      <% } %>
     });
   </script>
 </body>

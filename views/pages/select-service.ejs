@@ -683,6 +683,38 @@
       }
     });
 
+    // Restore preserved session data if this is back navigation
+    <% if (typeof isBackNavigation !== 'undefined' && isBackNavigation && typeof preservedSession !== 'undefined' && preservedSession) { %>
+    // Restore selections from back navigation
+    window.preservedSession = <%- JSON.stringify(preservedSession) %>;
+    console.log('Restoring preserved session from server:', window.preservedSession);
+    
+    // Restore selected services if they exist
+    if (window.preservedSession.selectedServices && window.preservedSession.selectedServices.length > 0) {
+      window.preservedSession.selectedServices.forEach(function(serviceId) {
+        const serviceElement = document.querySelector(`[data-service-id="${serviceId}"]`);
+        if (serviceElement) {
+          const checkbox = serviceElement.querySelector('input[type="checkbox"]');
+          if (checkbox) {
+            checkbox.checked = true;
+            // Trigger change event to update UI
+            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+      });
+      
+      // Update quantities if they exist
+      if (window.preservedSession.quantities) {
+        Object.keys(window.preservedSession.quantities).forEach(function(serviceId) {
+          const quantityInput = document.querySelector(`input[name="quantity-${serviceId}"]`);
+          if (quantityInput) {
+            quantityInput.value = window.preservedSession.quantities[serviceId];
+          }
+        });
+      }
+    }
+    <% } %>
+
     // Rest of your existing JavaScript with safety checks
     function changeQty(id, delta) {
       var input = document.getElementById('quantity-' + id);

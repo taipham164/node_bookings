@@ -150,10 +150,26 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
   const serviceVersion = req.query.version || "";
   const staffId = req.params.staffId;
   
+  // Check if this is back navigation
+  const isBackNavigation = req.query.back === 'true';
+  
   // Validate required parameters
   if (!serviceId || !staffId) {
     console.warn('Missing required route parameters:', { serviceId: !!serviceId, staffId: !!staffId });
     return res.redirect('/services?error=invalid_params');
+  }
+  
+  // Prepare preserved session data for back navigation
+  let preservedSession = null;
+  if (isBackNavigation && req.session) {
+    preservedSession = {
+      selectedServices: req.session.selectedServices,
+      quantities: req.session.quantities,
+      selectedStaff: req.session.selectedStaff,
+      selectedDateTime: req.session.selectedDateTime,
+      selectedSlot: req.session.selectedSlot
+    };
+    console.log('DEBUG: availability - Back navigation detected, preserving session:', preservedSession);
   }
   
   const startAt = dateHelpers.getStartAtDate();
@@ -589,7 +605,9 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       selectedServices, 
       quantities, 
       ...safeAdditionalInfo,
-      serviceDetails: safeServiceDetails 
+      serviceDetails: safeServiceDetails,
+      preservedSession,
+      isBackNavigation
     });
   } catch (error) {
     console.error('Error in availability search:', error);

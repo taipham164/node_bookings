@@ -34,6 +34,24 @@ router.get("/:serviceId", async (req, res, next) => {
   console.log('DEBUG: /staff/:serviceId route called with serviceId:', req.params.serviceId);
   console.log('DEBUG: /staff/:serviceId req.session:', req.session);
   
+  const isBackNavigation = req.query.back === 'true';
+  
+  // If this is back navigation, preserve existing session data
+  let preservedSession = null;
+  if (isBackNavigation && req.session) {
+    preservedSession = {
+      selectedServices: req.session.selectedServices,
+      quantities: req.session.quantities,
+      serviceDetails: req.session.serviceDetails,
+      totalDuration: req.session.totalDuration,
+      totalPrice: req.session.totalPrice,
+      selectedStaffId: req.session.selectedStaffId,
+      teamMemberBookingProfile: req.session.teamMemberBookingProfile,
+      staffProfile: req.session.staffProfile
+    };
+    console.log('Back navigation to staff - preserving session:', preservedSession);
+  }
+  
   try {
     // Validate required environment configuration
     if (!locationId) {
@@ -262,6 +280,8 @@ router.get("/:serviceId", async (req, res, next) => {
       serviceDetails: safeServiceDetails, 
       totalPrice: safeTotalPrice,
       totalDuration: safeTotalDuration,
+      preservedSession,
+      isBackNavigation,
       error // Pass any error messages to the template
     });
   } catch (error) {

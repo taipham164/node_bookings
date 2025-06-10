@@ -38,6 +38,23 @@ router.get("/", async (req, res, next) => {
   const staffId = req.query.staff;
   const startAt = req.query.startAt;
   
+  // Check if this is back navigation
+  const isBackNavigation = req.query.back === 'true';
+  
+  // Prepare preserved session data for back navigation
+  let preservedSession = null;
+  if (isBackNavigation && req.session) {
+    preservedSession = {
+      selectedServices: req.session.selectedServices,
+      quantities: req.session.quantities,
+      selectedStaff: req.session.selectedStaff,
+      selectedDateTime: req.session.selectedDateTime,
+      selectedSlot: req.session.selectedSlot,
+      contactInfo: req.session.contactInfo
+    };
+    console.log('DEBUG: contact - Back navigation detected, preserving session:', preservedSession);
+  }
+  
   // Validate required parameters
   if (!staffId || !serviceId || !startAt) {
     console.warn('Missing required parameters for contact page:', { 
@@ -123,7 +140,9 @@ router.get("/", async (req, res, next) => {
       selectedServices, 
       quantities, 
       serviceDetails,
-      error // Pass any error messages to the template
+      error, // Pass any error messages to the template
+      preservedSession,
+      isBackNavigation
     });
   } catch (error) {
     console.error('Error in contact route:', error.message || error);
@@ -164,7 +183,9 @@ router.get("/", async (req, res, next) => {
       selectedServices: [serviceId], 
       quantities: {}, 
       serviceDetails: [],
-      error: 'Service details temporarily unavailable. You can still proceed with your booking.'
+      error: 'Service details temporarily unavailable. You can still proceed with your booking.',
+      preservedSession,
+      isBackNavigation
     });
   }
 });

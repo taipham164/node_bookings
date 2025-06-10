@@ -603,9 +603,25 @@
   <%- include("../partials/appointment-summary") %>
   </div>
 
-  
-
-
+  <!-- Restore preserved session data if this is back navigation
+    <% if (typeof isBackNavigation !== 'undefined' && isBackNavigation && typeof preservedSession !== 'undefined' && preservedSession) { %>
+    // Restore staff selection from back navigation
+    window.preservedSession = <%- JSON.stringify(preservedSession) %>;
+    console.log('Restoring preserved staff session:', window.preservedSession);
+    
+    // Pre-select staff member if they were previously selected
+    if (window.preservedSession.selectedStaffId) {
+      document.addEventListener('DOMContentLoaded', function() {
+        const staffRadio = document.querySelector(`input[name="staffId"][value="${window.preservedSession.selectedStaffId}"]`);
+        if (staffRadio) {
+          staffRadio.checked = true;
+          // Trigger change event to update UI
+          staffRadio.dispatchEvent(new Event('change', { bubbles: true }));
+          console.log('Pre-selected staff member:', window.preservedSession.selectedStaffId);
+        }
+      });
+    }
+    <% } %>
 
   <!-- Staff Details Modal -->
   <div id="staffModal" class="modal">

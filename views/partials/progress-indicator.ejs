@@ -24,67 +24,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Add click functionality to progress steps
-    const progressSteps = document.querySelectorAll('.progress-step.clickable');
-    
-    progressSteps.forEach(step => {
-        step.addEventListener('click', function() {
-            const stepNumber = parseInt(this.dataset.step);
-            const currentStep = parseInt(document.querySelector('.progress-indicator').dataset.step);
-            
-            // Only allow going back to previous steps, not forward
-            if (stepNumber < currentStep) {
-                navigateToStep(stepNumber);
-            }
-        });
-        
-        // Add hover effect for clickable steps
-        step.addEventListener('mouseenter', function() {
-            this.style.cursor = 'pointer';
-        });
-    });
-    
-    function navigateToStep(stepNumber) {
-        // Get current URL parameters to maintain context
-        const urlParams = new URLSearchParams(window.location.search);
-        const serviceId = getServiceId();
-        const staffId = getStaffId();
-        
-        let targetUrl = '';
-        
-        switch(stepNumber) {
-            case 1:
-                targetUrl = '/services';
-                break;
-            case 2:
-                if (serviceId) {
-                    targetUrl = `/staff/${serviceId}`;
-                } else {
-                    targetUrl = '/services';
-                }
-                break;
-            case 3:
-                if (serviceId && staffId) {
-                    targetUrl = `/availability/${staffId}/${serviceId}`;
-                } else if (serviceId) {
-                    targetUrl = `/staff/${serviceId}`;
-                } else {
-                    targetUrl = '/services';
-                }
-                break;
-        }
-        
-        if (targetUrl) {
-            // Add version parameter if it exists
-            const version = urlParams.get('version');
-            if (version && targetUrl.includes('/staff/') || targetUrl.includes('/availability/')) {
-                targetUrl += (targetUrl.includes('?') ? '&' : '?') + `version=${version}`;
-            }
-            
-            window.location.href = targetUrl;
-        }
-    }
-    
+    // Helper functions defined first
     function getServiceId() {
         // Try to get serviceId from various sources
         const urlPath = window.location.pathname;
@@ -118,6 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // From query parameters
         if (urlParams.get('staffId')) return urlParams.get('staffId');
+        if (urlParams.get('staff')) return urlParams.get('staff');
         
         // From session storage or global variables
         if (typeof window.staffId !== 'undefined') return window.staffId;
@@ -125,5 +66,178 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return null;
     }
+    
+    function getServiceVersion() {
+        // Try to get service version from various sources
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // From query parameters
+        if (urlParams.get('version')) return urlParams.get('version');
+        
+        // From global variables
+        if (typeof window.serviceVersion !== 'undefined') return window.serviceVersion;
+        if (typeof window.selectedService !== 'undefined' && window.selectedService.version) return window.selectedService.version;
+        
+        return '';
+    }
+    
+    function storeCurrentSelectionState() {
+        const selectionState = {
+            serviceId: getServiceId(),
+            staffId: getStaffId(),
+            serviceVersion: getServiceVersion(),
+            timestamp: Date.now()
+        };
+        
+        // Store current selections
+        if (typeof window.selectedService !== 'undefined') {
+            selectionState.selectedService = window.selectedService;
+        }
+        
+        if (typeof window.selectedStaff !== 'undefined') {
+            selectionState.selectedStaff = window.selectedStaff;
+        }
+        
+        if (typeof window.serviceDetails !== 'undefined') {
+            selectionState.serviceDetails = window.serviceDetails;
+        }
+        
+        // Store appointment details if on availability/contact page
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('startAt')) {
+            selectionState.startAt = urlParams.get('startAt');
+        }
+        
+        // Store in sessionStorage
+        sessionStorage.setItem('bookingSelectionState', JSON.stringify(selectionState));
+        console.log('Stored selection state:', selectionState);
+    }
+    
+    function restoreSelectionState() {
+        try {
+            const stored = sessionStorage.getItem('bookingSelectionState');
+            if (stored) {
+                const selectionState = JSON.parse(stored);
+                console.log('Restoring selection state:', selectionState);
+                
+                // Restore global variables if they don't exist
+                if (selectionState.selectedService && typeof window.selectedService === 'undefined') {
+                    window.selectedService = selectionState.selectedService;
+                }
+                
+                if (selectionState.selectedStaff && typeof window.selectedStaff === 'undefined') {
+                    window.selectedStaff = selectionState.selectedStaff;
+                }
+                
+                if (selectionState.serviceDetails && typeof window.serviceDetails === 'undefined') {
+                    window.serviceDetails = selectionState.serviceDetails;
+                }
+                
+                return selectionState;
+            }
+        } catch (error) {
+            console.warn('Failed to restore selection state:', error);
+        }
+        return null;
+    }
+    
+    function navigateToStep(stepNumber) {
+        // Get current URL parameters to maintain context
+        const urlParams = new URLSearchParams(window.location.search);
+        const serviceId = getServiceId();
+        const staffId = getStaffId();
+        
+        console.log('Navigating to step:', stepNumber, { serviceId, staffId });
+        
+        let targetUrl = '';
+        
+        switch(stepNumber) {
+            case 1:
+                // Going back to services - preserve current session but allow re-selection
+                targetUrl = '/services?back=true';
+                break;
+            case 2:
+                if (serviceId) {
+                    targetUrl = `/staff/${serviceId}`;
+                    // Preserve version and indicate back navigation
+                    const version = urlParams.get('version') || getServiceVersion();
+                    if (version) {
+                        targetUrl += `?version=${version}&back=true`;
+                    } else {
+                        targetUrl += '?back=true';
+                    }
+                } else {
+                    console.warn('No serviceId found for staff navigation, redirecting to services');
+                    targetUrl = '/services?back=true';
+                }
+                break;
+            case 3:
+                if (serviceId && staffId) {
+                    targetUrl = `/availability/${staffId}/${serviceId}`;
+                    // Preserve version and indicate back navigation
+                    const version = urlParams.get('version') || getServiceVersion();
+                    if (version) {
+                        targetUrl += `?version=${version}&back=true`;
+                    } else {
+                        targetUrl += '?back=true';
+                    }
+                } else if (serviceId) {
+                    console.warn('No staffId found for availability navigation, redirecting to staff');
+                    const version = urlParams.get('version') || getServiceVersion();
+                    targetUrl = `/staff/${serviceId}`;
+                    if (version) {
+                        targetUrl += `?version=${version}&back=true`;
+                    } else {
+                        targetUrl += '?back=true';
+                    }
+                } else {
+                    console.warn('No serviceId found for availability navigation, redirecting to services');
+                    targetUrl = '/services?back=true';
+                }
+                break;
+        }
+        
+        if (targetUrl) {
+            console.log('Navigating to:', targetUrl);
+            // Store current selection state in sessionStorage before navigating
+            storeCurrentSelectionState();
+            window.location.href = targetUrl;
+        } else {
+            console.error('No target URL determined for step:', stepNumber);
+        }
+    }
+    
+    // Restore selection state if this is a back navigation
+    const currentUrlParams = new URLSearchParams(window.location.search);
+    if (currentUrlParams.get('back') === 'true') {
+        const restoredState = restoreSelectionState();
+        if (restoredState) {
+            console.log('Back navigation detected, restored state');
+        }
+    }
+    
+    // Add click functionality to progress steps
+    const progressSteps = document.querySelectorAll('.progress-step.clickable');
+    
+    progressSteps.forEach(step => {
+        step.addEventListener('click', function() {
+            const stepNumber = parseInt(this.dataset.step);
+            const currentStep = parseInt(document.querySelector('.progress-indicator').dataset.step);
+            
+            console.log('Progress step clicked:', stepNumber, 'current:', currentStep);
+            
+            // Only allow going back to previous steps, not forward
+            if (stepNumber < currentStep) {
+                navigateToStep(stepNumber);
+            } else {
+                console.log('Cannot navigate forward to step:', stepNumber);
+            }
+        });
+        
+        // Add hover effect for clickable steps
+        step.addEventListener('mouseenter', function() {
+            this.style.cursor = 'pointer';
+        });
+    });
 });
 </script>

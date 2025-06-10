@@ -31,6 +31,7 @@ const { safeNumberConversion } = require("../util/bigint-helpers");
 router.get("/", async (req, res, next) => {
   const cancel = req.query.cancel;
   const errorMessage = req.query.error;
+  const isBackNavigation = req.query.back === 'true';
   
   // Handle error messages
   let error = null;
@@ -38,6 +39,22 @@ router.get("/", async (req, res, next) => {
     error = 'Missing required information. Please start your booking again.';
   } else if (errorMessage === 'no_service_selected') {
     error = 'Please select a service to continue.';
+  }
+  
+  // If this is back navigation, preserve existing session data
+  let preservedSession = null;
+  if (isBackNavigation && req.session) {
+    preservedSession = {
+      selectedServices: req.session.selectedServices,
+      quantities: req.session.quantities,
+      serviceDetails: req.session.serviceDetails,
+      totalDuration: req.session.totalDuration,
+      totalPrice: req.session.totalPrice,
+      selectedStaffId: req.session.selectedStaffId,
+      teamMemberBookingProfile: req.session.teamMemberBookingProfile,
+      staffProfile: req.session.staffProfile
+    };
+    console.log('Back navigation to services - preserving session:', preservedSession);
   }
   
   try {
@@ -203,7 +220,9 @@ router.get("/", async (req, res, next) => {
       location: req.app.locals.location, 
       imageMap, 
       itemSecondaryImages,
-      error 
+      error,
+      preservedSession,
+      isBackNavigation
     });
   } catch (error) {
     console.error(error);
