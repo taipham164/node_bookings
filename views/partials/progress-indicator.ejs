@@ -2,12 +2,12 @@
 <div class="progress-indicator" data-step="<%= step %>">
     <div class="progress-step <%= step >= 1 ? 'completed' : '' %> <%= step === 1 ? 'active' : '' %> <%= step > 1 ? 'clickable' : '' %>" 
          data-step="1" data-url="/services">
-        <i class="fas <%= step >= 2 ? 'fa-check' : 'fa-concierge-bell' %>"></i>
+        <i class="fas <%= step >= 2 ? 'fa-check' : 'fa-scissors' %>"></i>
         <span>Services</span>
     </div>
     <div class="progress-step <%= step >= 2 ? 'completed' : '' %> <%= step === 2 ? 'active' : '' %> <%= step > 2 ? 'clickable' : '' %>" 
          data-step="2" data-url="">
-        <i class="fas <%= step >= 3 ? 'fa-check' : 'fa-user-tie' %>"></i>
+        <i class="fas <%= step >= 3 ? 'fa-check' : 'fa-user' %>"></i>
         <span>Staff</span>
     </div>
     <div class="progress-step <%= step >= 3 ? 'completed' : '' %> <%= step === 3 ? 'active' : '' %> <%= step > 3 ? 'clickable' : '' %>" 
@@ -17,7 +17,7 @@
     </div>
     <div class="progress-step <%= step >= 4 ? 'completed' : '' %> <%= step === 4 ? 'active' : '' %>" 
          data-step="4" data-url="">
-        <i class="fas <%= step >= 5 ? 'fa-check' : 'fa-user' %>"></i>
+        <i class="fas <%= step >= 5 ? 'fa-check' : 'fa-rectangle-list' %>"></i>
         <span><%= step === 5 ? 'Completed' : 'Details' %></span>
     </div>
 </div>
