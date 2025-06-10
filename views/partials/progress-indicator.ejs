@@ -1,0 +1,129 @@
+<!-- Minimalist Progress Indicator Partial with Navigation -->
+<div class="progress-indicator" data-step="<%= step %>">
+    <div class="progress-step <%= step >= 1 ? 'completed' : '' %> <%= step === 1 ? 'active' : '' %> <%= step > 1 ? 'clickable' : '' %>" 
+         data-step="1" data-url="/services">
+        <i class="fas <%= step >= 2 ? 'fa-check' : 'fa-concierge-bell' %>"></i>
+        <span>Services</span>
+    </div>
+    <div class="progress-step <%= step >= 2 ? 'completed' : '' %> <%= step === 2 ? 'active' : '' %> <%= step > 2 ? 'clickable' : '' %>" 
+         data-step="2" data-url="">
+        <i class="fas <%= step >= 3 ? 'fa-check' : 'fa-user-tie' %>"></i>
+        <span>Staff</span>
+    </div>
+    <div class="progress-step <%= step >= 3 ? 'completed' : '' %> <%= step === 3 ? 'active' : '' %> <%= step > 3 ? 'clickable' : '' %>" 
+         data-step="3" data-url="">
+        <i class="fas <%= step >= 4 ? 'fa-check' : 'fa-calendar-alt' %>"></i>
+        <span>Date & Time</span>
+    </div>
+    <div class="progress-step <%= step >= 4 ? 'completed' : '' %> <%= step === 4 ? 'active' : '' %>" 
+         data-step="4" data-url="">
+        <i class="fas <%= step >= 5 ? 'fa-check' : 'fa-user' %>"></i>
+        <span><%= step === 5 ? 'Completed' : 'Details' %></span>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click functionality to progress steps
+    const progressSteps = document.querySelectorAll('.progress-step.clickable');
+    
+    progressSteps.forEach(step => {
+        step.addEventListener('click', function() {
+            const stepNumber = parseInt(this.dataset.step);
+            const currentStep = parseInt(document.querySelector('.progress-indicator').dataset.step);
+            
+            // Only allow going back to previous steps, not forward
+            if (stepNumber < currentStep) {
+                navigateToStep(stepNumber);
+            }
+        });
+        
+        // Add hover effect for clickable steps
+        step.addEventListener('mouseenter', function() {
+            this.style.cursor = 'pointer';
+        });
+    });
+    
+    function navigateToStep(stepNumber) {
+        // Get current URL parameters to maintain context
+        const urlParams = new URLSearchParams(window.location.search);
+        const serviceId = getServiceId();
+        const staffId = getStaffId();
+        
+        let targetUrl = '';
+        
+        switch(stepNumber) {
+            case 1:
+                targetUrl = '/services';
+                break;
+            case 2:
+                if (serviceId) {
+                    targetUrl = `/staff/${serviceId}`;
+                } else {
+                    targetUrl = '/services';
+                }
+                break;
+            case 3:
+                if (serviceId && staffId) {
+                    targetUrl = `/availability/${staffId}/${serviceId}`;
+                } else if (serviceId) {
+                    targetUrl = `/staff/${serviceId}`;
+                } else {
+                    targetUrl = '/services';
+                }
+                break;
+        }
+        
+        if (targetUrl) {
+            // Add version parameter if it exists
+            const version = urlParams.get('version');
+            if (version && targetUrl.includes('/staff/') || targetUrl.includes('/availability/')) {
+                targetUrl += (targetUrl.includes('?') ? '&' : '?') + `version=${version}`;
+            }
+            
+            window.location.href = targetUrl;
+        }
+    }
+    
+    function getServiceId() {
+        // Try to get serviceId from various sources
+        const urlPath = window.location.pathname;
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // From URL path patterns
+        const staffMatch = urlPath.match(/\/staff\/([^\/]+)/);
+        if (staffMatch) return staffMatch[1];
+        
+        const availabilityMatch = urlPath.match(/\/availability\/[^\/]+\/([^\/]+)/);
+        if (availabilityMatch) return availabilityMatch[1];
+        
+        // From query parameters
+        if (urlParams.get('serviceId')) return urlParams.get('serviceId');
+        
+        // From session storage or global variables
+        if (typeof window.serviceId !== 'undefined') return window.serviceId;
+        if (typeof window.selectedService !== 'undefined' && window.selectedService.id) return window.selectedService.id;
+        
+        return null;
+    }
+    
+    function getStaffId() {
+        // Try to get staffId from various sources
+        const urlPath = window.location.pathname;
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // From URL path patterns
+        const availabilityMatch = urlPath.match(/\/availability\/([^\/]+)/);
+        if (availabilityMatch) return availabilityMatch[1];
+        
+        // From query parameters
+        if (urlParams.get('staffId')) return urlParams.get('staffId');
+        
+        // From session storage or global variables
+        if (typeof window.staffId !== 'undefined') return window.staffId;
+        if (typeof window.selectedStaff !== 'undefined' && window.selectedStaff.id) return window.selectedStaff.id;
+        
+        return null;
+    }
+});
+</script>

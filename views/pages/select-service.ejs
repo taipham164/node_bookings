@@ -7,6 +7,7 @@
   <title>Select Services - <%= (typeof location !== 'undefined' && location && location.businessName) ? location.businessName : 'Booking System' %></title>
   <link rel="stylesheet" href="/stylesheets/style.css">
   <link rel="stylesheet" href="/stylesheets/sidebar.css">
+  <link rel="stylesheet" href="/stylesheets/progress-indicator.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">  <script src="/javascripts/appointment-summary.js?v=<%= Date.now() %>" defer></script>
   <style>
     /* Enhanced Next Button Styling for Appointment Summary */
@@ -360,6 +361,9 @@
   <div class="content" style="display: flex; flex-direction: row; gap: 2.5em;">
     <!-- Main service list -->
     <div class="content-main services" style="flex: 2 1 0;">
+      
+      <!-- Progress Indicator -->
+      <%- include("../partials/progress-indicator", { step: 1 }) %>
       
       <!-- Error Message -->
       <% if (typeof error !== 'undefined' && error) { %>

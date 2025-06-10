@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Booking Confirmed - <%= location?.businessName || 'Booking System' %></title>
   <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/progress-indicator.css" rel="stylesheet" type="text/css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     .confirmation-container {
@@ -200,6 +201,9 @@
   </header>
   
   <div class="confirmation-container">
+    <!-- Progress Indicator -->
+    <%- include("../partials/progress-indicator", { step: 5 }) %>
+    
     <!-- Success Icon -->
     <div class="success-icon">
       <i class="fas fa-check"></i>
