@@ -85,30 +85,32 @@ router.post("/create", async (req, res, next) => {
     
     const serviceVariationVersion = req.query.version;
     const staffId = req.query.staffId;
-    const startAt = req.query.startAt;
-    // Handle customerNote from either existing or new customer forms
-    const customerNote = req.body.existingCustomerNote || req.body.newCustomerNote || "";
-      // Handle both new and existing customer data
+    const startAt = req.query.startAt;    // Handle customerNote from either existing or new customer forms
+    const customerNote = req.body.existingCustomerNote || req.body.serviceNote || "";// Handle both new and existing customer data
     const customerId = req.body.customerId; // For existing customers
     const emailAddress = req.body.emailAddress;
     const familyName = req.body.familyName;
     const givenName = req.body.givenName;
     const phoneNumber = req.body.phoneNumber; // This should always be present now
     
-    // Handle card information for new customers
-    const cardNumber = req.body.cardNumber;
-    const expiryDate = req.body.expiryDate;
-    const cvv = req.body.cvv;
-    const cardholderName = req.body.cardholderName;
+    // Debug: Log all customer data received
+    console.log('DEBUG: Customer data received:', {
+      customerId,
+      emailAddress,
+      familyName,
+      givenName,
+      phoneNumber
+    });
+      // Handle card information for new customers
+    const cardNonce = req.body.cardNonce; // Square SDK tokenized card data
+    const postalCode = req.body.postalCode; // For billing address
 
     // Validate phone number (required in new flow)
     if (!phoneNumber || !phoneNumber.trim()) {
       return res.render("pages/formatted-error", { 
         error: "Phone number is required. Please go back and enter your phone number." 
       });
-    }
-
-    // For existing customers, we might have customerId but still need basic validation
+    }    // For existing customers, we might have customerId but still need basic validation
     if (customerId) {
       console.log('Processing booking for existing customer:', customerId);
       // For existing customers, we already have their info, just validate phone
@@ -117,7 +119,8 @@ router.post("/create", async (req, res, next) => {
         return res.render("pages/formatted-error", { 
           error: "Please enter a valid phone number." 
         });
-      }    } else {
+      }
+    } else {
       // For new customers, validate all required fields including card information
       if (!emailAddress || !familyName || !givenName) {
         return res.render("pages/formatted-error", { 
@@ -132,38 +135,20 @@ router.post("/create", async (req, res, next) => {
           error: "Please enter a valid email address." 
         });
       }
-      
-      // Card validation for new customers
-      if (!cardNumber || !expiryDate || !cvv || !cardholderName) {
+        // Card validation for new customers - using Square SDK nonce
+      if (!cardNonce) {
         return res.render("pages/formatted-error", { 
-          error: "Please fill in all payment information fields." 
+          error: "Please provide valid payment information." 
         });
       }
       
-      // Basic card number validation (remove spaces and check length)
-      const cleanCardNumber = cardNumber.replace(/\s/g, '');
-      if (cleanCardNumber.length < 13 || cleanCardNumber.length > 19) {
+      // Postal code validation
+      if (!postalCode || postalCode.length < 5) {
         return res.render("pages/formatted-error", { 
-          error: "Please enter a valid card number." 
+          error: "Please enter a valid postal code." 
         });
       }
-      
-      // Expiry date validation (MM/YY format)
-      const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
-      if (!expiryRegex.test(expiryDate)) {
-        return res.render("pages/formatted-error", { 
-          error: "Please enter expiry date in MM/YY format." 
-        });
-      }
-      
-      // CVV validation
-      if (cvv.length < 3 || cvv.length > 4) {
-        return res.render("pages/formatted-error", { 
-          error: "Please enter a valid CVV." 
-        });
-      }
-      
-      console.log('Processing booking for new customer with card information');
+        console.log('Processing booking for new customer with card information');
     }
 
     // Phone number validation and normalization
@@ -203,8 +188,7 @@ router.post("/create", async (req, res, next) => {
     
     // Debug: print appointmentSegments before booking (with BigInt handling)
     console.log('DEBUG: appointmentSegments', safeJSONStringify(appointmentSegments));
-    
-    // Determine customer ID - use existing customer ID or create new customer
+      // Determine customer ID - use existing customer ID or create new customer
     let finalCustomerId;
     if (customerId) {
       // Use existing customer
@@ -213,10 +197,31 @@ router.post("/create", async (req, res, next) => {
     } else {
       // Create new customer
       finalCustomerId = await getCustomerID(givenName, familyName, emailAddress, normalizedPhone);
-      console.log('Created new customer ID:', finalCustomerId);
-    }
-    
-    // Create booking
+      console.log('Created new customer ID:', finalCustomerId);      // For new customers, save their card using the nonce from Square SDK
+      if (cardNonce) {
+        try {
+          console.log('Saving card for new customer using nonce:', finalCustomerId);
+          
+          // Create card on file using the tokenized nonce (following Square API pattern)
+          const { result } = await cardsApi.createCard({
+            idempotencyKey: crypto.randomUUID(),
+            sourceId: cardNonce, // The nonce from Square Web Payments SDK
+            card: {
+              customerId: finalCustomerId,
+              billingAddress: {
+                postalCode: postalCode,
+                country: 'US'
+              }
+            }
+          });
+          
+          console.log('Card saved successfully with ID:', result.card.id);
+        } catch (cardError) {
+          console.error('Error saving card with nonce:', cardError);
+          // Don't fail the booking if card saving fails
+        }
+      }
+    }    // Create booking with source tracking
     const { result: { booking } } = await bookingsApi.createBooking({
       booking: {
         appointmentSegments,
@@ -224,6 +229,8 @@ router.post("/create", async (req, res, next) => {
         customerNote,
         locationId,
         startAt,
+        // Note: Removing source field as CUSTOM_APP is not a valid enum value
+        // The booking will be tracked via other means (user-agent header, etc.)
       },
       idempotencyKey: crypto.randomUUID(),
     });

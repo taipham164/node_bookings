@@ -11,8 +11,8 @@ const { getCancellationPolicy } = require('./cancellation-policy');
  */
 async function getBookingPolicy() {
   try {
-    const { squareClient } = require('./square-client');
-    const { result } = await squareClient.bookingsApi.retrieveBusinessBookingProfile();
+    const { bookingsApi } = require('./square-client');
+    const { result } = await bookingsApi.retrieveBusinessBookingProfile();
     
     const profile = result.businessBookingProfile;
       return {
