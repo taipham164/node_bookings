@@ -2,7 +2,7 @@
 .ui-datepicker {
   width: 100%;
   max-width: 480px;
-  min-width: 400px;
+  min-width: 320px;
   padding: 32px 24px;
   display: block;
   margin: 0 auto 3rem;
@@ -283,6 +283,8 @@
   justify-content: center;
   margin-bottom: 4rem;
   width: 100%;
+  max-width: 480px;
+  margin: 0 auto 4rem auto;
   position: relative;
   z-index: 1;
 }
@@ -522,8 +524,32 @@
 
 /* Override any parent container constraints */
 .availability .datepicker-container {
-  max-width: none;
+  max-width: 480px;
   width: 100%;
+}
+
+/* Calendar section integration */
+.calendar-section .datepicker-container {
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto 2rem auto;
+}
+
+.calendar-section .ui-datepicker {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  margin: 0 auto;
+}
+
+/* Ensure proper alignment within calendar section */
+.calendar-section .availability-header {
+  margin-bottom: 1.5rem;
+}
+
+.calendar-section .times-section {
+  margin-top: 2rem;
 }
 
 /* Additional Layout Fixes */
@@ -551,6 +577,46 @@
 }
 
 /* Additional responsive fixes */
+@media only screen and (min-width: 1200px) {
+  .ui-datepicker {
+    max-width: 400px;
+  }
+  
+  .datepicker-container {
+    max-width: 400px;
+  }
+  
+  .calendar-section .datepicker-container {
+    max-width: 400px;
+  }
+}
+
+@media only screen and (min-width: 769px) {
+  .ui-datepicker {
+    max-width: 420px;
+  }
+  
+  .datepicker-container {
+    max-width: 420px;
+  }
+  
+  .calendar-section .datepicker-container {
+    max-width: 420px;
+  }
+  
+  .ui-datepicker table {
+    font-size: 16px;
+    border-spacing: 10px;
+  }
+  
+  .ui-datepicker td span,
+  .ui-datepicker td a {
+    max-width: 44px;
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
 @media only screen and (max-width: 380px) {
   .ui-datepicker {
     min-width: 320px;
@@ -570,11 +636,19 @@
 /* Responsive Design */
 @media only screen and (max-width: 768px) {
   .ui-datepicker {
-    max-width: 400px;
-    min-width: 360px;
+    max-width: 380px;
+    min-width: 320px;
     padding: 24px 18px;
     border-radius: 20px;
     margin: 0 auto 1.5rem;
+  }
+  
+  .datepicker-container {
+    max-width: 380px;
+  }
+  
+  .calendar-section .datepicker-container {
+    max-width: 380px;
   }
 
   .ui-datepicker .ui-datepicker-title {
@@ -618,6 +692,10 @@
     min-width: 320px;
     padding: 18px 14px;
     border-radius: 16px;
+  }
+  
+  .calendar-section .datepicker-container {
+    max-width: 340px;
   }
 
   .ui-datepicker .ui-datepicker-title {
@@ -676,6 +754,10 @@
     padding: 0 12px;
   }
   
+  .availability .datepicker-container {
+    max-width: 380px;
+  }
+  
   .section-title {
     font-size: 1.5rem;
   }
@@ -706,7 +788,8 @@
     margin-bottom: 1.5rem;
   }
   
-  .datepicker-container {
+  .availability .datepicker-container {
+    max-width: 340px;
     margin-bottom: 2rem;
   }
   
