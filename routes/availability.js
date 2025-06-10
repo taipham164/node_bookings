@@ -170,6 +170,11 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     req.session = {};
   }
   
+  // Debug session data
+  console.log('DEBUG: availability - Full session data:', JSON.stringify(req.session, null, 2));
+  console.log('DEBUG: availability - Session selectedServices:', req.session.selectedServices);
+  console.log('DEBUG: availability - Session quantities:', req.session.quantities);
+  
   // Retrieve multi-service selection from session if available
   const selectedServices = req.session.selectedServices || [serviceId];
   const quantities = req.session.quantities || {};
@@ -202,6 +207,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       }
       
       const duration = variation.itemVariationData.serviceDuration;
+      const price = variation.itemVariationData.priceMoney;
       // Get quantity: if expanded, use count from array; otherwise use quantities object
       const quantity = isExpanded ? serviceCountMap[sid] : (quantities[sid] ? parseInt(quantities[sid], 10) : 1);
       
@@ -211,6 +217,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
         id: sid,
         name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
         duration,
+        price,
         quantity
       });
       
@@ -430,7 +437,8 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       
       additionalInfo = {
         serviceItem: services.relatedObjects.filter(relatedObject => relatedObject.type === "ITEM")[0],
-        serviceVariation: services.object
+        serviceVariation: services.object,
+        bookingProfile: null  // No specific staff selected
       };
     } else {
       // Set all segmentFilters to require the selected staffId
@@ -558,22 +566,29 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       additionalInfo,
       selectedServices,
       quantities,
-      serviceDetails
+      serviceDetails: serviceDetails.length + ' services',
+      bookingProfile: additionalInfo.bookingProfile ? 'present' : 'null'
     });
+    
+    console.log('DEBUG: Detailed serviceDetails being passed to template:', 
+      JSON.stringify(serviceDetails, (key, value) => typeof value === 'bigint' ? value.toString() : value, 2));
     
     // Convert BigInt values to regular numbers to prevent EJS template errors
     const safeAdditionalInfo = convertBigIntToNumber(additionalInfo);
     const safeServiceDetails = convertBigIntToNumber(serviceDetails);
     const safeAvailabilities = convertBigIntToNumber(filteredAvailabilities);
     
+    console.log('DEBUG: Safe serviceDetails after BigInt conversion:', 
+      JSON.stringify(safeServiceDetails, null, 2));
+    
     // send the serviceId & serviceVersion since it's needed to book an appointment in the next step
     res.render("pages/availability", { 
       availabilities: safeAvailabilities, 
       serviceId, 
       serviceVersion, 
-      ...safeAdditionalInfo, 
       selectedServices, 
       quantities, 
+      ...safeAdditionalInfo,
       serviceDetails: safeServiceDetails 
     });
   } catch (error) {

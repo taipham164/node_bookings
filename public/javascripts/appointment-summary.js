@@ -5,17 +5,27 @@
 
 // Initialize appointment summary functionality
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('DEBUG: DOMContentLoaded - starting initialization');
+  
   // Check which page we're on
   var staffForm = document.querySelector('form[id="staff-form"]');
   var servicesForm = document.querySelector('form[id="services-form"]');
   var availabilityPage = document.querySelector('.availability-container');
   
+  console.log('DEBUG: Page detection:', {
+    staffForm: !!staffForm,
+    servicesForm: !!servicesForm,
+    availabilityPage: !!availabilityPage
+  });
+  
   // Update button text based on current page
   updateButtonText();
   
   if (staffForm) {
+    console.log('DEBUG: Initializing staff page');
     initStaffPageSummary();
   } else if (servicesForm) {
+    console.log('DEBUG: Initializing services page');
     // Original service page functionality
     initAppointmentSummary();
     initMobileBottomBar();
@@ -29,8 +39,12 @@ document.addEventListener('DOMContentLoaded', function() {
     updateAppointmentSummary();
     updateBarAndSheet();
   } else if (availabilityPage) {
+    console.log('DEBUG: Initializing availability page');
+    console.log('DEBUG: window.serviceDetails at main init:', window.serviceDetails);
     // Availability page functionality
     initAvailabilityPageSummary();
+  } else {
+    console.log('DEBUG: No matching page type found');
   }
   
   // Set up form handlers for appointment summary buttons
@@ -172,7 +186,7 @@ function updateAppointmentSummary() {
     var priceSpan = label ? label.querySelector('span[style*="color:#0070f3"]') : null;
     var price = priceSpan ? priceSpan.textContent.trim() : '';
     var durationSpan = label ? label.querySelector('span[style*="color:#888"]') : null;
-    var duration = durationSpan ? durationSpan.textContent.trim().replace(/^•\s*/, '') : '';
+    var duration = durationSpan ? durationSpan.textContent.trim().replace(/^[\u2022]\s*/, '') : '';
     var li = document.createElement('li');
     li.style.display = 'flex';
     li.style.alignItems = 'center';
@@ -210,7 +224,7 @@ function updateAppointmentSummary() {
       
       // Calculate duration
       if (durationSpan) {
-        var durationText = durationSpan.textContent.trim().replace(/^•\s*/, '');
+        var durationText = durationSpan.textContent.trim().replace(/^[\u2022]\s*/, '');
         var minutes = 0;
         if (durationText.includes('hr')) {
           var parts = durationText.split('hr');
@@ -233,8 +247,17 @@ function updateAppointmentSummary() {
       }
     });
     
-    // Add totals section to services page
-    if (totalDuration > 0 || totalPrice > 0) {
+    // Add totals section to services page (only if 2 or more services OR 1 service with qty >= 2)
+    var shouldShowTotals = checked.length >= 2;
+    if (!shouldShowTotals && checked.length === 1) {
+      // Check if single service has quantity >= 2
+      var cb = checked[0];
+      var qtyInput = document.getElementById('quantity-' + cb.value);
+      var qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 1 : 1;
+      shouldShowTotals = qty >= 2;
+    }
+    
+    if (shouldShowTotals && (totalDuration > 0 || totalPrice > 0)) {
       var totalsLi = document.createElement('li');
       totalsLi.style.display = 'flex';
       totalsLi.style.alignItems = 'center';
@@ -506,7 +529,7 @@ function updateBarAndSheet() {
     
     // Calculate duration
     if (durationSpan) {
-      var durationText = durationSpan.textContent.trim().replace(/^•\s*/, '');
+      var durationText = durationSpan.textContent.trim().replace(/^[\u2022]\s*/, '');
       var minutes = 0;
       if (durationText.includes('hr')) {
         var parts = durationText.split('hr');
@@ -547,8 +570,17 @@ function updateBarAndSheet() {
     }
   });
 
-  // Add totals section to mobile bottom sheet for services page
-  if (sheetItems && totalItems > 0 && (totalDuration > 0 || totalPrice > 0)) {
+  // Add totals section to mobile bottom sheet for services page (only if 2 or more services OR 1 service with qty >= 2)
+  var shouldShowTotals = checked.length >= 2;
+  if (!shouldShowTotals && checked.length === 1) {
+    // Check if single service has quantity >= 2
+    var cb = checked[0];
+    var qtyInput = document.getElementById('quantity-' + cb.value);
+    var qty = qtyInput && !qtyInput.disabled ? parseInt(qtyInput.value, 10) || 1 : 1;
+    shouldShowTotals = qty >= 2;
+  }
+  
+  if (sheetItems && totalItems > 0 && shouldShowTotals && (totalDuration > 0 || totalPrice > 0)) {
     var totalsLi = document.createElement('li');
     totalsLi.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:16px 0;margin-top:12px;border-top:2px solid #e9ecef;font-weight:600;';
     
@@ -762,6 +794,7 @@ function updateStaffPageSummary() {
   var hasItems = typeof window.serviceDetails !== 'undefined' && window.serviceDetails && window.serviceDetails.length > 0;
   console.log('DEBUG: hasItems:', hasItems);
   console.log('DEBUG: window.serviceDetails:', window.serviceDetails);
+  console.log('DEBUG: window.serviceDetails JSON:', JSON.stringify(window.serviceDetails, null, 2));
   
   if (hasItems) {
     summaryList.style.display = 'block';
@@ -770,7 +803,8 @@ function updateStaffPageSummary() {
     
     summaryItems.innerHTML = '';
     
-    window.serviceDetails.forEach(function(service) {
+    window.serviceDetails.forEach(function(service, index) {
+      console.log('DEBUG: Processing service', index, ':', JSON.stringify(service, null, 2));
       var li = document.createElement('li');
       li.style.display = 'flex';
       li.style.alignItems = 'center';
@@ -853,8 +887,14 @@ function updateStaffPageSummary() {
       }
     });
     
-    // Add totals section
-    if (window.serviceDetails.length > 0) {
+    // Add totals section (only if 2 or more services OR 1 service with qty >= 2)
+    var shouldShowTotals = window.serviceDetails.length >= 2;
+    if (!shouldShowTotals && window.serviceDetails.length === 1) {
+      // Check if single service has quantity >= 2
+      shouldShowTotals = (window.serviceDetails[0].quantity || 1) >= 2;
+    }
+    
+    if (shouldShowTotals) {
       var totalsLi = document.createElement('li');
       totalsLi.style.display = 'flex';
       totalsLi.style.alignItems = 'center';
@@ -1109,8 +1149,22 @@ function updateStaffBottomSheetContent() {
       serviceName.textContent = service.name;
       
       // Add staff info inline if available
-      if (window.selectedStaff && window.selectedStaff.name) {
-        serviceName.textContent += ' - by ' + window.selectedStaff.name;
+      var selectedStaff = document.querySelector('input[name="staffId"]:checked');
+      var staffName = '';
+      if (selectedStaff) {
+        if (selectedStaff.value === 'anyStaffMember') {
+          staffName = 'Any Available Staff';
+        } else {
+          var staffCard = selectedStaff.closest('.staff-card');
+          var staffNameElement = staffCard ? staffCard.querySelector('.staff-info h4') : null;
+          if (staffNameElement) {
+            staffName = staffNameElement.textContent.trim();
+          }
+        }
+      }
+      
+      if (staffName) {
+        serviceName.textContent += ' - with ' + staffName;
       }
       
       // Quantity
@@ -1157,8 +1211,14 @@ function updateStaffBottomSheetContent() {
       sheetItems.appendChild(li);
     });
     
-    // Add totals section if multiple services
-    if (window.serviceDetails.length > 1) {
+    // Add totals section if 2 or more services OR 1 service with qty >= 2
+    var shouldShowTotals = window.serviceDetails.length >= 2;
+    if (!shouldShowTotals && window.serviceDetails.length === 1) {
+      // Check if single service has quantity >= 2
+      shouldShowTotals = (window.serviceDetails[0].quantity || 1) >= 2;
+    }
+    
+    if (shouldShowTotals) {
       var totalsLi = document.createElement('li');
       totalsLi.style.padding = '16px 0 8px 0';
       totalsLi.style.borderTop = '2px solid #eee';
@@ -1231,7 +1291,20 @@ function initAvailabilityPageSummary() {
   console.log('DEBUG: initAvailabilityPageSummary called');
   var availabilityPage = document.querySelector('.availability-container');
   console.log('DEBUG: availabilityPage found:', !!availabilityPage);
-  if (!availabilityPage) return; // Not on availability page
+  console.log('DEBUG: window.serviceDetails at init:', window.serviceDetails);
+  console.log('DEBUG: window.selectedStaff at init:', window.selectedStaff);
+  
+  if (!availabilityPage) {
+    console.log('DEBUG: No availability page found, returning');
+    return; // Not on availability page
+  }
+  
+  // Wait a bit for window variables to be set
+  setTimeout(function() {
+    console.log('DEBUG: After timeout - window.serviceDetails:', window.serviceDetails);
+    console.log('DEBUG: After timeout - window.selectedStaff:', window.selectedStaff);
+    updateAvailabilityPageSummary();
+  }, 200);
   
   // Initial load - populate with session data
   updateAvailabilityPageSummary();
@@ -1253,6 +1326,11 @@ function updateAvailabilityPageSummary() {
   console.log('DEBUG: updateAvailabilityPageSummary called');
   console.log('DEBUG: window.serviceDetails:', window.serviceDetails);
   console.log('DEBUG: window.selectedStaff:', window.selectedStaff);
+  console.log('DEBUG: typeof window.serviceDetails:', typeof window.serviceDetails);
+  console.log('DEBUG: Array.isArray(window.serviceDetails):', Array.isArray(window.serviceDetails));
+  if (window.serviceDetails) {
+    console.log('DEBUG: window.serviceDetails.length:', window.serviceDetails.length);
+  }
   
   var summaryList = document.getElementById('summary-list');
   var summaryItems = document.getElementById('summary-items');
@@ -1260,6 +1338,15 @@ function updateAvailabilityPageSummary() {
   var continueBtn = document.getElementById('continue-btn');
   var summaryBarNext = document.getElementById('summary-bar-next');
   var summarySheetNext = document.getElementById('summary-sheet-next');
+  
+  console.log('DEBUG: Elements found:', {
+    summaryList: !!summaryList,
+    summaryItems: !!summaryItems,
+    summaryEmpty: !!summaryEmpty,
+    continueBtn: !!continueBtn,
+    summaryBarNext: !!summaryBarNext,
+    summarySheetNext: !!summarySheetNext
+  });
   
   if (!summaryList || !summaryItems || !summaryEmpty) {
     console.log('DEBUG: Missing required elements, returning early');
@@ -1269,79 +1356,124 @@ function updateAvailabilityPageSummary() {
   // Clear items
   summaryItems.innerHTML = '';
   var hasItems = typeof window.serviceDetails !== 'undefined' && window.serviceDetails && window.serviceDetails.length > 0;
+  console.log('DEBUG: hasItems calculation:', hasItems);
+  console.log('DEBUG: window.serviceDetails in detail:', window.serviceDetails);
+  
+  // Always show summary list when we have service details
+  summaryList.style.display = 'block';
   
   if (hasItems) {
+    console.log('DEBUG: Processing services...');
+    summaryEmpty.style.display = 'none';
+    summaryItems.style.display = 'block';
+    
     var totalPrice = 0;
     var totalDuration = 0;
     
     // Add service items
     window.serviceDetails.forEach(function(service) {
       var li = document.createElement('li');
-      li.className = 'summary-item';
+      li.style.display = 'flex';
+      li.style.alignItems = 'center';
+      li.style.justifyContent = 'space-between';
+      li.style.marginBottom = '12px';
+      li.style.padding = '8px 0';
+      li.style.borderBottom = '1px solid #f0f0f0';
       
       var serviceInfo = document.createElement('div');
-      serviceInfo.className = 'summary-item-info';
+      serviceInfo.style.flex = '1';
       
       var serviceName = document.createElement('div');
-      serviceName.className = 'summary-item-name';
+      serviceName.style.fontWeight = '600';
+      serviceName.style.color = '#333';
       serviceName.textContent = service.name;
       
       // Add staff info inline if available
       if (window.selectedStaff && window.selectedStaff.name) {
-        serviceName.textContent += ' - by ' + window.selectedStaff.name;
-      }
-      
-      var serviceDetails = document.createElement('div');
-      serviceDetails.className = 'summary-item-details';
-      
-      // Duration
-      if (service.duration) {
-        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
-        var durationMinutes = Math.round(durationMs / 60000);
-        var durationText = durationMinutes + 'm';
-        serviceDetails.textContent = durationText;
-        totalDuration += durationMinutes * (service.quantity || 1);
-      }
-      
-      // Price
-      if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
-        var price = amount / 100;
-        if (serviceDetails.textContent) serviceDetails.textContent += ' • ';
-        serviceDetails.textContent += '$' + price.toFixed(2);
-        totalPrice += amount * (service.quantity || 1);
+        serviceName.innerHTML = service.name + 
+          ' <span style="color: #667eea; font-weight: 500;">- by ' + window.selectedStaff.name + '</span>';
       }
       
       // Quantity
       if (service.quantity && service.quantity > 1) {
-        serviceName.textContent += ' (x' + service.quantity + ')';
+        if (window.selectedStaff && window.selectedStaff.name) {
+          serviceName.innerHTML = service.name + 
+            ' (x' + service.quantity + ')' +
+            ' <span style="color: #667eea; font-weight: 500;">- by ' + window.selectedStaff.name + '</span>';
+        } else {
+          serviceName.textContent += ' (x' + service.quantity + ')';
+        }
+      }
+      
+      var serviceDetails = document.createElement('div');
+      serviceDetails.style.fontSize = '0.85rem';
+      serviceDetails.style.color = '#666';
+      serviceDetails.style.marginTop = '2px';
+      
+      var duration = '';
+      if (service.duration) {
+        // Convert duration from milliseconds to minutes
+        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var minutes = Math.round(durationMs / 60000); // Convert milliseconds to minutes
+        var hours = Math.floor(minutes / 60);
+        var mins = minutes % 60;
+        if (hours > 0) {
+          duration = hours + 'h';
+          if (mins > 0) duration += ' ' + mins + 'm';
+        } else {
+          duration = mins + 'm';
+        }
+        totalDuration += minutes * (service.quantity || 1);
+      }
+      
+      var price = '';
+      if (service.price && service.price.amount) {
+        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        price = '$' + (amount / 100).toFixed(2);
+        totalPrice += amount * (service.quantity || 1);
+      }
+      
+      serviceDetails.innerHTML = '<i class="fas fa-clock me-1"></i>' + duration;
+      if (price) {
+        serviceDetails.innerHTML += ' • <span style="color: #28a745;">' + price + '</span>';
       }
       
       serviceInfo.appendChild(serviceName);
       serviceInfo.appendChild(serviceDetails);
+      
       li.appendChild(serviceInfo);
       summaryItems.appendChild(li);
     });
     
-    // Add totals section
-    if (window.serviceDetails.length > 1) {
+    // Add totals section (only if 2 or more services OR 1 service with qty >= 2)
+    var shouldShowTotals = window.serviceDetails.length >= 2;
+    if (!shouldShowTotals && window.serviceDetails.length === 1) {
+      // Check if single service has quantity >= 2
+      shouldShowTotals = (window.serviceDetails[0].quantity || 1) >= 2;
+    }
+    
+    if (shouldShowTotals) {
       var totalsLi = document.createElement('li');
-      totalsLi.className = 'summary-item summary-totals';
-      totalsLi.style.borderTop = '1px solid #eee';
-      totalsLi.style.paddingTop = '12px';
-      totalsLi.style.marginTop = '8px';
+      totalsLi.style.display = 'flex';
+      totalsLi.style.alignItems = 'center';
+      totalsLi.style.justifyContent = 'space-between';
+      totalsLi.style.marginTop = '16px';
+      totalsLi.style.padding = '12px 0';
+      totalsLi.style.borderTop = '2px solid #e9ecef';
+      totalsLi.style.fontWeight = '600';
+      totalsLi.style.fontSize = '1rem';
       
       var totalsInfo = document.createElement('div');
-      totalsInfo.className = 'summary-item-info';
+      totalsInfo.style.flex = '1';
       
       var totalsTitle = document.createElement('div');
-      totalsTitle.className = 'summary-item-name';
-      totalsTitle.textContent = 'Total';
-      totalsTitle.style.fontWeight = '600';
+      totalsTitle.style.fontWeight = '700';
       totalsTitle.style.color = '#333';
+      totalsTitle.textContent = 'Total';
       
       var totalsDetails = document.createElement('div');
-      totalsDetails.className = 'summary-item-details';
+      totalsDetails.style.fontSize = '0.9rem';
+      totalsDetails.style.color = '#666';
       totalsDetails.style.marginTop = '4px';
       
       // Format total duration
@@ -1392,8 +1524,24 @@ function updateAvailabilityPageSummary() {
       summarySheetNext.removeAttribute('disabled');
     }
   } else {
+    console.log('DEBUG: No items found, showing empty state');
+    console.log('DEBUG: window.serviceDetails value:', window.serviceDetails);
     summaryItems.style.display = 'none';
     summaryEmpty.style.display = 'block';
+    
+    // Force enable continue button for testing
+    if (continueBtn) {
+      continueBtn.style.opacity = '1';
+      continueBtn.removeAttribute('disabled');
+    }
+    if (summaryBarNext) {
+      summaryBarNext.style.opacity = '1';
+      summaryBarNext.removeAttribute('disabled');
+    }
+    if (summarySheetNext) {
+      summarySheetNext.style.opacity = '1';
+      summarySheetNext.removeAttribute('disabled');
+    }
   }
 }
 
@@ -1580,8 +1728,14 @@ function updateAvailabilityBottomSheetContent() {
       sheetItems.appendChild(li);
     });
     
-    // Add totals section if multiple services
-    if (window.serviceDetails.length > 1) {
+    // Add totals section if 2 or more services OR 1 service with qty >= 2
+    var shouldShowTotals = window.serviceDetails.length >= 2;
+    if (!shouldShowTotals && window.serviceDetails.length === 1) {
+      // Check if single service has quantity >= 2
+      shouldShowTotals = (window.serviceDetails[0].quantity || 1) >= 2;
+    }
+    
+    if (shouldShowTotals) {
       var totalsLi = document.createElement('li');
       totalsLi.style.padding = '16px 0 8px 0';
       totalsLi.style.borderTop = '2px solid #eee';

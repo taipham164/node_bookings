@@ -384,7 +384,15 @@ router.post("/select", async (req, res, next) => {
     
     // CRITICAL FIX: Correct the redirect format to match availability route pattern
     // Route pattern is /:staffId/:serviceId, so staff ID comes first
-    res.redirect(`/availability/${selectedStaffId}/${firstServiceId}?version=${serviceVersion}`);
+    
+    // Ensure session is saved before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+      }
+      console.log('DEBUG: Session saved before redirect to availability');
+      res.redirect(`/availability/${selectedStaffId}/${firstServiceId}?version=${serviceVersion}`);
+    });
   } catch (error) {
     console.error("Error in staff selection:", error);
     next(error);

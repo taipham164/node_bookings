@@ -8,7 +8,7 @@
     <link href="/stylesheets/datepicker.css" rel="stylesheet" type="text/css">
     <link href="/stylesheets/sidebar.css" rel="stylesheet" type="text/css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="/javascripts/appointment-summary.js" defer></script>
+    <script src="/javascripts/appointment-summary.js?v=<%= Date.now() %>" defer></script>
     <style>
         .availability-container {
             max-width: none;
@@ -444,13 +444,72 @@
     </script>
     
     <script>
+        // Debug what data is available from the server - RAW EJS
+        console.log('DEBUG: EJS serviceDetails available:', <% if (typeof serviceDetails !== 'undefined') { %>true<% } else { %>false<% } %>);
+        console.log('DEBUG: EJS bookingProfile available:', <% if (typeof bookingProfile !== 'undefined') { %>true<% } else { %>false<% } %>);
+        
+        // Debug what data is available from the server
+        console.log('DEBUG: Server data check:');
+        console.log('DEBUG: typeof serviceDetails:', typeof serviceDetails);
+        console.log('DEBUG: serviceDetails:', typeof serviceDetails !== 'undefined' ? serviceDetails : 'UNDEFINED');
+        console.log('DEBUG: typeof bookingProfile:', typeof bookingProfile);
+        console.log('DEBUG: bookingProfile:', typeof bookingProfile !== 'undefined' ? bookingProfile : 'UNDEFINED');
+        console.log('DEBUG: All template variables available:');
+        console.log('  - serviceDetails:', typeof serviceDetails !== 'undefined');
+        console.log('  - bookingProfile:', typeof bookingProfile !== 'undefined');
+        console.log('  - availabilities:', typeof availabilities !== 'undefined');
+        console.log('  - serviceId:', typeof serviceId !== 'undefined');
+        console.log('  - selectedServices:', typeof selectedServices !== 'undefined');
+        console.log('  - quantities:', typeof quantities !== 'undefined');
+        
         // Make service details available to appointment summary JavaScript
-        window.serviceDetails = [];
-        window.selectedStaff = null;
+        <% if (typeof serviceDetails !== 'undefined' && serviceDetails) { %>
+            window.serviceDetails = <%- JSON.stringify(serviceDetails) %>;
+            console.log('DEBUG: serviceDetails SET from server data');
+        <% } else { %>
+            window.serviceDetails = [];
+            console.log('DEBUG: serviceDetails set to EMPTY ARRAY - server had no data');
+        <% } %>
+        
+        <% if (typeof bookingProfile !== 'undefined' && bookingProfile) { %>
+            window.selectedStaff = {
+                id: "<%= bookingProfile.teamMemberId %>",
+                name: "<%= bookingProfile.displayName %>",
+                description: <%- JSON.stringify(bookingProfile.description || '') %>
+            };
+            console.log('DEBUG: selectedStaff SET from bookingProfile');
+        <% } else { %>
+            window.selectedStaff = {
+                id: "anyStaffMember",
+                name: "Any Available Staff",
+                description: ""
+            };
+            console.log('DEBUG: selectedStaff set to ANY STAFF - no bookingProfile from server');
+        <% } %>
+        
+        console.log('DEBUG: window.serviceDetails set to:', window.serviceDetails);
+        console.log('DEBUG: window.selectedStaff set to:', window.selectedStaff);
+        console.log('DEBUG: typeof window.serviceDetails:', typeof window.serviceDetails);
+        console.log('DEBUG: Array.isArray(window.serviceDetails):', Array.isArray(window.serviceDetails));
+        console.log('DEBUG: window.serviceDetails.length:', window.serviceDetails ? window.serviceDetails.length : 'undefined');
         
         // Ensure appointment summary is initialized
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Availability page loaded');
+            
+            // Additional debugging for appointment summary initialization
+            console.log('DEBUG: DOM loaded - window.serviceDetails:', window.serviceDetails);
+            console.log('DEBUG: DOM loaded - window.selectedStaff:', window.selectedStaff);
+            
+            // Initialize availability page appointment summary
+            if (typeof initAvailabilityPageSummary === 'function') {
+                setTimeout(function() {
+                    console.log('DEBUG: About to call initAvailabilityPageSummary');
+                    initAvailabilityPageSummary();
+                }, 100);
+            } else {
+                console.error('DEBUG: initAvailabilityPageSummary function not found');
+            }
         });
     </script>
 </body>
