@@ -15,6 +15,9 @@
             margin: 0;
             padding: 2rem 0;
             padding-bottom: 120px; /* Add space for floating button */
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
         .calendar-section {
             background: white;
@@ -22,12 +25,18 @@
             padding: 2rem;
             margin-bottom: 2rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
         .times-section {
             background: white;
             border-radius: 15px;
             padding: 2rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
         .section-header {
             display: flex;
@@ -79,6 +88,9 @@
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 1rem;
             margin-top: 1rem;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
         .time-slot {
             background: white;
@@ -167,11 +179,52 @@
         }
         
         @media (max-width: 768px) {
+            .content {
+                flex-direction: column !important;
+                gap: 0 !important;
+            }
+            
+            .content-main {
+                flex: none !important;
+                width: 100% !important;
+                padding-right: 0 !important;
+            }
+            
             .availability-container {
-                padding: 1rem 0;
+                padding: 1rem !important;
+                padding-bottom: 120px !important;
             }
             .calendar-section, .times-section {
                 padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            .times-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 1rem;
+            }
+            .time-slot {
+                padding: 1rem;
+                font-size: 0.95rem;
+                min-height: 60px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            .time-slot i {
+                font-size: 1rem;
+                margin-bottom: 0.25rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .availability-container {
+                padding: 0.75rem !important;
+                padding-bottom: 120px !important;
+            }
+            .calendar-section, .times-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
             }
             .times-grid {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -180,6 +233,52 @@
             .time-slot {
                 padding: 0.75rem;
                 font-size: 0.9rem;
+                min-height: 55px;
+            }
+            .time-slot i {
+                font-size: 0.9rem;
+                margin-bottom: 0.25rem;
+            }
+            .section-header h4 {
+                font-size: 1.1rem;
+            }
+            .section-header i {
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .availability-container {
+                padding: 0.5rem !important;
+                padding-bottom: 120px !important;
+            }
+            .calendar-section, .times-section {
+                padding: 0.75rem;
+                border-radius: 10px;
+            }
+            .times-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 0.5rem;
+            }
+            .time-slot {
+                padding: 0.5rem;
+                font-size: 0.85rem;
+                min-height: 50px;
+                border-radius: 8px;
+            }
+            .time-slot i {
+                font-size: 0.8rem;
+                margin-bottom: 0.2rem;
+            }
+            .section-header {
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            .section-header h4 {
+                font-size: 1rem;
+            }
+            .section-header i {
+                font-size: 1.1rem;
             }
         }
         
