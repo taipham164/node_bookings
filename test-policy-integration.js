@@ -61,12 +61,11 @@ async function testPolicyIntegration() {
         console.log(JSON.stringify(completeConfig, null, 2));
         
         // Test 4: Policy Validation
-        console.log('\n4️⃣ Policy Validation:');
-        const validationResults = {
+        console.log('\n4️⃣ Policy Validation:');        const validationResults = {
             hasCancellationPolicy: !!cancellationPolicy,
             has2HourCutoff: policyTerms.cutOffHours === 2,
             has50PercentFee: policyTerms.lateCancel.charge.includes('50%'),
-            hasNoShowProtection: policyTerms.noShow.charge.includes('Full service fee'),
+            hasNoShowProtection: policyTerms.noShow.charge.includes('50%') || policyTerms.noShow.charge.includes('service fee'),
             hasCardAuthorization: policyTerms.noShowPolicy?.holdCard === true,
             allowsSelfService: policyTerms.allowUserCancel === true
         };

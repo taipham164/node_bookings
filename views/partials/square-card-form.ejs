@@ -77,10 +77,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const originalText = submitBtn.innerHTML;
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing...';
-                
-                try {
+                  try {
                     // Tokenize card details
-                    const tokenResult = await card.tokenize();
+                    const tokenResult = await card.tokenize({
+                        verificationDetails: {
+                            intent: 'STORE',
+                            customerInitiated: true,
+                            sellerKeyedIn: false
+                        }
+                    });
                     
                     if (tokenResult.status === 'OK') {
                         // Set the nonce in the hidden field

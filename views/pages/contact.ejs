@@ -6,13 +6,14 @@
     <title>Checkout - <%= location?.businessName || 'Booking System' %></title>    <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
     <link href="/stylesheets/sidebar.css" rel="stylesheet" type="text/css">
     <link href="/stylesheets/progress-indicator.css" rel="stylesheet" type="text/css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-      <!-- Firebase SDK -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    
-    <!-- Square Web Payments SDK -->
-    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>      <!-- Square Web Payments SDK -->
+    <% if (process.env.ENVIRONMENT === 'sandbox') { %>
+        <script src="https://sandbox-web.squarecdn.com/v1/square.js"></script>
+    <% } else { %>
+        <script src="https://web.squarecdn.com/v1/square.js"></script>
+    <% } %>
     
     <script src="/javascripts/appointment-summary.js?v=<%= Date.now() %>" defer></script>
     <style>
@@ -403,6 +404,118 @@
         
         .cancel-btn:hover {
             background: #5a6268;
+        }        /* AGGRESSIVE Square Payment Form CSS Reset - Override ALL global styles */
+        #existing-card-element, #card-element {
+            /* Container styling to match working debug page exactly */
+            border: 1px solid #ccc !important;
+            padding: 10px !important;
+            margin: 10px 0 !important;
+            background-color: #ffffff !important;
+            min-height: 56px !important;
+            width: auto !important;
+            box-sizing: border-box !important;
+            font-family: inherit !important;
+            font-size: inherit !important;
+        }
+        
+        #existing-card-element:focus-within, #card-element:focus-within {
+            border-color: #667eea !important;
+        }
+        
+        /* NUCLEAR OPTION - Reset ALL nested elements */
+        #existing-card-element *,
+        #existing-card-element *:before,
+        #existing-card-element *:after,
+        #card-element *,
+        #card-element *:before, 
+        #card-element *:after {
+            all: unset !important;
+            display: revert !important;
+            position: revert !important;
+            font-family: inherit !important;
+        }
+        
+        /* Restore iframe functionality */
+        #existing-card-element iframe, 
+        #card-element iframe {
+            border: none !important;
+            background: transparent !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 40px !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Ensure Square's div containers work properly */
+        #existing-card-element > div,
+        #card-element > div {
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+        }
+        
+        /* Override any Bootstrap or global form styles specifically */
+        .form-group #existing-card-element,
+        .form-group #card-element,
+        .form-group #existing-card-element *,
+        .form-group #card-element * {
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            outline: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            transition: none !important;
+            transform: none !important;
+            width: auto !important;
+            height: auto !important;
+        }
+        
+        /* FINAL NUCLEAR OPTION - Complete CSS isolation for Square forms */
+        #existing-card-element,
+        #card-element {
+            /* Complete reset and isolation */
+            all: initial !important;
+            /* Restore only what we need */
+            display: block !important;
+            border: 1px solid #ccc !important;
+            padding: 10px !important;
+            margin: 10px 0 !important;
+            background-color: #ffffff !important;
+            min-height: 56px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            font-family: inherit !important;
+            position: relative !important;
+        }
+        
+        /* Completely isolate all children */
+        #existing-card-element *,
+        #card-element * {
+            all: unset !important;
+            display: revert !important;
+            position: revert !important;
+            font-family: inherit !important;
+        }
+        
+        /* Restore iframe behavior specifically */
+        #existing-card-element iframe,
+        #card-element iframe {
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 40px !important;
+            border: none !important;
+            background: transparent !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
     </style>
 </head>
@@ -770,12 +883,14 @@
                                 </div>
                                 <p style="margin: 0 0 1rem 0; color: #6c757d; font-size: 0.95rem; line-height: 1.4;">
                                     A valid payment method is required to secure your appointment. Your card will not be charged until your appointment is completed.
-                                </p>
-                                  <!-- Square Web Payments SDK Card Form -->
+                                </p>                                <!-- Square Web Payments SDK Card Form -->
                                 <div id="card-container" style="margin-bottom: 1rem;">
                                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Card Details *</label>
-                                    <div id="card-element" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 12px; background: white;">
-                                        <!-- Square SDK will inject card form here -->
+                                    <div style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #6c757d;">
+                                        Enter card number, expiry (MM/YY), and CVV in the field below
+                                    </div>                                    <!-- EXACT debug page structure for Square form -->
+                                    <div id="card-element" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+                                        Loading...
                                     </div>
                                     <div id="card-errors" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.5rem; display: none;"></div>
                                 </div>
@@ -783,19 +898,7 @@
                                 <!-- Hidden field for card nonce -->
                                 <input type="hidden" id="cardNonce" name="cardNonce" value="">
                                 
-                                <!-- Postal Code (separate field for billing) -->
-                                <div class="form-group" style="margin-bottom: 1rem;">
-                                    <label for="postalCode">Postal Code *</label>
-                                    <input 
-                                        type="text" 
-                                        id="postalCode"
-                                        name="postalCode"
-                                        placeholder="12345"
-                                        maxlength="10"
-                                        required
-                                        style="width: 150px;"
-                                    />
-                                </div>
+                               
                                 
                                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
                                     <i class="fas fa-lock" style="color: #28a745; font-size: 0.875rem;"></i>
@@ -1109,9 +1212,7 @@
         };
         <% } else { %>
         window.selectedDateTime = null;
-        <% } %>
-
-        document.addEventListener('DOMContentLoaded', function() {// Get DOM elements
+        <% } %>        document.addEventListener('DOMContentLoaded', function() {// Get DOM elements
             const phoneInput = document.getElementById('phoneNumber');
             const customerLookupResult = document.getElementById('customerLookupResult');
             
@@ -1124,18 +1225,34 @@
             const existingCustomerForm = document.getElementById('existingCustomerForm');
             const bookingForm = document.getElementById('bookingForm');
             
+            // Initialize button state - disable until Square form is ready
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+                submitBtn.style.opacity = '0.6';
+                console.log('🔧 [Init] Submit button initially disabled until Square form loads');
+            }
+            
             // Change phone buttons
             const changePhoneExistingBtn = document.getElementById('changePhoneExistingBtn');
             const changePhoneNewBtn = document.getElementById('changePhoneNewBtn');            // Setup modal verification handlers
             setupModalVerificationHandlers();
-            
-            // Show new customer step function
+              // Show new customer step function
             window.showNewCustomerStep = function() {
                 phoneStep.style.display = 'none';
                 newCustomerStep.style.display = 'block';
                 
                 // Set verified phone number
                 document.getElementById('verifiedPhoneNumber').value = currentPhoneNumber;
+                
+                // Disable submit button initially until Square form is ready
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+                    submitBtn.style.opacity = '0.6';
+                }
                 
                 // Focus on first name field
                 setTimeout(() => {
@@ -1192,7 +1309,8 @@
                                     <span><strong>Phone:</strong> ${phoneValue}</span>
                                 </div>
                                 <button type="button" class="submit-btn" onclick="showSMSModalForExistingCustomer()" style="margin-top: 1rem;">
-                                    <i class="fas fa-sms"></i> Continue with this account
+                                    <i class="fas fa-sms"></i>
+                                    Continue with this account
                                 </button>
                             </div>
                         `;
@@ -1313,30 +1431,44 @@
             }
             
             if (changePhoneNewBtn) {
-                changePhoneNewBtn.addEventListener('click', resetToPhoneStep);            }
-              // Show existing customer step (make global for onclick)
-            window.showExistingCustomerStep = function() {
+                changePhoneNewBtn.addEventListener('click', resetToPhoneStep);            }            // Show existing customer step (make global for onclick)
+            window.showExistingCustomerStep = async function() {
                 console.log('showExistingCustomerStep called - customerData:', customerData);
                 phoneStep.style.display = 'none';
                 existingCustomerStep.style.display = 'block';
                 
-                // Populate customer info
+                // Show loading state while checking cards
                 const customerInfo = document.getElementById('existingCustomerInfo');
                 customerInfo.innerHTML = `
-                    <h6><i class="fas fa-user-check"></i> Customer Information</h6>
-                    <div class="info-item">
-                        <i class="fas fa-user"></i>
-                        <span><strong>Name:</strong> ${customerData.givenName || ''} ${customerData.familyName || ''}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-envelope"></i>
-                        <span><strong>Email:</strong> ${customerData.emailAddress || 'Not provided'}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-phone"></i>
-                        <span><strong>Phone:</strong> ${currentPhoneNumber}</span>
+                    <div style="text-align: center; padding: 2rem;">
+                        <span class="loading-spinner"></span>
+                        <p style="margin-top: 1rem; color: #6c757d;">Checking your payment methods...</p>
                     </div>
                 `;
+                
+                try {
+                    // Check customer's cards on file
+                    const cardsResponse = await fetch(`/payment/customer/${customerData.id}/cards`);
+                    const cardsResult = await cardsResponse.json();
+                    
+                    console.log('Customer cards:', cardsResult);
+                    
+                    // Check if customer has valid cards
+                    const hasValidCards = cardsResult.success && cardsResult.enabledCards && cardsResult.enabledCards.length > 0;
+                    
+                    if (hasValidCards) {
+                        // Customer has valid cards - show normal existing customer flow
+                        showExistingCustomerWithCards(cardsResult.enabledCards);
+                    } else {
+                        // Customer has no valid cards - require card addition
+                        showExistingCustomerRequireCard();
+                    }
+                    
+                } catch (error) {
+                    console.error('Error checking customer cards:', error);
+                    // Fallback to require card addition if API fails
+                    showExistingCustomerRequireCard();
+                }
                 
                 // Set hidden fields
                 document.getElementById('existingCustomerId').value = customerData.id || '';
@@ -1344,6 +1476,162 @@
                 document.getElementById('existingGivenName').value = customerData.givenName || '';
                 document.getElementById('existingFamilyName').value = customerData.familyName || '';
                 document.getElementById('existingEmailAddress').value = customerData.emailAddress || '';
+            }
+            
+            // Show existing customer with valid cards
+            function showExistingCustomerWithCards(cards) {
+                const customerInfo = document.getElementById('existingCustomerInfo');
+                
+                const cardSummary = cards.slice(0, 2).map(card => 
+                    `${card.cardBrand} ending in ${card.last4}`
+                ).join(', ');
+                
+                const additionalCards = cards.length > 2 ? ` (+${cards.length - 2} more)` : '';
+                
+                customerInfo.innerHTML = `
+                    <div style="background: #e8f5e8; border: 1px solid #c3e6c3; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+                        <h6><i class="fas fa-user-check"></i> Customer Information</h6>
+                        <div class="info-item">
+                            <i class="fas fa-user"></i>
+                            <span><strong>Name:</strong> ${customerData.givenName || ''} ${customerData.familyName || ''}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-envelope"></i>
+                            <span><strong>Email:</strong> ${customerData.emailAddress || 'Not provided'}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-phone"></i>
+                            <span><strong>Phone:</strong> ${currentPhoneNumber}</span>
+                        </div>
+                        <div class="info-item" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #c3e6c3;">
+                            <i class="fas fa-credit-card" style="color: #28a745;"></i>
+                            <span><strong>Payment Methods:</strong> ${cardSummary}${additionalCards}</span>
+                        </div>
+                        <div style="background: #fff; border-radius: 6px; padding: 1rem; margin-top: 1rem;">
+                            <p style="margin: 0; font-size: 0.9rem; color: #155724;">
+                                <i class="fas fa-check-circle" style="color: #28a745; margin-right: 0.5rem;"></i>
+                                Your card will be used for no-show protection and cancellation fees per our policy.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Show existing customer requiring card addition
+            function showExistingCustomerRequireCard() {
+                const customerInfo = document.getElementById('existingCustomerInfo');
+                customerInfo.innerHTML = `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+                        <h6><i class="fas fa-user-check"></i> Customer Information</h6>
+                        <div class="info-item">
+                            <i class="fas fa-user"></i>
+                            <span><strong>Name:</strong> ${customerData.givenName || ''} ${customerData.familyName || ''}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-envelope"></i>
+                            <span><strong>Email:</strong> ${customerData.emailAddress || 'Not provided'}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-phone"></i>
+                            <span><strong>Phone:</strong> ${currentPhoneNumber}</span>
+                        </div>
+                        
+                        <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 1rem; margin-top: 1rem;">
+                            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                                <i class="fas fa-exclamation-triangle" style="color: #721c24; margin-top: 0.125rem;"></i>
+                                <div>
+                                    <p style="margin: 0 0 0.5rem 0; font-weight: 500; color: #721c24;">
+                                        Payment Method Required
+                                    </p>
+                                    <p style="margin: 0; font-size: 0.9rem; color: #721c24; line-height: 1.4;">
+                                        You don't have any payment methods on file. A valid payment method is required to secure your appointment and for our cancellation policy.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cancellation Policy Display -->
+                    <div style="background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <h6 style="margin: 0 0 1rem 0; color: #1565c0;">
+                            <i class="fas fa-info-circle"></i> Cancellation Policy
+                        </h6>
+                        <div style="font-size: 0.9rem; color: #1565c0; line-height: 1.5;">
+                            <p style="margin: 0 0 0.75rem 0;">
+                                <strong>Cancel 2+ hours before:</strong> No charge
+                            </p>
+                            <p style="margin: 0 0 0.75rem 0;">
+                                <strong>Cancel within 2 hours:</strong> 50% of service fee
+                            </p>
+                            <p style="margin: 0 0 1rem 0;">
+                                <strong>No-show:</strong> 50% of service fee
+                            </p>
+                            <div style="background: rgba(255, 255, 255, 0.7); border-radius: 4px; padding: 0.75rem;">
+                                <p style="margin: 0; font-size: 0.85rem;">
+                                    <i class="fas fa-shield-alt" style="margin-right: 0.5rem;"></i>
+                                    Your card will only be charged if you cancel within 2 hours or don't show up for your appointment.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Show card addition section in the existing customer form
+                showCardAdditionForExistingCustomer();
+            }
+            
+            // Show card addition section for existing customer
+            function showCardAdditionForExistingCustomer() {
+                const existingForm = document.getElementById('existingCustomerForm');
+                const submitBtn = document.getElementById('existingCustomerSubmitBtn');
+                
+                // Find the special requests textarea
+                const textareaGroup = existingForm.querySelector('.form-group');
+                
+                // Insert card section before the marketing consent
+                const cardSection = document.createElement('div');
+                cardSection.id = 'existingCustomerCardSection';
+                cardSection.innerHTML = `
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 1.5rem;">
+                            <h6 style="margin: 0 0 1rem 0; color: #333;">
+                                <i class="fas fa-credit-card"></i> Add Payment Method
+                            </h6>
+                            <p style="margin: 0 0 1.5rem 0; color: #6c757d; font-size: 0.95rem;">
+                                Please add a payment method to secure your appointment and comply with our cancellation policy.
+                            </p>                            <!-- Square Web Payments SDK Card Form -->                            <div id="existing-card-container">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Card Details *</label>
+                                <div style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #6c757d;">
+                                    Enter card number, expiry (MM/YY), and CVV in the field below
+                                </div>                                <!-- EXACT debug page structure for Square form -->
+                                <div id="existing-card-element" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+                                    Loading...
+                                </div>
+                                <div id="existing-card-errors" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.5rem; display: none;"></div>
+                            </div>                            <!-- Hidden field for card nonce -->
+                            <input type="hidden" id="existingCardNonce" name="cardNonce" value="">
+                            
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-lock" style="color: #28a745; font-size: 0.875rem;"></i>
+                                    <span style="color: #6c757d; font-size: 0.875rem;">Your payment information is encrypted and secure with Square</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Insert before marketing consent
+                const marketingConsent = existingForm.querySelector('.marketing-consent');
+                existingForm.insertBefore(cardSection, marketingConsent);
+                
+                // Disable submit button until card is added
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+                submitBtn.style.opacity = '0.6';
+                
+                // Initialize Square payments for existing customer card
+                initializeSquarePaymentsForExistingCustomer();
             }
             
             // Show new customer step (make global for onclick)
@@ -1358,19 +1646,8 @@
                 setTimeout(() => {
                     document.getElementById('givenName').focus();
                 }, 100);
-            }
-            
-            // Form submission handlers
-            if (existingCustomerForm) {
-                existingCustomerForm.addEventListener('submit', function(e) {
-                    const submitBtn = document.getElementById('existingCustomerSubmitBtn');
-                    
-                    if (submitBtn) {
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Booking...';
-                    }
-                });
-            }
+            }            // Form submission handlers (existing customer handled by Square initialization)
+            // Note: existingCustomerForm submission is handled in initializeSquarePaymentsForExistingCustomer()
             
             if (bookingForm) {
                 bookingForm.addEventListener('submit', function(e) {
@@ -1408,24 +1685,133 @@
                 console.error('Square Web Payments SDK not loaded');
             }
         });
-        
-        // Initialize Square Web Payments SDK
+          // Initialize Square Web Payments SDK
         async function initializeSquarePayments() {
             const appId = '<%= process.env.SQ_APPLICATION_ID %>';
             const locationId = '<%= process.env.SQ_LOCATION_ID %>';
             
-            try {
+            // Validate Square configuration
+            if (!appId || appId === 'undefined' || appId.includes('PLACEHOLDER')) {
+                console.error('Square Application ID not configured properly');
+                const cardElement = document.getElementById('card-element');
+                if (cardElement) {
+                    cardElement.innerHTML = `
+                        <div style="color: #dc3545; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                            <p><i class="fas fa-exclamation-triangle"></i> Payment Configuration Error</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">
+                                Square Application ID is not properly configured.<br>
+                                Please contact the administrator to set up payment processing.
+                            </p>
+                        </div>
+                    `;
+                }
+                return;
+            }            try {
+                console.log('🔧 [NewCustomer] Starting Square initialization...');
+                console.log('🔧 [NewCustomer] App ID:', appId);
+                console.log('🔧 [NewCustomer] Location ID:', locationId);
+                console.log('🔧 [NewCustomer] Square object available:', !!window.Square);
+                
                 const payments = window.Square.payments(appId, locationId);
+                console.log('✅ [NewCustomer] Payments instance created:', payments);
                 
-                // Initialize card payment method
-                const card = await payments.card();
-                await card.attach('#card-element');
+                // Initialize card payment method with improved configuration
+                console.log('🔧 [NewCustomer] Creating card payment method...');
+                const card = await payments.card({
+                    includeInputLabels: true
+                });
+                console.log('✅ [NewCustomer] Card payment method created:', card);
                 
-                // Override the existing form submission handler for booking form
+                // Check if target element exists and is ready
+                const targetElement = document.getElementById('card-element');
+                console.log('🔧 [NewCustomer] Target element:', targetElement);
+                console.log('🔧 [NewCustomer] Target element HTML before attach:', targetElement.innerHTML);
+                  console.log('🔧 [NewCustomer] Attempting to attach card form...');
+                
+                // Clear the initial loading text first
+                const cardElement = document.getElementById('card-element');
+                if (cardElement && cardElement.textContent.trim() === 'Loading...') {
+                    console.log('🧹 [NewCustomer] Clearing initial loading text...');
+                    cardElement.textContent = '';
+                }                await card.attach('#card-element');
+                console.log('✅ [NewCustomer] Card form attached successfully!');
+                
+                // Listen for input validation changes on the Square card element
+                card.addEventListener('change', (event) => {
+                    const submitBtn = document.getElementById('submitBtn');
+                    const errorDiv = document.getElementById('card-errors');
+
+                    console.log('🔧 [NewCustomer] Card validation event:', event);
+                    console.log('🔧 [NewCustomer] Event errors:', event.errors);
+                    console.log('🔧 [NewCustomer] Event complete:', event.complete);
+
+                    if (event.errors && event.errors.length > 0) {
+                        // Show error messages
+                        const errorMessage = event.errors.map(e => e.message).join(', ');
+                        errorDiv.textContent = errorMessage;
+                        errorDiv.style.display = 'block';
+
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+                        submitBtn.style.opacity = '0.6';
+                        console.log('🔴 [NewCustomer] Button disabled due to validation errors');
+                    } else if (event.complete) {
+                        // Card details are complete and valid
+                        errorDiv.style.display = 'none';
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+                        submitBtn.style.opacity = '1';
+                        console.log('✅ [NewCustomer] Button enabled - card details complete and valid');
+                    } else {
+                        // Card details incomplete but no errors yet
+                        errorDiv.style.display = 'none';
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+                        submitBtn.style.opacity = '0.6';
+                        console.log('🟡 [NewCustomer] Button disabled - card details incomplete');
+                    }
+                });
+
+                // Button remains disabled until user enters complete card details
+                console.log('🔧 [NewCustomer] Button will be enabled only when card details are complete');
+                
+                // Debug: Check if Square form rendered properly
+                setTimeout(() => {
+                    const cardElement = document.getElementById('card-element');
+                    console.log('🔍 [NewCustomer] Card element after attach:', cardElement);
+                    console.log('🔍 [NewCustomer] Card element children:', cardElement.children.length);
+                    console.log('🔍 [NewCustomer] Card element HTML:', cardElement.innerHTML);
+                    console.log('🔍 [NewCustomer] Card element computed styles:', window.getComputedStyle(cardElement));
+                    
+                    // Check for iframes (Square uses iframes for secure input)
+                    const iframes = cardElement.querySelectorAll('iframe');
+                    console.log('🔍 [NewCustomer] Number of iframes:', iframes.length);
+                    
+                    if (iframes.length === 0) {
+                        console.error('❌ [NewCustomer] No iframes found - Square form may not have rendered properly');
+                        console.log('🔧 [NewCustomer] Element structure:', cardElement.outerHTML);
+                        console.log('🔧 [NewCustomer] Attempting to re-initialize...');
+                        // Could add re-initialization logic here if needed
+                    } else {
+                        console.log('✅ [NewCustomer] Square form iframes detected - form should be interactive');
+                        iframes.forEach((iframe, index) => {
+                            console.log(`🔍 [NewCustomer] Iframe ${index}:`, iframe.src);
+                            console.log(`🔍 [NewCustomer] Iframe ${index} styles:`, window.getComputedStyle(iframe));
+                        });
+                    }
+                    
+                    // Test if we can interact with the element
+                    console.log('🔧 [NewCustomer] Testing element interaction...');
+                    const clickEvent = new Event('click', { bubbles: true });
+                    cardElement.dispatchEvent(clickEvent);
+                    
+                }, 3000);
+                  // Override the existing form submission handler for booking form
                 const bookingForm = document.getElementById('bookingForm');
                 if (bookingForm) {
                     // Remove existing event listeners by cloning the form
                     const newBookingForm = bookingForm.cloneNode(true);
+                    newBookingForm.id = "bookingForm"; // Maintain the form ID
                     bookingForm.parentNode.replaceChild(newBookingForm, bookingForm);
                     
                     // Add new event listener with Square integration
@@ -1450,35 +1836,62 @@
                             alert('Please enter a valid email address.');
                             return;
                         }
-                        
-                        // Show loading state
+                          // Show loading state
                         const originalText = submitBtn.innerHTML;
                         submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing Payment...';
-                        
-                        try {
-                            // Tokenize card details
-                            const tokenResult = await card.tokenize({
+                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing Payment...';                        try {
+                            // Using exact working configuration from debug page
+                            console.log('🔧 [NewCustomer] Attempting tokenization with verified working format...');
+                            console.log('� [NewCustomer] Parameters:', {
+                                billingContact: { postalCode: postalCode.value.trim() },
+                                intent: 'STORE',
+                                customerInitiated: true,
+                                sellerKeyedIn: false
+                            });                            const tokenResult = await card.tokenize({
+                                intent: 'STORE', // STORE = Save card only, no amount/currency needed
+                                // Required verification details for STORE intent (flattened structure)
                                 billingContact: {
                                     postalCode: postalCode.value.trim()
-                                }
+                                },
+                                customerInitiated: true,
+                                sellerKeyedIn: false
                             });
                             
-                            if (tokenResult.status === 'OK') {
+                            console.log('� [NewCustomer] Tokenization result:', tokenResult);
+                              if (tokenResult.status === 'OK') {
                                 // Set the nonce in the hidden field
-                                document.getElementById('cardNonce').value = tokenResult.token;
+                                const token = tokenResult.token || tokenResult.details?.card?.token;
+                                if (token) {
+                                    document.getElementById('cardNonce').value = token;
+                                } else {
+                                    console.error('No token found in result:', tokenResult);
+                                    throw new Error('Token not found in response');
+                                }
                                 
                                 // Clear any previous errors
                                 const errorDiv = document.getElementById('card-errors');
                                 if (errorDiv) {
                                     errorDiv.style.display = 'none';
                                 }
-                                
-                                // Update button text and submit
+                                  // Update button text and submit
                                 submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating Booking...';
+                                
+                                // Debug: Log the cardNonce value
+                                console.log('🧾 Submitting form with cardNonce:', document.getElementById('cardNonce').value);
+                                
+                                // Add fallback timeout to prevent hanging
+                                const submissionTimeout = setTimeout(() => {
+                                    console.warn('⚠️ Form submission timeout - re-enabling button');
+                                    submitBtn.disabled = false;
+                                    submitBtn.innerHTML = originalText;
+                                    alert('Submission is taking longer than expected. Please try again.');
+                                }, 30000); // 30 second timeout
                                 
                                 // Submit the form
                                 newBookingForm.submit();
+                                
+                                // Clear timeout if submission happens quickly
+                                clearTimeout(submissionTimeout);
                             } else {
                                 // Handle tokenization errors
                                 let errorMessage = 'Invalid payment information';
@@ -1511,8 +1924,7 @@
                         }
                     });
                 }
-                
-            } catch (error) {
+                  } catch (error) {
                 console.error('Error initializing Square payments:', error);
                 
                 // Fallback: show error message
@@ -1521,7 +1933,198 @@
                     cardElement.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;"><p><i class="fas fa-exclamation-triangle"></i> Payment form could not load.</p><p style="font-size: 0.9rem; margin-top: 10px;">Please refresh the page and try again.</p></div>';
                 }
             }
+        }          // Initialize Square Web Payments SDK for existing customer card addition
+        async function initializeSquarePaymentsForExistingCustomer() {
+  const appId = '<%= process.env.SQ_APPLICATION_ID %>';
+  const locationId = '<%= process.env.SQ_LOCATION_ID %>';
+
+  console.log('[Square Init] Starting payment form setup...');
+
+  if (!appId || !locationId || typeof window.Square === 'undefined') {
+    console.error('[Square Init] Missing App ID, Location ID, or Square SDK');
+    return;
+  }
+
+  const waitForElement = async (selector, timeout = 3000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      const el = document.querySelector(selector);
+      if (el && el.offsetParent !== null) return el;
+      await new Promise(res => setTimeout(res, 100));
+    }
+    throw new Error(`[Square Init] Element ${selector} not visible in time`);
+  };
+
+  try {
+    const cardElement = await waitForElement('#existing-card-element');
+    const payments = window.Square.payments(appId, locationId);    const card = await payments.card({ includeInputLabels: true });
+
+    // Clear initial placeholder content
+    cardElement.textContent = '';
+    await card.attach('#existing-card-element');
+    console.log('[Square Init] Card element attached');
+    
+    // Immediately attach event listener after successful attachment
+    console.log('🔧 [ExistingCustomer] Attaching change event listener...');
+    card.addEventListener('change', (event) => {
+      const submitBtn = document.getElementById('existingCustomerSubmitBtn');
+      const errorDiv = document.getElementById('existing-card-errors');
+
+      console.log('🔧 [ExistingCustomer] Card validation event:', event);
+      console.log('🔧 [ExistingCustomer] Event errors:', event.errors);
+      console.log('🔧 [ExistingCustomer] Event complete:', event.complete);
+
+      if (event.errors && event.errors.length > 0) {
+        // Show error messages
+        const errorMessage = event.errors.map(e => e.message).join(', ');
+        errorDiv.textContent = errorMessage;
+        errorDiv.style.display = 'block';
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+        submitBtn.style.opacity = '0.6';
+        console.log('🔴 [ExistingCustomer] Button disabled due to validation errors');
+      } else if (event.complete) {
+        // Card details are complete and valid
+        errorDiv.style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+        submitBtn.style.opacity = '1';
+        console.log('✅ [ExistingCustomer] Button enabled - card details complete and valid');
+      } else {
+        // Card details incomplete but no errors yet
+        errorDiv.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+        submitBtn.style.opacity = '0.6';
+        console.log('🟡 [ExistingCustomer] Button disabled - card details incomplete');
+      }
+    });
+    console.log('✅ [ExistingCustomer] Change event listener attached');
+    
+    // Add enhanced debugging to verify form is interactive
+    setTimeout(() => {
+      const cardEl = document.getElementById('existing-card-element');
+      console.log('🔍 [ExistingCustomer] Card element after attach:', cardEl);
+      console.log('🔍 [ExistingCustomer] Card element children:', cardEl.children.length);
+      console.log('🔍 [ExistingCustomer] Card element iframes:', cardEl.querySelectorAll('iframe').length);
+      
+      if (cardEl.querySelectorAll('iframe').length === 0) {
+        console.error('❌ [ExistingCustomer] No iframes found - Square form may not have rendered');
+      } else {
+        console.log('✅ [ExistingCustomer] Square form iframes detected');      }
+    }, 2000);
+
+    // Add debug functions to window for manual testing
+    window.enableExistingCustomerButton = function() {
+      const submitBtn = document.getElementById('existingCustomerSubmitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+        submitBtn.style.opacity = '1';
+        console.log('🔧 [Debug] Manually enabled existing customer submit button');
+      }
+    };
+    
+    window.testCardValidation = function() {
+      console.log('🔧 [Debug] Testing card validation...');
+      const submitBtn = document.getElementById('existingCustomerSubmitBtn');
+      const errorDiv = document.getElementById('existing-card-errors');
+      
+      // Simulate a complete card event
+      console.log('🔧 [Debug] Simulating complete card event');
+      errorDiv.style.display = 'none';
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+      submitBtn.style.opacity = '1';      console.log('✅ [Debug] Button should now be enabled');
+    };
+      window.checkFormElements = function() {
+      console.log('🔍 [Debug] Checking form elements...');
+      const elements = {
+        form: document.getElementById('existingCustomerForm'),
+        submitBtn: document.getElementById('existingCustomerSubmitBtn'),
+        cardElement: document.getElementById('existing-card-element'),
+        errorDiv: document.getElementById('existing-card-errors'),
+        cardNonce: document.getElementById('existingCardNonce')
+        // Note: Postal code is handled by Square form internally
+      };
+      
+      Object.entries(elements).forEach(([name, element]) => {
+        console.log(`${element ? '✅' : '❌'} ${name}:`, element);
+      });
+      
+      return elements;
+    };// Get form elements (declared once here)
+    const form = document.getElementById('existingCustomerForm');
+    const submitBtn = document.getElementById('existingCustomerSubmitBtn');
+    
+    // Note: Postal code is collected by Square form automatically with includeInputLabels: true
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const errorDiv = document.getElementById('existing-card-errors');
+
+      // Debug: Check if elements exist
+      console.log('🔧 [ExistingCustomer] Form submission - checking elements...');
+      console.log('🔧 [ExistingCustomer] Error div element:', errorDiv);
+      console.log('🔧 [ExistingCustomer] Submit button element:', submitBtn);
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading-spinner"></span> Saving Card...';      try {
+        console.log('🔧 [ExistingCustomer] Tokenizing with Square built-in postal code...');        const tokenResult = await card.tokenize({
+          intent: 'STORE', // Square collects postal code automatically with includeInputLabels: true
+          // Required verification details for STORE intent (flattened structure)
+          billingContact: {}, // Empty object since Square form collects billing info
+          customerInitiated: true, // Customer is entering their own card details
+          sellerKeyedIn: false // Customer is entering details, not seller
+        });if (tokenResult.status === 'OK') {
+          document.getElementById('existingCardNonce').value = tokenResult.token;
+          
+          // Debug: Log the cardNonce value for existing customer
+          console.log('🧾 [ExistingCustomer] Submitting form with cardNonce:', tokenResult.token);
+          
+          // Add fallback timeout to prevent hanging
+          const submissionTimeout = setTimeout(() => {
+            console.warn('⚠️ [ExistingCustomer] Form submission timeout - re-enabling button');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+            alert('Submission is taking longer than expected. Please try again.');
+          }, 30000); // 30 second timeout
+          
+          form.submit();
+          
+          // Clear timeout if submission happens quickly
+          clearTimeout(submissionTimeout);
+        } else {
+          const msg = tokenResult.errors.map(e => e.message).join(', ');
+          errorDiv.textContent = msg || 'Card validation failed';
+          errorDiv.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
         }
+      } catch (err) {
+        console.error('[Square Init] Tokenization failed', err);
+        errorDiv.textContent = 'Payment error. Please try again.';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+      }
+    });
+
+  } catch (err) {
+    console.error('[Square Init] Error:', err);
+    const el = document.getElementById('existing-card-element');
+    if (el) {
+      el.innerHTML = `
+        <div style="color: #dc3545; padding: 1em; border: 1px dashed #dc3545; border-radius: 4px;">
+          <p><i class="fas fa-exclamation-triangle"></i> Payment form failed to load.</p>
+          <p style="font-size: 0.9em;">${err.message}</p>
+        </div>`;
+    }
+  }
+}
+
     </script>
 </body>
 </html>

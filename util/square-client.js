@@ -32,7 +32,8 @@ const {
   catalogApi,
   locationsApi,
   teamApi,
-  cardsApi
+  cardsApi,
+  paymentsApi
 } = new Client(config);
 
 module.exports = {
@@ -41,5 +42,6 @@ module.exports = {
   customersApi,
   locationsApi,
   teamApi,
-  cardsApi
+  cardsApi,
+  paymentsApi
 };

@@ -31,6 +31,16 @@ if (!process.env["ENVIRONMENT"]) {
 } else if (!process.env["SQ_LOCATION_ID"]) {
   console.error(".env file missing required field \"SQ_LOCATION_ID\".");
   process.exit(1);
+} else if (!process.env["SQ_APPLICATION_ID"]) {
+  console.error(".env file missing required field \"SQ_APPLICATION_ID\".");
+  console.error("This is required for Square Web Payments SDK to work.");
+  console.error("Please see SQUARE_APPLICATION_ID_SETUP.md for instructions.");
+  process.exit(1);
+} else if (process.env["SQ_APPLICATION_ID"].includes("PLACEHOLDER")) {
+  console.error("SQ_APPLICATION_ID contains placeholder value.");
+  console.error("Please replace with your actual Square Application ID.");
+  console.error("See SQUARE_APPLICATION_ID_SETUP.md for instructions.");
+  process.exit(1);
 }
 
 const routes = require("./routes/index");

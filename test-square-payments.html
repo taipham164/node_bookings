@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Web Payments SDK Test</title>
+    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        #card-element {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 12px;
+            background: white;
+        }
+        #card-errors {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 10px;
+            display: none;
+        }
+        .submit-btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Square Web Payments SDK Test</h1>
+    <p>This test page verifies that Square's Web Payments SDK is working correctly with PCI-compliant card tokenization.</p>
+    
+    <form id="payment-form">
+        <div class="form-group">
+            <label for="customer-name">Customer Name</label>
+            <input type="text" id="customer-name" value="John Doe" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="customer-email">Email</label>
+            <input type="email" id="customer-email" value="john.doe@example.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="postal-code">Postal Code</label>
+            <input type="text" id="postal-code" value="12345" maxlength="10" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Card Details</label>
+            <div id="card-element">
+                <!-- Square SDK will inject card form here -->
+            </div>
+            <div id="card-errors"></div>
+        </div>
+        
+        <button type="submit" class="submit-btn" id="submit-btn">
+            Test Card Tokenization
+        </button>
+    </form>
+    
+    <div id="result" class="result">
+        <h3>Result:</h3>
+        <pre id="result-content"></pre>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Testing Square Web Payments SDK...');
+            
+            // Use environment variables or sandbox defaults
+            const appId = 'sandbox-sq0idb-your-app-id'; // Replace with actual app ID
+            const locationId = 'your-location-id'; // Replace with actual location ID
+            
+            // Check if Square SDK loaded
+            if (!window.Square) {
+                showError('Square Web Payments SDK not loaded. Please check your internet connection.');
+                return;
+            }
+            
+            try {
+                console.log('Initializing Square payments...');
+                const payments = window.Square.payments(appId, locationId);
+                
+                // Initialize card payment method
+                console.log('Creating card element...');
+                const card = await payments.card({
+                    style: {
+                        input: {
+                            fontSize: '14px',
+                            fontFamily: 'Arial, sans-serif'
+                        }
+                    }
+                });
+                
+                console.log('Attaching card element...');
+                await card.attach('#card-element');
+                console.log('Card element attached successfully!');
+                
+                // Handle form submission
+                const form = document.getElementById('payment-form');
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const submitBtn = document.getElementById('submit-btn');
+                    const originalText = submitBtn.textContent;
+                    
+                    // Show loading state
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Processing...';
+                    hideResult();
+                    
+                    try {
+                        console.log('Tokenizing card...');
+                        
+                        // Tokenize card details
+                        const tokenResult = await card.tokenize();
+                        console.log('Tokenization result:', tokenResult);
+                        
+                        if (tokenResult.status === 'OK') {
+                            // Success - show the nonce
+                            showSuccess({
+                                message: 'Card tokenization successful!',
+                                nonce: tokenResult.token,
+                                details: tokenResult.details
+                            });
+                        } else {
+                            // Handle tokenization errors
+                            let errorMessage = 'Card tokenization failed';
+                            if (tokenResult.errors) {
+                                errorMessage = tokenResult.errors.map(e => e.message).join(', ');
+                            }
+                            
+                            showCardError(errorMessage);
+                            showError({
+                                message: errorMessage,
+                                errors: tokenResult.errors
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Tokenization error:', error);
+                        showCardError('Payment processing error. Please try again.');
+                        showError({
+                            message: 'Payment processing error',
+                            error: error.message
+                        });
+                    }
+                    
+                    // Reset submit button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                });
+                
+                // Show success message for SDK initialization
+                showSuccess({
+                    message: 'Square Web Payments SDK initialized successfully!',
+                    status: 'Ready for card tokenization'
+                });
+                
+            } catch (error) {
+                console.error('Error initializing Square payments:', error);
+                showError({
+                    message: 'Failed to initialize Square Web Payments SDK',
+                    error: error.message
+                });
+                
+                // Show fallback message in card element
+                const cardElement = document.getElementById('card-element');
+                cardElement.innerHTML = '<p style="color: #dc3545; text-align: center; padding: 20px;">Payment form could not load. Please check your Square configuration.</p>';
+            }
+        });
+        
+        function showSuccess(data) {
+            const result = document.getElementById('result');
+            const content = document.getElementById('result-content');
+            
+            result.className = 'result success';
+            result.style.display = 'block';
+            content.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        function showError(data) {
+            const result = document.getElementById('result');
+            const content = document.getElementById('result-content');
+            
+            result.className = 'result error';
+            result.style.display = 'block';
+            content.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        function showCardError(message) {
+            const errorDiv = document.getElementById('card-errors');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function hideResult() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('card-errors').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -187,13 +187,39 @@ router.post("/create", async (req, res, next) => {
     }
     
     // Debug: print appointmentSegments before booking (with BigInt handling)
-    console.log('DEBUG: appointmentSegments', safeJSONStringify(appointmentSegments));
-      // Determine customer ID - use existing customer ID or create new customer
+    console.log('DEBUG: appointmentSegments', safeJSONStringify(appointmentSegments));    // Determine customer ID - use existing customer ID or create new customer
     let finalCustomerId;
     if (customerId) {
       // Use existing customer
       finalCustomerId = customerId;
       console.log('Using existing customer ID:', finalCustomerId);
+      
+      // For existing customers, check if they provided a card nonce (new card to save)
+      if (cardNonce) {
+        try {
+          console.log('Saving new card for existing customer using nonce:', finalCustomerId);
+          
+          // Create card on file using the tokenized nonce
+          const { result } = await cardsApi.createCard({
+            idempotencyKey: crypto.randomUUID(),
+            sourceId: cardNonce, // The nonce from Square Web Payments SDK
+            card: {
+              customerId: finalCustomerId,
+              billingAddress: {
+                postalCode: postalCode,
+                country: 'US'
+              }
+            }
+          });
+          
+          console.log('Card saved successfully for existing customer with ID:', result.card.id);
+        } catch (cardError) {
+          console.error('Error saving card for existing customer:', cardError);
+          // Don't fail the booking if card saving fails
+        }
+      } else {
+        console.log('Existing customer using saved payment method on file');
+      }
     } else {
       // Create new customer
       finalCustomerId = await getCustomerID(givenName, familyName, emailAddress, normalizedPhone);
@@ -221,7 +247,7 @@ router.post("/create", async (req, res, next) => {
           // Don't fail the booking if card saving fails
         }
       }
-    }    // Create booking with source tracking
+    }// Create booking with source tracking
     const { result: { booking } } = await bookingsApi.createBooking({
       booking: {
         appointmentSegments,
@@ -392,15 +418,27 @@ router.get("/:bookingId", async (req, res, next) => {
         serviceDetailsMap[sid] = base;
       }
       serviceDetailsMap[sid].quantity += 1;
+    }    const serviceDetails = Object.values(serviceDetailsMap);
+
+    // Fetch customer information
+    let customerInfo = null;
+    if (booking.customerId) {
+      try {
+        const { result: { customer } } = await customersApi.retrieveCustomer(booking.customerId);
+        customerInfo = customer;
+        console.log('Retrieved customer info for booking:', customer.givenName, customer.familyName);
+      } catch (customerError) {
+        console.error('Error retrieving customer information:', customerError);
+        // Continue without customer info if retrieval fails
+      }
     }
-    const serviceDetails = Object.values(serviceDetailsMap);
 
     // Defensive location handling
     let location = req.app.locals.location || { address: {}, timezone: 'UTC' };
     if (!location.address) location.address = {};
     if (!location.timezone) location.timezone = 'UTC';
 
-    res.render("pages/confirmation", { booking, teamMemberProfiles, serviceDetails, location });
+    res.render("pages/confirmation", { booking, teamMemberProfiles, serviceDetails, location, customerInfo });
   } catch (error) {
     console.error(error);
     next(error);

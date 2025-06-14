@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Square Payment Form Debug</title>
+    <script src="https://web.squarecdn.com/v1/square.js"></script>
+</head>
+<body>
+    <h2>Square Payment Form Debug</h2>
+    
+    <div id="debug-info">
+        <h3>Debug Information</h3>
+        <div id="sdk-status"></div>
+        <div id="app-config"></div>
+        <div id="error-log"></div>
+    </div>
+    
+    <div id="payment-section" style="margin: 2rem 0;">
+        <h3>Add Payment Method</h3>
+        <p>Please add a payment method to secure your appointment and comply with our cancellation policy.</p>
+        
+        <div id="card-container">
+            <label>Card Details *</label>
+            <div id="card-element" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 12px; background: white; min-height: 40px;">
+                <!-- Square SDK will inject card form here -->
+            </div>
+            <div id="card-errors" style="color: red; margin-top: 0.5rem; display: none;"></div>
+        </div>
+        
+        <div style="margin-top: 1rem;">
+            <label>Postal Code *</label>
+            <input type="text" id="postalCode" placeholder="12345" maxlength="10" style="padding: 0.75rem; border: 1px solid #ced4da; border-radius: 4px;" />
+        </div>
+        
+        <button id="test-btn" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: #007bff; color: white; border: none; border-radius: 4px;">
+            Test Card Tokenization
+        </button>
+    </div>
+
+    <script>
+        const appId = '<%= process.env.SQ_APPLICATION_ID %>';
+        const locationId = '<%= process.env.SQ_LOCATION_ID %>';
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            const sdkStatus = document.getElementById('sdk-status');
+            const appConfig = document.getElementById('app-config');
+            const errorLog = document.getElementById('error-log');
+            
+            // Check SDK availability
+            sdkStatus.innerHTML = `
+                <p><strong>Square SDK Status:</strong> ${window.Square ? '✅ Loaded' : '❌ Not Loaded'}</p>
+            `;
+            
+            // Check configuration
+            appConfig.innerHTML = `
+                <p><strong>App ID:</strong> ${appId || 'Not Set'}</p>
+                <p><strong>Location ID:</strong> ${locationId || 'Not Set'}</p>
+                <p><strong>Environment:</strong> ${appId && appId.includes('sandbox') ? 'Sandbox' : 'Production'}</p>
+            `;
+            
+            if (!window.Square) {
+                errorLog.innerHTML = '<p style="color: red;"><strong>Error:</strong> Square SDK not loaded</p>';
+                return;
+            }
+            
+            if (!appId || appId === 'undefined' || appId.includes('PLACEHOLDER')) {
+                errorLog.innerHTML = '<p style="color: red;"><strong>Error:</strong> Invalid Application ID</p>';
+                return;
+            }
+            
+            try {
+                console.log('Creating Square payments instance...');
+                const payments = window.Square.payments(appId, locationId);
+                console.log('Payments instance created successfully');
+                
+                console.log('Creating card payment method...');
+                const card = await payments.card({
+                    style: {
+                        '.input-container': {
+                            borderColor: '#e9ecef',
+                            borderRadius: '8px'
+                        },
+                        '.input-container.is-focus': {
+                            borderColor: '#667eea'
+                        },
+                        '.input-container.is-error': {
+                            borderColor: '#dc3545'
+                        }
+                    }
+                });
+                console.log('Card payment method created successfully');
+                
+                console.log('Attaching card form to DOM...');
+                await card.attach('#card-element');
+                console.log('Card form attached successfully');
+                
+                errorLog.innerHTML = '<p style="color: green;"><strong>Success:</strong> Payment form loaded successfully!</p>';
+                
+                // Add test tokenization
+                document.getElementById('test-btn').addEventListener('click', async function() {
+                    const postalCode = document.getElementById('postalCode').value;
+                    
+                    if (!postalCode || postalCode.length < 5) {
+                        document.getElementById('card-errors').textContent = 'Please enter a valid postal code';
+                        document.getElementById('card-errors').style.display = 'block';
+                        return;
+                    }
+                    
+                    try {
+                        console.log('Testing card tokenization...');
+                        const tokenResult = await card.tokenize({
+                            billingContact: {
+                                postalCode: postalCode
+                            }
+                        });
+                        
+                        if (tokenResult.status === 'OK') {
+                            console.log('Tokenization successful:', tokenResult.token);
+                            alert('Card tokenization successful! Token: ' + tokenResult.token.substring(0, 20) + '...');
+                        } else {
+                            console.error('Tokenization failed:', tokenResult.errors);
+                            document.getElementById('card-errors').textContent = 'Card validation failed: ' + tokenResult.errors.map(e => e.message).join(', ');
+                            document.getElementById('card-errors').style.display = 'block';
+                        }
+                    } catch (error) {
+                        console.error('Tokenization error:', error);
+                        document.getElementById('card-errors').textContent = 'Tokenization error: ' + error.message;
+                        document.getElementById('card-errors').style.display = 'block';
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error initializing Square payments:', error);
+                errorLog.innerHTML = `<p style="color: red;"><strong>Error:</strong> ${error.message}</p>`;
+                
+                // Show fallback form
+                document.getElementById('card-element').innerHTML = `
+                    <div style="color: #dc3545; text-align: center; padding: 20px;">
+                        <p><strong>Payment form could not load</strong></p>
+                        <p style="font-size: 0.9rem;">Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -3,6 +3,9 @@
  * Handles saving and managing customer payment methods
  */
 
+const { cardsApi, customersApi, paymentsApi } = require('./square-client');
+const { randomUUID } = require('crypto');
+
 /**
  * Creates a new card on file for a customer
  * @param {Object} cardData - Card information
@@ -11,10 +14,7 @@
  */
 async function createCardOnFile(cardData, customerId) {
   try {
-    const { squareClient } = require('./square-client');
-    const { randomUUID } = require('crypto');
-    
-    const requestBody = {
+      const requestBody = {
       idempotencyKey: randomUUID(),
       sourceId: cardData.sourceId, // From Web Payments SDK
       card: {
@@ -25,7 +25,7 @@ async function createCardOnFile(cardData, customerId) {
       }
     };
     
-    const { result } = await squareClient.cardsApi.createCard(requestBody);
+    const { result } = await cardsApi.createCard(requestBody);
     
     return {
       cardId: result.card.id,
@@ -50,15 +50,9 @@ async function createCardOnFile(cardData, customerId) {
  */
 async function listCustomerCards(customerId) {
   try {
-    const { squareClient } = require('./square-client');
-    
-    const query = {
-      filter: {
-        customerId: customerId
-      }
-    };
-    
-    const { result } = await squareClient.cardsApi.listCards(undefined, undefined, undefined, query);
+    // Use the correct parameter structure for cardsApi.listCards
+    // Parameters: cursor, customerId, includeDisabled, referenceId, sortOrder
+    const { result } = await cardsApi.listCards(undefined, customerId);
     
     return result.cards?.map(card => ({
       cardId: card.id,
@@ -83,9 +77,7 @@ async function listCustomerCards(customerId) {
  */
 async function getCard(cardId) {
   try {
-    const { squareClient } = require('./square-client');
-    
-    const { result } = await squareClient.cardsApi.retrieveCard(cardId);
+    const { result } = await cardsApi.retrieveCard(cardId);
     
     return {
       cardId: result.card.id,
@@ -111,9 +103,7 @@ async function getCard(cardId) {
  */
 async function disableCard(cardId) {
   try {
-    const { squareClient } = require('./square-client');
-    
-    const { result } = await squareClient.cardsApi.disableCard(cardId);
+    const { result } = await cardsApi.disableCard(cardId);
     
     return {
       cardId: result.card.id,
@@ -134,9 +124,6 @@ async function disableCard(cardId) {
  */
 async function createPaymentWithSavedCard(cardId, paymentData) {
   try {
-    const { squareClient } = require('./square-client');
-    const { randomUUID } = require('crypto');
-    
     const requestBody = {
       idempotencyKey: randomUUID(),
       sourceId: cardId,
@@ -149,7 +136,7 @@ async function createPaymentWithSavedCard(cardId, paymentData) {
       autocomplete: true
     };
     
-    const { result } = await squareClient.paymentsApi.createPayment(requestBody);
+    const { result } = await paymentsApi.createPayment(requestBody);
     
     return {
       paymentId: result.payment.id,
@@ -172,10 +159,8 @@ async function createPaymentWithSavedCard(cardId, paymentData) {
  */
 async function getCustomerWithCards(customerId) {
   try {
-    const { squareClient } = require('./square-client');
-    
     const [customerResult, cards] = await Promise.all([
-      squareClient.customersApi.retrieveCustomer(customerId),
+      customersApi.retrieveCustomer(customerId),
       listCustomerCards(customerId)
     ]);
     
