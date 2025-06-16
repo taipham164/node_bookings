@@ -1044,7 +1044,7 @@ function updateStaffBarAndSheet() {
             staffName = 'Staff Selected'; // fallback
           }
         }
-        barCount.textContent += ' • ' + staffName;
+        barCount.textContent += ' • with ' + staffName;
       }
     }
     
