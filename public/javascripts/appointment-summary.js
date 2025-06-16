@@ -1032,7 +1032,18 @@ function updateStaffBarAndSheet() {
     if (barCount) {
       barCount.textContent = totalItems + ' service' + (totalItems !== 1 ? 's' : '');
       if (selectedStaff) {
-        var staffName = selectedStaff.value === 'anyStaffMember' ? 'Any Staff' : 'Staff Selected';
+        var staffName = '';
+        if (selectedStaff.value === 'anyStaffMember') {
+          staffName = 'Any Staff';
+        } else {
+          var staffCard = selectedStaff.closest('.staff-card');
+          var staffNameElement = staffCard ? staffCard.querySelector('.staff-info h4') : null;
+          if (staffNameElement) {
+            staffName = staffNameElement.textContent.trim();
+          } else {
+            staffName = 'Staff Selected'; // fallback
+          }
+        }
         barCount.textContent += ' • ' + staffName;
       }
     }
@@ -1680,8 +1691,22 @@ function updateAvailabilityBottomSheetContent() {
       serviceName.textContent = service.name;
       
       // Add staff info inline if available
-      if (window.selectedStaff && window.selectedStaff.name) {
-        serviceName.textContent += ' - by ' + window.selectedStaff.name;
+      var selectedStaff = document.querySelector('input[name="staffId"]:checked');
+      var staffName = '';
+      if (selectedStaff) {
+        if (selectedStaff.value === 'anyStaffMember') {
+          staffName = 'Any Available Staff';
+        } else {
+          var staffCard = selectedStaff.closest('.staff-card');
+          var staffNameElement = staffCard ? staffCard.querySelector('.staff-info h4') : null;
+          if (staffNameElement) {
+            staffName = staffNameElement.textContent.trim();
+          }
+        }
+      }
+      
+      if (staffName) {
+        serviceName.textContent += ' - by ' + staffName;
       }
       
       // Quantity
