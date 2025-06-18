@@ -62,6 +62,7 @@ app.set("view engine", "ejs");
 app.use(logger("dev"));
 
 app.use(express.static(__dirname + "/public"));
+app.use("/web", express.static(__dirname + "/public/web"));
 
 app.use(express.json());
 app.use(express.urlencoded({
