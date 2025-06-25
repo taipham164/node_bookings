@@ -11,6 +11,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     
+    <!-- Session Persistence Script -->
+    <script src="/js/session-persistence.js?v=<%= Date.now() %>" defer></script>
+    <script src="/js/firebase-session-manager.js?v=<%= Date.now() %>" defer></script>
+    
     <!-- reCAPTCHA v3 (if using App Check) -->
     <% if (recaptchaSiteKey) { %>
     <script src="https://www.google.com/recaptcha/api.js?render=<%= recaptchaSiteKey %>"></script>

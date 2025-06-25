@@ -1,6 +1,7 @@
 /**
  * Appointment Summary Component
  * Handles the appointment summary sidebar, mobile summary bar, and bottom sheet
+ * Now with Firebase session persistence integration
  */
 
 // Helper function to safely convert BigInt to Number
@@ -20,10 +21,27 @@ function safeBigIntToNumber(value) {
   return Number(value) || 0;
 }
 
-// Initialize appointment summary functionality
+// Initialize appointment summary functionality with session persistence
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DEBUG: DOMContentLoaded - starting initialization');
+  console.log('DEBUG: DOMContentLoaded - starting initialization with session persistence');
   
+  // Initialize session persistence first
+  if (window.sessionPersistence) {
+    console.log('DEBUG: Session persistence available, restoring data...');
+    // Restore data for current page after a short delay to allow DOM to settle
+    setTimeout(() => {
+      window.sessionPersistence.restoreCurrentPageData();
+    }, 300);
+  } else {
+    console.log('DEBUG: Session persistence not available yet, will retry...');
+    // Retry after session persistence loads
+    setTimeout(() => {
+      if (window.sessionPersistence) {
+        window.sessionPersistence.restoreCurrentPageData();
+      }
+    }, 500);
+  }
+
   // Check which page we're on
   var staffForm = document.querySelector('form[id="staff-form"]');
   var servicesForm = document.querySelector('form[id="services-form"]');
@@ -78,6 +96,11 @@ document.addEventListener('quantityChanged', function(e) {
   console.log('Quantity changed event received:', e.detail);
   updateAppointmentSummary();
   updateBarAndSheet();
+  
+  // Save service selections when quantities change
+  if (window.sessionPersistence) {
+    setTimeout(() => window.sessionPersistence.saveServiceSelections(), 100);
+  }
 });
 
 // Listen for service limits changes from the services page
@@ -107,6 +130,11 @@ document.addEventListener('serviceLimitsChanged', function(e) {
       }
     }
   });
+
+  // Save service selections when limits change
+  if (window.sessionPersistence && hasSelections) {
+    setTimeout(() => window.sessionPersistence.saveServiceSelections(), 100);
+  }
 });
 
 // Set up form submission handlers for appointment summary buttons
@@ -756,6 +784,11 @@ function initStaffPageSummary() {
     radio.addEventListener('change', function() {
       console.log('DEBUG: Radio change event fired for:', radio.value);
       updateStaffPageSummary();
+      
+      // Save staff selection when changed
+      if (window.sessionPersistence) {
+        setTimeout(() => window.sessionPersistence.saveStaffSelection(), 100);
+      }
     });
   });
   
@@ -933,7 +966,6 @@ function updateStaffPageSummary() {
       totalsLi.style.fontSize = '1rem';
       
       var totalsInfo = document.createElement('div');
-      totalsInfo.style.flex = '1';
       
       var totalsTitle = document.createElement('div');
       totalsTitle.style.fontWeight = '700';
@@ -964,10 +996,7 @@ function updateStaffPageSummary() {
         totalPriceText = '$' + (totalPrice / 100).toFixed(2);
       }
       
-      totalsDetails.innerHTML = '<i class="fas fa-clock me-1"></i>' + totalDurationText;
-      if (totalPriceText) {
-        totalsDetails.innerHTML += ' • <span style="color: #28a745; font-weight: 600;">' + totalPriceText + '</span>';
-      }
+      totalsDetails.innerHTML = '<i class="fas fa-clock me-1"></i>' + totalDurationText + ' • <span style="color: #28a745; font-weight: 600;">' + totalPriceText + '</span>';
       
       totalsInfo.appendChild(totalsTitle);
       totalsInfo.appendChild(totalsDetails);
@@ -1071,7 +1100,7 @@ function updateStaffBarAndSheet() {
             staffName = 'Staff Selected'; // fallback
           }
         }
-        barCount.textContent += ' • with ' + staffName;
+        barCount.textContent += ' • ' + staffName;
       }
     }
     
@@ -1202,7 +1231,7 @@ function updateStaffBottomSheetContent() {
       }
       
       if (staffName) {
-        serviceName.textContent += ' - with ' + staffName;
+        serviceName.textContent += ' - by ' + staffName;
       }
       
       // Quantity
@@ -1571,54 +1600,11 @@ function updateContactPageSummary() {
       subtotalLi.appendChild(subtotalAmount);
       summaryItems.appendChild(subtotalLi);
       
-      // Calculate taxes from backend service data
-      var totalTaxAmount = 0;
-      var hasTaxableServices = false;
+      // Taxes (if applicable - calculate as example)
+      var taxRate = 0.08; // 8% tax rate - you can make this configurable
+      var taxAmount = totalPrice * taxRate;
       
-      window.serviceDetails.forEach(function(service) {
-        if (service.price && service.price.amount) {
-          var serviceAmount = safeBigIntToNumber(service.price.amount);
-          var serviceQuantity = service.quantity || 1;
-          var serviceTotalPrice = serviceAmount * serviceQuantity;
-          
-          // Check various tax information sources from Square API
-          var serviceTaxAmount = 0;
-          
-          // 1. Direct tax amount in price object
-          if (service.price.tax) {
-            serviceTaxAmount = safeBigIntToNumber(service.price.tax) * serviceQuantity;
-            hasTaxableServices = true;
-          }
-          // 2. Tax rate in service object
-          else if (service.taxRate) {
-            serviceTaxAmount = serviceTotalPrice * parseFloat(service.taxRate);
-            hasTaxableServices = true;
-          }
-          // 3. Tax rate in price object with tax not included
-          else if (service.price.taxIncluded === false && service.price.taxRate) {
-            serviceTaxAmount = serviceTotalPrice * parseFloat(service.price.taxRate);
-            hasTaxableServices = true;
-          }
-          // 4. Check if service has tax IDs (indicates taxable)
-          else if (service.taxIds && service.taxIds.length > 0) {
-            // If tax IDs are present but no rate/amount, use default local tax rate
-            // This could be made configurable per location
-            var defaultTaxRate = 0.08; // 8% default - should come from location settings
-            serviceTaxAmount = serviceTotalPrice * defaultTaxRate;
-            hasTaxableServices = true;
-          }
-          // 5. Location-specific pricing with tax
-          else if (service.locationPrice && service.locationPrice.tax) {
-            serviceTaxAmount = safeBigIntToNumber(service.locationPrice.tax) * serviceQuantity;
-            hasTaxableServices = true;
-          }
-          
-          totalTaxAmount += serviceTaxAmount;
-        }
-      });
-      
-      // Display tax line only if there are taxable services
-      if (hasTaxableServices && totalTaxAmount > 0) {
+      if (taxAmount > 0) {
         var taxLi = document.createElement('li');
         taxLi.style.padding = '8px 0';
         taxLi.style.display = 'flex';
@@ -1633,7 +1619,7 @@ function updateContactPageSummary() {
         var taxAmountSpan = document.createElement('span');
         taxAmountSpan.style.fontSize = '14px';
         taxAmountSpan.style.color = '#333';
-        taxAmountSpan.textContent = '$' + (totalTaxAmount / 100).toFixed(2);
+        taxAmountSpan.textContent = '$' + (taxAmount / 100).toFixed(2);
         
         taxLi.appendChild(taxLabel);
         taxLi.appendChild(taxAmountSpan);
@@ -1659,7 +1645,7 @@ function updateContactPageSummary() {
       totalAmountSpan.style.fontWeight = '700';
       totalAmountSpan.style.fontSize = '18px';
       totalAmountSpan.style.color = '#28a745';
-      var finalTotal = totalTaxAmount > 0 ? totalPrice + totalTaxAmount : totalPrice;
+      var finalTotal = taxAmount > 0 ? totalPrice + taxAmount : totalPrice;
       totalAmountSpan.textContent = '$' + (finalTotal / 100).toFixed(2);
       
       totalLi.appendChild(totalLabel);
@@ -1928,7 +1914,7 @@ function updateContactBottomSheetContent() {
       serviceInfo.appendChild(rightInfo);
       li.appendChild(serviceInfo);
       sheetItems.appendChild(li);
-    });
+       });
     
     // Add totals section if multiple services OR single service with qty >= 2
     var shouldShowTotals = window.serviceDetails.length >= 2;
@@ -2002,11 +1988,5 @@ function updateContactBottomSheetContent() {
   } else {
     sheetItems.style.display = 'none';
     sheetEmpty.style.display = 'block';
-  }
-  
-  // Hide the Next button on contact page (show only service details)
-  var sheetNext = document.getElementById('summary-sheet-next');
-  if (sheetNext) {
-    sheetNext.style.display = 'none';
   }
 }
