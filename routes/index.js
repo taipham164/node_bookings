@@ -75,19 +75,19 @@ router.get("/square-test", function(req, res, next) {
 /**
  * GET /
  *
- * Entry point for the app. Will render the web template as the home page.
+ * Entry point for the app. Redirects directly to service selection.
  */
 router.get("/", async (req, res, next) => {
-  res.render("web/index");
+  res.redirect("/services");
 });
 
 /**
  * GET /home
  *
- * Alternative route to the home page.
+ * Alternative route that also redirects to service selection.
  */
 router.get("/home", async (req, res, next) => {
-  res.render("web/index");
+  res.redirect("/services");
 });
 
 module.exports = router;

@@ -3,6 +3,23 @@
  * Handles the appointment summary sidebar, mobile summary bar, and bottom sheet
  */
 
+// Helper function to safely convert BigInt to Number
+function safeBigIntToNumber(value) {
+  if (typeof value === 'bigint') {
+    return Number(value);
+  }
+  if (typeof value === 'string') {
+    // Try to parse as BigInt first, then convert to Number
+    try {
+      return Number(BigInt(value));
+    } catch (e) {
+      // If that fails, try direct Number conversion
+      return Number(value);
+    }
+  }
+  return Number(value) || 0;
+}
+
 // Initialize appointment summary functionality
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DEBUG: DOMContentLoaded - starting initialization');
@@ -11,11 +28,13 @@ document.addEventListener('DOMContentLoaded', function() {
   var staffForm = document.querySelector('form[id="staff-form"]');
   var servicesForm = document.querySelector('form[id="services-form"]');
   var availabilityPage = document.querySelector('.availability-container');
+  var contactPage = document.querySelector('.contact-container') || document.querySelector('form[action="/contact"]');
   
   console.log('DEBUG: Page detection:', {
     staffForm: !!staffForm,
     servicesForm: !!servicesForm,
-    availabilityPage: !!availabilityPage
+    availabilityPage: !!availabilityPage,
+    contactPage: !!contactPage
   });
   
   // Update button text based on current page
@@ -43,6 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DEBUG: window.serviceDetails at main init:', window.serviceDetails);
     // Availability page functionality
     initAvailabilityPageSummary();
+  } else if (contactPage) {
+    console.log('DEBUG: Initializing contact page');
+    initContactPageSummary();
   } else {
     console.log('DEBUG: No matching page type found');
   }
@@ -115,6 +137,12 @@ function updateButtonText(page) {
   var staffForm = document.querySelector('form[id="staff-form"]');
   var servicesForm = document.querySelector('form[id="services-form"]');
   var availabilityPage = document.querySelector('.availability-container');
+  var contactPage = document.querySelector('.contact-container') || document.querySelector('form[action="/contact"]');
+  
+  // Skip button text update on contact page since buttons are hidden
+  if (contactPage) {
+    return;
+  }
   
   var buttonText = 'Next';
   if (page === 'availability' || availabilityPage) {
@@ -589,7 +617,6 @@ function updateBarAndSheet() {
     var totalsTitle = document.createElement('div');
     totalsTitle.style.fontWeight = '700';
     totalsTitle.style.color = '#333';
-    totalsTitle.style.fontSize = '1.1em';
     totalsTitle.textContent = 'Total';
     
     var totalsDetails = document.createElement('div');
@@ -837,8 +864,8 @@ function updateStaffPageSummary() {
       
       var duration = '';
       if (service.duration) {
-        // Convert duration from milliseconds to minutes
-        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        // Convert duration from milliseconds to minutes using safe conversion
+        var durationMs = safeBigIntToNumber(service.duration);
         var minutes = Math.round(durationMs / 60000); // Convert milliseconds to minutes
         var hours = Math.floor(minutes / 60);
         var mins = minutes % 60;
@@ -852,7 +879,7 @@ function updateStaffPageSummary() {
       
       var price = '';
       if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        var amount = safeBigIntToNumber(service.price.amount);
         price = '$' + (amount / 100).toFixed(2);
       }
       
@@ -875,14 +902,14 @@ function updateStaffPageSummary() {
     window.serviceDetails.forEach(function(service) {
       // Calculate total duration
       if (service.duration) {
-        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMs = safeBigIntToNumber(service.duration);
         var durationMinutes = Math.round(durationMs / 60000);
         totalDuration += durationMinutes * (service.quantity || 1);
       }
       
       // Calculate total price
       if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        var amount = safeBigIntToNumber(service.price.amount);
         totalPrice += amount * (service.quantity || 1);
       }
     });
@@ -1018,12 +1045,12 @@ function updateStaffBarAndSheet() {
     window.serviceDetails.forEach(function(service) {
       totalItems += service.quantity || 1;
       if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        var amount = safeBigIntToNumber(service.price.amount);
         totalPrice += amount * (service.quantity || 1);
       }
       if (service.duration) {
-        // Convert duration from milliseconds to minutes
-        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        // Convert duration from milliseconds to minutes using safe conversion
+        var durationMs = safeBigIntToNumber(service.duration);
         var durationMinutes = Math.round(durationMs / 60000); // Convert milliseconds to minutes
         totalDuration += durationMinutes * (service.quantity || 1);
       }
@@ -1123,7 +1150,7 @@ function initStaffBottomSheet() {
   if (overlay) overlay.addEventListener('click', closeBottomSheet);
 }
 
-// Update staff bottom sheet content
+// Update appointment summary for staff page
 function updateStaffBottomSheetContent() {
   var sheetItems = document.getElementById('summary-sheet-items');
   var sheetEmpty = document.getElementById('summary-sheet-empty');
@@ -1189,7 +1216,7 @@ function updateStaffBottomSheetContent() {
       
       // Duration
       if (service.duration) {
-        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMs = safeBigIntToNumber(service.duration);
         var durationMinutes = Math.round(durationMs / 60000);
         var durationText = durationMinutes + 'm';
         serviceDetails.textContent = durationText;
@@ -1205,7 +1232,7 @@ function updateStaffBottomSheetContent() {
       
       // Price
       if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        var amount = safeBigIntToNumber(service.price.amount);
         var price = amount / 100;
         var priceDiv = document.createElement('div');
         priceDiv.style.fontWeight = '600';
@@ -1222,7 +1249,7 @@ function updateStaffBottomSheetContent() {
       sheetItems.appendChild(li);
     });
     
-    // Add totals section if 2 or more services OR 1 service with qty >= 2
+    // Add totals section if multiple services OR single service with qty >= 2
     var shouldShowTotals = window.serviceDetails.length >= 2;
     if (!shouldShowTotals && window.serviceDetails.length === 1) {
       // Check if single service has quantity >= 2
@@ -1297,51 +1324,58 @@ function updateStaffBottomSheetContent() {
   }
 }
 
-// Availability page specific functionality
-function initAvailabilityPageSummary() {
-  console.log('DEBUG: initAvailabilityPageSummary called');
-  var availabilityPage = document.querySelector('.availability-container');
-  console.log('DEBUG: availabilityPage found:', !!availabilityPage);
-  console.log('DEBUG: window.serviceDetails at init:', window.serviceDetails);
-  console.log('DEBUG: window.selectedStaff at init:', window.selectedStaff);
+// Contact page specific functionality
+function initContactPageSummary() {
+  console.log('DEBUG: initContactPageSummary called');
+  var contactPage = document.querySelector('.contact-container') || document.querySelector('form[action="/contact"]');
+  console.log('DEBUG: contactPage found:', !!contactPage);
   
-  if (!availabilityPage) {
-    console.log('DEBUG: No availability page found, returning');
-    return; // Not on availability page
-  }
+  if (!contactPage) return; // Not on contact page
   
-  // Wait a bit for window variables to be set
+  // Wait a bit for window variables to be set before updating
   setTimeout(function() {
-    console.log('DEBUG: After timeout - window.serviceDetails:', window.serviceDetails);
-    console.log('DEBUG: After timeout - window.selectedStaff:', window.selectedStaff);
-    updateAvailabilityPageSummary();
+    console.log('DEBUG: Delayed execution - updating contact page summary');
+    updateContactPageSummary();
+  }, 100);
+  
+  // Also try updating immediately
+  updateContactPageSummary();
+  
+  // Retry mechanism in case data loads later
+  var retryCount = 0;
+  var maxRetries = 10;
+  var retryInterval = setInterval(function() {
+    if (typeof window.serviceDetails !== 'undefined' && window.serviceDetails && window.serviceDetails.length > 0) {
+      console.log('DEBUG: Service details found on retry', retryCount);
+      updateContactPageSummary();
+      clearInterval(retryInterval);
+    } else {
+      retryCount++;
+      console.log('DEBUG: Retry', retryCount, 'serviceDetails still not available');
+      if (retryCount >= maxRetries) {
+        console.log('DEBUG: Max retries reached, stopping');
+        clearInterval(retryInterval);
+      }
+    }
   }, 200);
   
-  // Initial load - populate with session data
-  updateAvailabilityPageSummary();
+  // Initialize mobile bottom sheet for contact page
+  initContactBottomSheet();
   
-  // Initialize mobile bottom sheet for availability page
-  initAvailabilityBottomSheet();
-  
-  // Handle mobile bottom bar for availability page
-  updateAvailabilityBarAndSheet();
+  // Handle mobile bottom bar for contact page
+  updateContactBarAndSheet();
   
   // Update on window resize
   window.addEventListener('resize', function() {
-    updateAvailabilityBarAndSheet();
+    updateContactBarAndSheet();
   });
 }
 
-// Update appointment summary for availability page
-function updateAvailabilityPageSummary() {
-  console.log('DEBUG: updateAvailabilityPageSummary called');
+// Update appointment summary for contact page
+function updateContactPageSummary() {
+  console.log('DEBUG: updateContactPageSummary called');
   console.log('DEBUG: window.serviceDetails:', window.serviceDetails);
   console.log('DEBUG: window.selectedStaff:', window.selectedStaff);
-  console.log('DEBUG: typeof window.serviceDetails:', typeof window.serviceDetails);
-  console.log('DEBUG: Array.isArray(window.serviceDetails):', Array.isArray(window.serviceDetails));
-  if (window.serviceDetails) {
-    console.log('DEBUG: window.serviceDetails.length:', window.serviceDetails.length);
-  }
   
   var summaryList = document.getElementById('summary-list');
   var summaryItems = document.getElementById('summary-items');
@@ -1350,7 +1384,7 @@ function updateAvailabilityPageSummary() {
   var summaryBarNext = document.getElementById('summary-bar-next');
   var summarySheetNext = document.getElementById('summary-sheet-next');
   
-  console.log('DEBUG: Elements found:', {
+  console.log('DEBUG: Contact page elements found:', {
     summaryList: !!summaryList,
     summaryItems: !!summaryItems,
     summaryEmpty: !!summaryEmpty,
@@ -1368,10 +1402,16 @@ function updateAvailabilityPageSummary() {
   summaryItems.innerHTML = '';
   var hasItems = typeof window.serviceDetails !== 'undefined' && window.serviceDetails && window.serviceDetails.length > 0;
   console.log('DEBUG: hasItems calculation:', hasItems);
-  console.log('DEBUG: window.serviceDetails in detail:', window.serviceDetails);
+  console.log('DEBUG: typeof window.serviceDetails:', typeof window.serviceDetails);
+  console.log('DEBUG: window.serviceDetails value:', window.serviceDetails);
+  console.log('DEBUG: window.serviceDetails length:', window.serviceDetails ? window.serviceDetails.length : 'N/A');
   
   // Always show summary list when we have service details
-  summaryList.style.display = 'block';
+  if (hasItems) {
+    summaryList.style.display = 'block';
+  } else {
+    summaryList.style.display = 'block'; // Still show list even if empty for debugging
+  }
   
   if (hasItems) {
     console.log('DEBUG: Processing services...');
@@ -1381,187 +1421,315 @@ function updateAvailabilityPageSummary() {
     var totalPrice = 0;
     var totalDuration = 0;
     
-    // Add service items
+    // Add appointment date/time section first if available
+    if (window.selectedDateTime) {
+      var dateTimeLi = document.createElement('li');
+      dateTimeLi.style.padding = '16px 0';
+      dateTimeLi.style.borderBottom = '2px solid #f0f0f0';
+      dateTimeLi.style.marginBottom = '12px';
+      
+      var dateTimeHeader = document.createElement('div');
+      dateTimeHeader.style.fontWeight = '700';
+      dateTimeHeader.style.fontSize = '16px';
+      dateTimeHeader.style.color = '#333';
+      dateTimeHeader.style.marginBottom = '8px';
+      dateTimeHeader.innerHTML = '<i class="fas fa-calendar-alt" style="margin-right: 8px; color: #667eea;"></i>Appointment Time';
+      
+      var dateTimeInfo = document.createElement('div');
+      dateTimeInfo.style.fontSize = '14px';
+      dateTimeInfo.style.color = '#666';
+      dateTimeInfo.style.fontWeight = '500';
+      
+      if (window.selectedDateTime.formattedDate && window.selectedDateTime.formattedTime) {
+        dateTimeInfo.textContent = window.selectedDateTime.formattedDate + ', ' + window.selectedDateTime.formattedTime;
+      } else {
+        dateTimeInfo.textContent = 'Appointment scheduled';
+      }
+      
+      dateTimeLi.appendChild(dateTimeHeader);
+      dateTimeLi.appendChild(dateTimeInfo);
+      summaryItems.appendChild(dateTimeLi);
+    }
+    
     window.serviceDetails.forEach(function(service) {
       var li = document.createElement('li');
-      li.style.display = 'flex';
-      li.style.alignItems = 'center';
-      li.style.justifyContent = 'space-between';
-      li.style.marginBottom = '12px';
-      li.style.padding = '8px 0';
+      li.style.padding = '12px 0';
       li.style.borderBottom = '1px solid #f0f0f0';
       
       var serviceInfo = document.createElement('div');
-      serviceInfo.style.flex = '1';
+      serviceInfo.style.display = 'flex';
+      serviceInfo.style.justifyContent = 'space-between';
+      serviceInfo.style.alignItems = 'flex-start';
+      
+      var leftInfo = document.createElement('div');
+      leftInfo.style.flex = '1';
       
       var serviceName = document.createElement('div');
       serviceName.style.fontWeight = '600';
       serviceName.style.color = '#333';
+      serviceName.style.fontSize = '15px';
       serviceName.textContent = service.name;
       
-      // Add staff info inline if available
+      // Add staff info on separate line for better readability
+      var staffInfo = document.createElement('div');
+      staffInfo.style.fontSize = '13px';
+      staffInfo.style.color = '#667eea';
+      staffInfo.style.marginTop = '4px';
+      staffInfo.style.fontWeight = '500';
+      
       if (window.selectedStaff && window.selectedStaff.name) {
-        serviceName.innerHTML = service.name + 
-          ' <span style="color: #667eea; font-weight: 500;">- by ' + window.selectedStaff.name + '</span>';
+        if (window.selectedStaff.name === 'Any Available Staff') {
+          staffInfo.textContent = 'with Any Available Staff';
+        } else {
+          staffInfo.textContent = 'with ' + window.selectedStaff.name;
+        }
       }
       
       // Quantity
       if (service.quantity && service.quantity > 1) {
-        if (window.selectedStaff && window.selectedStaff.name) {
-          serviceName.innerHTML = service.name + 
-            ' (x' + service.quantity + ')' +
-            ' <span style="color: #667eea; font-weight: 500;">- by ' + window.selectedStaff.name + '</span>';
-        } else {
-          serviceName.textContent += ' (x' + service.quantity + ')';
-        }
+        serviceName.textContent += ' (x' + service.quantity + ')';
       }
       
       var serviceDetails = document.createElement('div');
-      serviceDetails.style.fontSize = '0.85rem';
+      serviceDetails.style.fontSize = '13px';
       serviceDetails.style.color = '#666';
-      serviceDetails.style.marginTop = '2px';
+      serviceDetails.style.marginTop = '4px';
       
-      var duration = '';
+      // Duration
       if (service.duration) {
-        // Convert duration from milliseconds to minutes
-        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
-        var minutes = Math.round(durationMs / 60000); // Convert milliseconds to minutes
-        var hours = Math.floor(minutes / 60);
-        var mins = minutes % 60;
+        var durationMs = safeBigIntToNumber(service.duration);
+        var durationMinutes = Math.round(durationMs / 60000);
+        var hours = Math.floor(durationMinutes / 60);
+        var mins = durationMinutes % 60;
+        var durationText = '';
+        
         if (hours > 0) {
-          duration = hours + 'h';
-          if (mins > 0) duration += ' ' + mins + 'm';
+          durationText = hours + 'h';
+          if (mins > 0) durationText += ' ' + mins + 'm';
         } else {
-          duration = mins + 'm';
+          durationText = mins + 'm';
         }
-        totalDuration += minutes * (service.quantity || 1);
+        
+        serviceDetails.innerHTML = '<i class="fas fa-clock" style="margin-right: 4px;"></i>' + durationText;
+        totalDuration += durationMinutes * (service.quantity || 1);
       }
       
-      var price = '';
+      leftInfo.appendChild(serviceName);
+      if (staffInfo.textContent) {
+        leftInfo.appendChild(staffInfo);
+      }
+      leftInfo.appendChild(serviceDetails);
+      
+      var rightInfo = document.createElement('div');
+      rightInfo.style.textAlign = 'right';
+      rightInfo.style.marginLeft = '12px';
+      
+      // Price
       if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
-        price = '$' + (amount / 100).toFixed(2);
+        var amount = safeBigIntToNumber(service.price.amount);
+        var price = amount / 100;
+        var priceDiv = document.createElement('div');
+        priceDiv.style.fontWeight = '600';
+        priceDiv.style.fontSize = '15px';
+        priceDiv.style.color = '#28a745';
+        priceDiv.textContent = '$' + price.toFixed(2);
+        rightInfo.appendChild(priceDiv);
         totalPrice += amount * (service.quantity || 1);
       }
       
-      serviceDetails.innerHTML = '<i class="fas fa-clock me-1"></i>' + duration;
-      if (price) {
-        serviceDetails.innerHTML += ' • <span style="color: #28a745;">' + price + '</span>';
-      }
-      
-      serviceInfo.appendChild(serviceName);
-      serviceInfo.appendChild(serviceDetails);
-      
+      serviceInfo.appendChild(leftInfo);
+      serviceInfo.appendChild(rightInfo);
       li.appendChild(serviceInfo);
       summaryItems.appendChild(li);
     });
     
-    // Add totals section (only if 2 or more services OR 1 service with qty >= 2)
-    var shouldShowTotals = window.serviceDetails.length >= 2;
-    if (!shouldShowTotals && window.serviceDetails.length === 1) {
-      // Check if single service has quantity >= 2
-      shouldShowTotals = (window.serviceDetails[0].quantity || 1) >= 2;
-    }
-    
-    if (shouldShowTotals) {
-      var totalsLi = document.createElement('li');
-      totalsLi.style.display = 'flex';
-      totalsLi.style.alignItems = 'center';
-      totalsLi.style.justifyContent = 'space-between';
-      totalsLi.style.marginTop = '16px';
-      totalsLi.style.padding = '12px 0';
-      totalsLi.style.borderTop = '2px solid #e9ecef';
-      totalsLi.style.fontWeight = '600';
-      totalsLi.style.fontSize = '1rem';
+    // Enhanced totals section with pricing breakdown
+    if (totalPrice > 0) {
+      // Add spacing before totals
+      var spacerLi = document.createElement('li');
+      spacerLi.style.padding = '8px 0';
+      summaryItems.appendChild(spacerLi);
       
-      var totalsInfo = document.createElement('div');
-      totalsInfo.style.flex = '1';
+      // Subtotal
+      var subtotalLi = document.createElement('li');
+      subtotalLi.style.padding = '8px 0';
+      subtotalLi.style.display = 'flex';
+      subtotalLi.style.justifyContent = 'space-between';
+      subtotalLi.style.alignItems = 'center';
       
-      var totalsTitle = document.createElement('div');
-      totalsTitle.style.fontWeight = '700';
-      totalsTitle.style.color = '#333';
-      totalsTitle.textContent = 'Total';
+      var subtotalLabel = document.createElement('span');
+      subtotalLabel.style.fontSize = '14px';
+      subtotalLabel.style.color = '#666';
+      subtotalLabel.textContent = 'Subtotal';
       
-      var totalsDetails = document.createElement('div');
-      totalsDetails.style.fontSize = '0.9rem';
-      totalsDetails.style.color = '#666';
-      totalsDetails.style.marginTop = '4px';
+      var subtotalAmount = document.createElement('span');
+      subtotalAmount.style.fontSize = '14px';
+      subtotalAmount.style.color = '#333';
+      subtotalAmount.textContent = '$' + (totalPrice / 100).toFixed(2);
       
-      // Format total duration
-      var totalDurationText = '';
+      subtotalLi.appendChild(subtotalLabel);
+      subtotalLi.appendChild(subtotalAmount);
+      summaryItems.appendChild(subtotalLi);
+      
+      // Calculate taxes from backend service data
+      var totalTaxAmount = 0;
+      var hasTaxableServices = false;
+      
+      window.serviceDetails.forEach(function(service) {
+        if (service.price && service.price.amount) {
+          var serviceAmount = safeBigIntToNumber(service.price.amount);
+          var serviceQuantity = service.quantity || 1;
+          var serviceTotalPrice = serviceAmount * serviceQuantity;
+          
+          // Check various tax information sources from Square API
+          var serviceTaxAmount = 0;
+          
+          // 1. Direct tax amount in price object
+          if (service.price.tax) {
+            serviceTaxAmount = safeBigIntToNumber(service.price.tax) * serviceQuantity;
+            hasTaxableServices = true;
+          }
+          // 2. Tax rate in service object
+          else if (service.taxRate) {
+            serviceTaxAmount = serviceTotalPrice * parseFloat(service.taxRate);
+            hasTaxableServices = true;
+          }
+          // 3. Tax rate in price object with tax not included
+          else if (service.price.taxIncluded === false && service.price.taxRate) {
+            serviceTaxAmount = serviceTotalPrice * parseFloat(service.price.taxRate);
+            hasTaxableServices = true;
+          }
+          // 4. Check if service has tax IDs (indicates taxable)
+          else if (service.taxIds && service.taxIds.length > 0) {
+            // If tax IDs are present but no rate/amount, use default local tax rate
+            // This could be made configurable per location
+            var defaultTaxRate = 0.08; // 8% default - should come from location settings
+            serviceTaxAmount = serviceTotalPrice * defaultTaxRate;
+            hasTaxableServices = true;
+          }
+          // 5. Location-specific pricing with tax
+          else if (service.locationPrice && service.locationPrice.tax) {
+            serviceTaxAmount = safeBigIntToNumber(service.locationPrice.tax) * serviceQuantity;
+            hasTaxableServices = true;
+          }
+          
+          totalTaxAmount += serviceTaxAmount;
+        }
+      });
+      
+      // Display tax line only if there are taxable services
+      if (hasTaxableServices && totalTaxAmount > 0) {
+        var taxLi = document.createElement('li');
+        taxLi.style.padding = '8px 0';
+        taxLi.style.display = 'flex';
+        taxLi.style.justifyContent = 'space-between';
+        taxLi.style.alignItems = 'center';
+        
+        var taxLabel = document.createElement('span');
+        taxLabel.style.fontSize = '14px';
+        taxLabel.style.color = '#666';
+        taxLabel.textContent = 'Taxes';
+        
+        var taxAmountSpan = document.createElement('span');
+        taxAmountSpan.style.fontSize = '14px';
+        taxAmountSpan.style.color = '#333';
+        taxAmountSpan.textContent = '$' + (totalTaxAmount / 100).toFixed(2);
+        
+        taxLi.appendChild(taxLabel);
+        taxLi.appendChild(taxAmountSpan);
+        summaryItems.appendChild(taxLi);
+      }
+      
+      // Total section with border
+      var totalLi = document.createElement('li');
+      totalLi.style.padding = '16px 0 12px 0';
+      totalLi.style.borderTop = '2px solid #eee';
+      totalLi.style.marginTop = '8px';
+      totalLi.style.display = 'flex';
+      totalLi.style.justifyContent = 'space-between';
+      totalLi.style.alignItems = 'center';
+      
+      var totalLabel = document.createElement('span');
+      totalLabel.style.fontWeight = '700';
+      totalLabel.style.fontSize = '16px';
+      totalLabel.style.color = '#333';
+      totalLabel.textContent = 'Total';
+      
+      var totalAmountSpan = document.createElement('span');
+      totalAmountSpan.style.fontWeight = '700';
+      totalAmountSpan.style.fontSize = '18px';
+      totalAmountSpan.style.color = '#28a745';
+      var finalTotal = totalTaxAmount > 0 ? totalPrice + totalTaxAmount : totalPrice;
+      totalAmountSpan.textContent = '$' + (finalTotal / 100).toFixed(2);
+      
+      totalLi.appendChild(totalLabel);
+      totalLi.appendChild(totalAmountSpan);
+      summaryItems.appendChild(totalLi);
+      
+      // Payment due information
+      var paymentInfoLi = document.createElement('li');
+      paymentInfoLi.style.padding = '12px 0 8px 0';
+      paymentInfoLi.style.fontSize = '13px';
+      paymentInfoLi.style.color = '#666';
+      paymentInfoLi.style.textAlign = 'center';
+      paymentInfoLi.style.fontStyle = 'italic';
+      
+      // Show duration info if available
       if (totalDuration > 0) {
         var hours = Math.floor(totalDuration / 60);
         var mins = totalDuration % 60;
+        var durationText = '';
+        
         if (hours > 0) {
-          totalDurationText = hours + 'h';
-          if (mins > 0) totalDurationText += ' ' + mins + 'm';
+          durationText = hours + 'h';
+          if (mins > 0) durationText += ' ' + mins + 'm';
         } else {
-          totalDurationText = mins + 'm';
+          durationText = mins + 'm';
         }
+        
+        paymentInfoLi.innerHTML = '<i class="fas fa-clock" style="margin-right: 4px;"></i>Total duration: ' + durationText + '<br><small style="color: #999;">Payment will be processed upon completion</small>';
+      } else {
+        paymentInfoLi.innerHTML = '<small style="color: #999;">Payment will be processed upon completion</small>';
       }
       
-      // Format total price
-      var totalPriceText = '';
-      if (totalPrice > 0) {
-        totalPriceText = '$' + (totalPrice / 100).toFixed(2);
-      }
-      
-      totalsDetails.innerHTML = '<i class="fas fa-clock me-1"></i>' + totalDurationText;
-      if (totalPriceText) {
-        totalsDetails.innerHTML += ' • <span style="color: #28a745; font-weight: 600;">' + totalPriceText + '</span>';
-      }
-      
-      totalsInfo.appendChild(totalsTitle);
-      totalsInfo.appendChild(totalsDetails);
-      
-      totalsLi.appendChild(totalsInfo);
-      summaryItems.appendChild(totalsLi);
+      summaryItems.appendChild(paymentInfoLi);
     }
     
-    summaryItems.style.display = 'block';
-    summaryEmpty.style.display = 'none';
-    
-    // Always enable continue button on availability page (time slot selection will handle validation)
+    // Hide buttons on contact page (show only service details)
     if (continueBtn) {
-      continueBtn.style.opacity = '1';
-      continueBtn.removeAttribute('disabled');
+      continueBtn.style.display = 'none';
     }
     if (summaryBarNext) {
-      summaryBarNext.style.opacity = '1';
-      summaryBarNext.removeAttribute('disabled');
+      summaryBarNext.style.display = 'none';
     }
     if (summarySheetNext) {
-      summarySheetNext.style.opacity = '1';
-      summarySheetNext.removeAttribute('disabled');
+      summarySheetNext.style.display = 'none';
     }
   } else {
     console.log('DEBUG: No items found, showing empty state');
-    console.log('DEBUG: window.serviceDetails value:', window.serviceDetails);
     summaryItems.style.display = 'none';
     summaryEmpty.style.display = 'block';
     
-    // Force enable continue button for testing
+    // Hide buttons on contact page (show only service details)
     if (continueBtn) {
-      continueBtn.style.opacity = '1';
-      continueBtn.removeAttribute('disabled');
+      continueBtn.style.display = 'none';
     }
     if (summaryBarNext) {
-      summaryBarNext.style.opacity = '1';
-      summaryBarNext.removeAttribute('disabled');
+      summaryBarNext.style.display = 'none';
     }
     if (summarySheetNext) {
-      summarySheetNext.style.opacity = '1';
-      summarySheetNext.removeAttribute('disabled');
+      summarySheetNext.style.display = 'none';
     }
   }
 }
 
-// Update mobile bar and bottom sheet for availability page
-function updateAvailabilityBarAndSheet() {
+// Update mobile bar and bottom sheet for contact page
+function updateContactBarAndSheet() {
   var bar = document.getElementById('summary-bottom-bar');
   var barCount = document.getElementById('summary-bar-count');
   var barTotal = document.getElementById('summary-bar-total');
   var barDuration = document.getElementById('summary-bar-duration');
+  var barNext = document.getElementById('summary-bar-next');
   
   if (!bar) return;
   
@@ -1575,11 +1743,11 @@ function updateAvailabilityBarAndSheet() {
     window.serviceDetails.forEach(function(service) {
       totalItems += service.quantity || 1;
       if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        var amount = safeBigIntToNumber(service.price.amount);
         totalPrice += amount * (service.quantity || 1);
       }
       if (service.duration) {
-        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMs = safeBigIntToNumber(service.duration);
         var durationMinutes = Math.round(durationMs / 60000);
         totalDuration += durationMinutes * (service.quantity || 1);
       }
@@ -1609,23 +1777,31 @@ function updateAvailabilityBarAndSheet() {
       barDuration.textContent = durationText;
     }
     
+    // Hide the Next button on contact page (show only service details)
+    if (barNext) {
+      barNext.style.display = 'none';
+    }
+    
     bar.style.display = 'block';
   } else {
     bar.style.display = 'none';
   }
 }
 
-// Initialize availability bottom sheet
-function initAvailabilityBottomSheet() {
+// Contact page bottom sheet functionality
+function initContactBottomSheet() {
+  var contactPage = document.querySelector('.contact-container') || document.querySelector('form[action="/contact"]');
+  var bar = document.getElementById('summary-bottom-bar');
   var sheet = document.getElementById('summary-bottom-sheet');
-  var overlay = document.getElementById('summary-sheet-overlay');
   var barExpand = document.getElementById('summary-bar-expand');
   var sheetClose = document.getElementById('summary-sheet-close');
+  var overlay = document.getElementById('summary-sheet-overlay');
   
-  if (!sheet) return;
-  
+  if (!contactPage || !bar || !sheet) return;
+
+  // Bottom sheet toggle functions
   function openBottomSheet() {
-    updateAvailabilityBottomSheetContent();
+    updateContactBottomSheetContent();
     sheet.style.display = 'block';
     if (overlay) overlay.style.display = 'block';
     
@@ -1649,13 +1825,14 @@ function initAvailabilityBottomSheet() {
     }, 300);
   }
 
+  // Event listeners for bottom sheet
   if (barExpand) barExpand.addEventListener('click', openBottomSheet);
   if (sheetClose) sheetClose.addEventListener('click', closeBottomSheet);
   if (overlay) overlay.addEventListener('click', closeBottomSheet);
 }
 
-// Update availability bottom sheet content
-function updateAvailabilityBottomSheetContent() {
+// Update contact bottom sheet content
+function updateContactBottomSheetContent() {
   var sheetItems = document.getElementById('summary-sheet-items');
   var sheetEmpty = document.getElementById('summary-sheet-empty');
   
@@ -1720,7 +1897,7 @@ function updateAvailabilityBottomSheetContent() {
       
       // Duration
       if (service.duration) {
-        var durationMs = typeof service.duration === 'bigint' ? Number(service.duration) : service.duration;
+        var durationMs = safeBigIntToNumber(service.duration);
         var durationMinutes = Math.round(durationMs / 60000);
         var durationText = durationMinutes + 'm';
         serviceDetails.textContent = durationText;
@@ -1736,7 +1913,7 @@ function updateAvailabilityBottomSheetContent() {
       
       // Price
       if (service.price && service.price.amount) {
-        var amount = typeof service.price.amount === 'bigint' ? Number(service.price.amount) : service.price.amount;
+        var amount = safeBigIntToNumber(service.price.amount);
         var price = amount / 100;
         var priceDiv = document.createElement('div');
         priceDiv.style.fontWeight = '600';
@@ -1753,7 +1930,7 @@ function updateAvailabilityBottomSheetContent() {
       sheetItems.appendChild(li);
     });
     
-    // Add totals section if 2 or more services OR 1 service with qty >= 2
+    // Add totals section if multiple services OR single service with qty >= 2
     var shouldShowTotals = window.serviceDetails.length >= 2;
     if (!shouldShowTotals && window.serviceDetails.length === 1) {
       // Check if single service has quantity >= 2
@@ -1825,5 +2002,11 @@ function updateAvailabilityBottomSheetContent() {
   } else {
     sheetItems.style.display = 'none';
     sheetEmpty.style.display = 'block';
+  }
+  
+  // Hide the Next button on contact page (show only service details)
+  var sheetNext = document.getElementById('summary-sheet-next');
+  if (sheetNext) {
+    sheetNext.style.display = 'none';
   }
 }

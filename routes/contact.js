@@ -21,6 +21,35 @@ const {
 
 const { getCancellationPolicy, getPolicyTerms } = require("../util/cancellation-policy");
 const { getBookingConfiguration } = require("../util/booking-policy");
+const { safeNumberConversion } = require("../util/bigint-helpers");
+
+/**
+ * Recursively convert BigInt values to regular numbers in an object/array
+ * This prevents EJS template rendering errors with BigInt values
+ */
+function convertBigIntToNumber(obj) {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (typeof obj === 'bigint') {
+    return safeNumberConversion(obj);
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(convertBigIntToNumber);
+  }
+  
+  if (typeof obj === 'object') {
+    const converted = {};
+    for (const [key, value] of Object.entries(obj)) {
+      converted[key] = convertBigIntToNumber(value);
+    }
+    return converted;
+  }
+  
+  return obj;
+}
 
 /**
  * GET /contact
@@ -111,6 +140,90 @@ router.get("/", async (req, res, next) => {
     // Create fallback data to ensure page renders successfully
     const serviceDetails = [];
     
+    // Build serviceDetails from session data (similar to availability route)
+    if (selectedServices && selectedServices.length > 0) {
+      console.log('Building serviceDetails from session data...');
+      
+      const uniqueServices = [...new Set(selectedServices)];
+      const isExpanded = selectedServices.length > uniqueServices.length;
+      
+      // If expanded, group by service ID and count occurrences
+      const serviceCountMap = {};
+      if (isExpanded) {
+        selectedServices.forEach(sid => {
+          serviceCountMap[sid] = (serviceCountMap[sid] || 0) + 1;
+        });
+      }
+      
+      for (const sid of uniqueServices) {
+        try {
+          const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
+          const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
+          
+          if (item) {
+            const duration = variation.itemVariationData.serviceDuration;
+            const price = variation.itemVariationData.priceMoney;
+            // Get quantity: if expanded, use count from array; otherwise use quantities object
+            const quantity = isExpanded ? serviceCountMap[sid] : (quantities[sid] ? parseInt(quantities[sid], 10) : 1);
+            
+            console.log(`DEBUG: contact - service ${sid} duration: ${duration}, quantity: ${quantity}`);
+            
+            // Build comprehensive service data including tax information
+            const serviceData = {
+              id: sid,
+              name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
+              duration,
+              price,
+              quantity
+            };
+            
+            // Include tax information if available from Square API
+            if (variation.itemVariationData.locationOverrides) {
+              // Check for location-specific tax overrides
+              variation.itemVariationData.locationOverrides.forEach(override => {
+                if (override.trackInventory === false && override.priceMoney) {
+                  // Additional price/tax information might be here
+                  serviceData.locationPrice = override.priceMoney;
+                }
+              });
+            }
+            
+            // Include item-level tax information if available
+            if (item.itemData.taxIds && item.itemData.taxIds.length > 0) {
+              serviceData.taxIds = item.itemData.taxIds;
+            }
+            
+            // Include pricing type information
+            if (variation.itemVariationData.pricingType) {
+              serviceData.pricingType = variation.itemVariationData.pricingType;
+            }
+            
+            serviceDetails.push(serviceData);
+          } else {
+            console.warn(`No item found for service variation ${sid}`);
+          }
+        } catch (serviceError) {
+          console.error(`Error fetching service details for ${sid}:`, serviceError);
+          // Add fallback service data
+          serviceDetails.push({
+            id: sid,
+            name: 'Selected Service',
+            duration: 3600000, // 1 hour default
+            price: { amount: 5000, currency: 'USD' }, // $50 default
+            quantity: quantities[sid] ? parseInt(quantities[sid], 10) : 1
+          });
+        }
+      }
+    }
+    
+    console.log('Built serviceDetails:', serviceDetails.length, 'services');
+    
+    // Convert BigInt values to regular numbers to prevent EJS template errors
+    const safeServiceDetails = convertBigIntToNumber(serviceDetails);
+    
+    console.log('DEBUG: Safe serviceDetails after BigInt conversion:', 
+      JSON.stringify(safeServiceDetails, null, 2));
+    
     // Create minimal fallback service item data
     const serviceItem = {
       id: serviceId,
@@ -130,13 +243,33 @@ router.get("/", async (req, res, next) => {
       }
     };
     
-    // Create minimal fallback team member data
-    const teamMemberBookingProfile = {
-      displayName: 'Selected Staff Member',
-      givenName: 'Staff',
-      familyName: 'Member',
-      teamMemberId: staffId
-    };
+    // Fetch actual team member data
+    let teamMemberBookingProfile = null;
+    try {
+      if (staffId && staffId !== 'anyStaffMember') {
+        console.log('Fetching team member profile for staffId:', staffId);
+        const { result } = await bookingsApi.retrieveTeamMemberBookingProfile(staffId);
+        teamMemberBookingProfile = result.teamMemberBookingProfile;
+        console.log('Retrieved team member profile:', teamMemberBookingProfile.displayName);
+      } else {
+        // Handle "any staff member" case
+        teamMemberBookingProfile = {
+          displayName: 'Any Available Staff',
+          givenName: 'Any Available',
+          familyName: 'Staff',
+          teamMemberId: 'anyStaffMember'
+        };
+      }
+    } catch (staffError) {
+      console.error('Error fetching team member profile:', staffError);
+      // Create fallback team member data
+      teamMemberBookingProfile = {
+        displayName: 'Selected Staff Member',
+        givenName: 'Staff',
+        familyName: 'Member',
+        teamMemberId: staffId
+      };
+    }
     
     // Store minimal data in session for later use
     req.session.teamMemberBookingProfile = teamMemberBookingProfile;
@@ -170,7 +303,7 @@ router.get("/", async (req, res, next) => {
       teamMemberBookingProfile, 
       selectedServices, 
       quantities, 
-      serviceDetails,
+      serviceDetails: safeServiceDetails,
       error, // Pass any error messages to the template
       preservedSession,
       isBackNavigation,
