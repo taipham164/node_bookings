@@ -1600,30 +1600,107 @@ function updateContactPageSummary() {
       subtotalLi.appendChild(subtotalAmount);
       summaryItems.appendChild(subtotalLi);
       
-      // Taxes (if applicable - calculate as example)
-      var taxRate = 0.08; // 8% tax rate - you can make this configurable
-      var taxAmount = totalPrice * taxRate;
+      // Taxes (calculate dynamically based on each service's tax data from Square API)
+      var totalTaxAmount = 0;
+      var taxBreakdown = {};
       
-      if (taxAmount > 0) {
-        var taxLi = document.createElement('li');
-        taxLi.style.padding = '8px 0';
-        taxLi.style.display = 'flex';
-        taxLi.style.justifyContent = 'space-between';
-        taxLi.style.alignItems = 'center';
-        
-        var taxLabel = document.createElement('span');
-        taxLabel.style.fontSize = '14px';
-        taxLabel.style.color = '#666';
-        taxLabel.textContent = 'Taxes';
-        
-        var taxAmountSpan = document.createElement('span');
-        taxAmountSpan.style.fontSize = '14px';
-        taxAmountSpan.style.color = '#333';
-        taxAmountSpan.textContent = '$' + (taxAmount / 100).toFixed(2);
-        
-        taxLi.appendChild(taxLabel);
-        taxLi.appendChild(taxAmountSpan);
-        summaryItems.appendChild(taxLi);
+      console.log('DEBUG: Calculating taxes from serviceDetails:', window.serviceDetails);
+      
+      // Calculate taxes for each service individually
+      if (window.serviceDetails && window.serviceDetails.length > 0) {
+        window.serviceDetails.forEach(function(service) {
+          console.log('DEBUG: Processing service for tax calculation:', service);
+          if (service.taxes && Object.keys(service.taxes).length > 0) {
+            var servicePrice = (service.price && service.price.amount) ? service.price.amount : 0;
+            var serviceQuantity = service.quantity || 1;
+            var serviceTotalPrice = servicePrice * serviceQuantity;
+            
+            console.log('DEBUG: Service price calculation:', {
+              servicePrice: servicePrice,
+              serviceQuantity: serviceQuantity,
+              serviceTotalPrice: serviceTotalPrice,
+              taxes: service.taxes
+            });
+            
+            // Calculate tax for this service based on its specific tax rates
+            Object.values(service.taxes).forEach(function(tax) {
+              console.log('DEBUG: Processing tax:', tax);
+              if (tax.enabled && tax.percentage > 0) {
+                var serviceTaxAmount = serviceTotalPrice * tax.percentage;
+                totalTaxAmount += serviceTaxAmount;
+                
+                console.log('DEBUG: Tax calculation:', {
+                  taxName: tax.name,
+                  taxPercentage: tax.percentage,
+                  serviceTaxAmount: serviceTaxAmount,
+                  totalTaxAmount: totalTaxAmount
+                });
+                
+                // Track tax breakdown by tax name for display
+                if (!taxBreakdown[tax.name]) {
+                  taxBreakdown[tax.name] = 0;
+                }
+                taxBreakdown[tax.name] += serviceTaxAmount;
+              }
+            });
+          }
+        });
+      }
+      
+      console.log('DEBUG: Final tax calculation:', {
+        totalTaxAmount: totalTaxAmount,
+        taxBreakdown: taxBreakdown
+      });
+      
+      // Display tax breakdown if there are any taxes
+      if (totalTaxAmount > 0) {
+        // Show individual tax lines if there are multiple tax types
+        var taxNames = Object.keys(taxBreakdown);
+        if (taxNames.length === 1) {
+          // Single tax type - show as "Tax"
+          var taxLi = document.createElement('li');
+          taxLi.style.padding = '8px 0';
+          taxLi.style.display = 'flex';
+          taxLi.style.justifyContent = 'space-between';
+          taxLi.style.alignItems = 'center';
+          
+          var taxLabel = document.createElement('span');
+          taxLabel.style.fontSize = '14px';
+          taxLabel.style.color = '#666';
+          taxLabel.textContent = taxNames[0];
+          
+          var taxAmountSpan = document.createElement('span');
+          taxAmountSpan.style.fontSize = '14px';
+          taxAmountSpan.style.color = '#333';
+          taxAmountSpan.textContent = '$' + (totalTaxAmount / 100).toFixed(2);
+          
+          taxLi.appendChild(taxLabel);
+          taxLi.appendChild(taxAmountSpan);
+          summaryItems.appendChild(taxLi);
+        } else if (taxNames.length > 1) {
+          // Multiple tax types - show each separately
+          taxNames.forEach(function(taxName) {
+            var taxLi = document.createElement('li');
+            taxLi.style.padding = '8px 0';
+            taxLi.style.display = 'flex';
+            taxLi.style.justifyContent = 'space-between';
+            taxLi.style.alignItems = 'center';
+            
+            var taxLabel = document.createElement('span');
+            taxLabel.style.fontSize = '14px';
+            taxLabel.style.color = '#666';
+            taxLabel.textContent = taxName;
+            
+            var taxAmountSpan = document.createElement('span');
+            taxAmountSpan.style.fontSize = '14px';
+            taxAmountSpan.style.color = '#333';
+            taxAmountSpan.textContent = '$' + (taxBreakdown[taxName] / 100).toFixed(2);
+            
+            taxLi.appendChild(taxLabel);
+            taxLi.appendChild(taxAmountSpan);
+            summaryItems.appendChild(taxLi);
+          });
+        }
       }
       
       // Total section with border
@@ -1645,7 +1722,7 @@ function updateContactPageSummary() {
       totalAmountSpan.style.fontWeight = '700';
       totalAmountSpan.style.fontSize = '18px';
       totalAmountSpan.style.color = '#28a745';
-      var finalTotal = taxAmount > 0 ? totalPrice + taxAmount : totalPrice;
+      var finalTotal = totalTaxAmount > 0 ? totalPrice + totalTaxAmount : totalPrice;
       totalAmountSpan.textContent = '$' + (finalTotal / 100).toFixed(2);
       
       totalLi.appendChild(totalLabel);

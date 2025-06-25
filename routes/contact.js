@@ -24,6 +24,46 @@ const { getBookingConfiguration } = require("../util/booking-policy");
 const { safeNumberConversion } = require("../util/bigint-helpers");
 
 /**
+ * Fetch tax objects from Square API based on tax IDs
+ * @param {string[]} taxIds - Array of tax IDs to fetch
+ * @returns {Object} - Map of tax ID to tax object with rate information
+ */
+async function fetchTaxObjects(taxIds) {
+  if (!taxIds || taxIds.length === 0) {
+    return {};
+  }
+
+  try {
+    const taxObjects = {};
+    
+    // Fetch each tax object individually
+    for (const taxId of taxIds) {
+      try {
+        const { result } = await catalogApi.retrieveCatalogObject(taxId);
+        if (result.object && result.object.type === 'TAX') {
+          const taxData = result.object.taxData;
+          taxObjects[taxId] = {
+            id: taxId,
+            name: taxData.name || 'Tax',
+            percentage: taxData.percentage ? parseFloat(taxData.percentage) / 100 : 0,
+            inclusionType: taxData.inclusionType || 'ADDITIVE',
+            enabled: taxData.enabled !== false
+          };
+        }
+      } catch (taxError) {
+        console.warn(`Failed to fetch tax object ${taxId}:`, taxError.message);
+        // Continue with other tax objects
+      }
+    }
+    
+    return taxObjects;
+  } catch (error) {
+    console.error('Error fetching tax objects:', error);
+    return {};
+  }
+}
+
+/**
  * Recursively convert BigInt values to regular numbers in an object/array
  * This prevents EJS template rendering errors with BigInt values
  */
@@ -191,6 +231,18 @@ router.get("/", async (req, res, next) => {
             // Include item-level tax information if available
             if (item.itemData.taxIds && item.itemData.taxIds.length > 0) {
               serviceData.taxIds = item.itemData.taxIds;
+              
+              // Fetch actual tax objects for this service
+              try {
+                const taxObjects = await fetchTaxObjects(item.itemData.taxIds);
+                serviceData.taxes = taxObjects;
+                console.log(`DEBUG: Fetched tax data for service ${sid}:`, taxObjects);
+              } catch (taxError) {
+                console.warn(`Failed to fetch tax data for service ${sid}:`, taxError.message);
+                serviceData.taxes = {};
+              }
+            } else {
+              serviceData.taxes = {};
             }
             
             // Include pricing type information
@@ -210,7 +262,8 @@ router.get("/", async (req, res, next) => {
             name: 'Selected Service',
             duration: 3600000, // 1 hour default
             price: { amount: 5000, currency: 'USD' }, // $50 default
-            quantity: quantities[sid] ? parseInt(quantities[sid], 10) : 1
+            quantity: quantities[sid] ? parseInt(quantities[sid], 10) : 1,
+            taxes: {} // No tax data for fallback
           });
         }
       }

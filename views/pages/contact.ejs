@@ -1204,6 +1204,8 @@
             description: ""
         };
         <% } %>
+        
+        // Tax data is included in serviceDetails for each service - no global tax rate needed
 
         <% if (typeof startAt !== 'undefined' && startAt && typeof location !== 'undefined' && location) { %>
         window.selectedDateTime = {
