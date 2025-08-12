@@ -3,12 +3,17 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Checkout - <%= location?.businessName || 'Booking System' %></title>    <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
+    <title>Checkout - <%= location?.businessName || 'Booking System' %></title>
+    <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
     <link href="/stylesheets/sidebar.css" rel="stylesheet" type="text/css">
     <link href="/stylesheets/progress-indicator.css" rel="stylesheet" type="text/css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">    <!-- Firebase SDK -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>      <!-- Square Web Payments SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
+    <!-- Square Web Payments SDK -->
     <% if (process.env.ENVIRONMENT === 'sandbox') { %>
         <script src="https://sandbox-web.squarecdn.com/v1/square.js"></script>
     <% } else { %>
@@ -18,50 +23,53 @@
     <script src="/js/session-persistence.js?v=<%= Date.now() %>" defer></script>
     <script src="/js/firebase-session-manager.js?v=<%= Date.now() %>" defer></script>
     <script src="/javascripts/appointment-summary.js?v=<%= Date.now() %>" defer></script>
+    
     <style>
         .contact-container {
             max-width: none;
             margin: 0;
-            padding: 2rem 0;
-            padding-bottom: 120px;
+            padding: 2rem 0 120px;
             width: 100%;
             box-sizing: border-box;
-            overflow-x: hidden;
         }
+        
         .contact-section {
             background: white;
             border-radius: 15px;
             padding: 2rem;
             margin-bottom: 2rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 100%;
-            box-sizing: border-box;
         }
+        
         .section-header {
             display: flex;
             align-items: center;
             gap: 0.75rem;
             margin-bottom: 1.5rem;
         }
+        
         .section-header h4 {
             margin: 0;
             color: #333;
             font-size: 1.3rem;
         }
+        
         .section-header i {
             color: #667eea;
             font-size: 1.5rem;
         }
+        
         .form-group {
             margin-bottom: 1.5rem;
         }
+        
         .form-group label {
             display: block;
             font-weight: 600;
             margin-bottom: 0.5rem;
             color: #333;
         }
+        
         .form-group input,
         .form-group textarea,
         .form-group select {
@@ -73,6 +81,7 @@
             transition: border-color 0.2s ease;
             box-sizing: border-box;
         }
+        
         .form-group input:focus,
         .form-group textarea:focus,
         .form-group select:focus {
@@ -80,11 +89,13 @@
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
+        
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
         }
+        
         .phone-input-group {
             display: flex;
             align-items: center;
@@ -92,10 +103,12 @@
             border-radius: 8px;
             transition: border-color 0.2s ease;
         }
+        
         .phone-input-group:focus-within {
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
+        
         .country-code {
             display: flex;
             align-items: center;
@@ -106,11 +119,13 @@
             font-weight: 600;
             color: #333;
         }
+        
         .country-flag {
             width: 20px;
             height: 15px;
             border-radius: 2px;
         }
+        
         .phone-number-input {
             flex: 1;
             border: none;
@@ -118,14 +133,17 @@
             font-size: 16px;
             background: transparent;
         }
+        
         .phone-number-input:focus {
             outline: none;
         }
+        
         .helper-text {
             font-size: 0.875rem;
             color: #6c757d;
             margin-top: 0.5rem;
         }
+        
         .submit-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -143,15 +161,18 @@
             justify-content: center;
             gap: 0.5rem;
         }
+        
         .submit-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
         }
+        
         .submit-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
         }
+        
         .marketing-consent {
             background: #f8f9fa;
             border-radius: 8px;
@@ -159,29 +180,34 @@
             margin-top: 1rem;
             border: 1px solid #e9ecef;
         }
+        
         .checkbox-group {
             display: flex;
             align-items: flex-start;
             gap: 0.75rem;
             margin-bottom: 0.5rem;
         }
+        
         .checkbox-group input[type="checkbox"] {
             width: auto;
             margin: 0;
             margin-top: 0.25rem;
         }
+        
         .checkbox-group label {
             margin: 0;
             font-weight: 500;
             color: #333;
             line-height: 1.4;
         }
+        
         .consent-details {
             font-size: 0.875rem;
             color: #6c757d;
             line-height: 1.4;
             margin-top: 0.5rem;
         }
+        
         .customer-info-display {
             background: #e8f5e8;
             border: 1px solid #c3e6c3;
@@ -189,21 +215,25 @@
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
+        
         .customer-info-display h6 {
             margin: 0 0 1rem 0;
             color: #155724;
             font-weight: 600;
         }
+        
         .customer-info-display .info-item {
             display: flex;
             align-items: center;
             margin-bottom: 0.5rem;
         }
+        
         .customer-info-display .info-item i {
             width: 20px;
             margin-right: 0.5rem;
             color: #28a745;
         }
+        
         .loading-spinner {
             display: inline-block;
             width: 20px;
@@ -213,85 +243,53 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
         .step-indicator {
             text-align: center;
             margin-bottom: 2rem;
             color: #6c757d;
             font-size: 0.9rem;
         }
+        
         .step-indicator strong {
             color: #667eea;
         }
         
-        /* Layout adjustments for the new flex structure */
-        .content {
-            min-height: calc(100vh - 200px);
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 1rem;
+            width: 100%;
+            transition: background-color 0.2s ease;
         }
         
-        /* Desktop layout improvements */
-        @media (min-width: 769px) {
-            .content-main {
-                padding-right: 1rem;
-            }
-            
-            #appointment-summary {
-                flex: 1 1 0;
-                min-width: 300px;
-                max-width: 400px;
-                position: static !important;
-                transform: none !important;
-                height: fit-content;
-                align-self: flex-start;
-                position: sticky;
-                top: 2rem;
-            }
+        .cancel-btn:hover {
+            background: #5a6268;
         }
         
-        @media (max-width: 768px) {
-            .content {
-                flex-direction: column !important;
-                gap: 0 !important;
-            }
-            
-            .content-main {
-                flex: none !important;
-                width: 100% !important;
-                padding-right: 0 !important;
-            }
-            
-            .contact-container {
-                padding: 1rem !important;
-                padding-bottom: 120px !important;
-            }
-            .contact-section {
-                padding: 1.5rem;
-                margin-bottom: 1.5rem;
-            }
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-            }
+        /* Square Payment Form Styles */
+        #existing-card-element, #card-element {
+            border: 1px solid #ccc !important;
+            padding: 10px !important;
+            margin: 10px 0 !important;
+            background-color: #ffffff !important;
+            min-height: 56px !important;
+            box-sizing: border-box !important;
         }
         
-        @media (max-width: 480px) {
-            .contact-container {
-                padding: 0.75rem !important;
-                padding-bottom: 120px !important;
-            }
-            .contact-section {
-                padding: 1rem;
-                margin-bottom: 1rem;
-            }
-            .section-header h4 {
-                font-size: 1.1rem;
-            }
-            .section-header i {
-                font-size: 1.2rem;
-            }
+        #existing-card-element:focus-within, #card-element:focus-within {
+            border-color: #667eea !important;
         }
         
         /* Modal Styles */
@@ -373,151 +371,73 @@
             border-top: 1px solid #e9ecef;
         }
         
-        .modal .form-group {
-            margin-bottom: 1rem;
+        /* Responsive Styles */
+        .content {
+            min-height: calc(100vh - 200px);
         }
         
-        .modal .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #333;
+        @media (min-width: 769px) {
+            .content-main {
+                padding-right: 1rem;
+            }
+            
+            #appointment-summary {
+                flex: 1 1 0;
+                min-width: 300px;
+                max-width: 400px;
+                height: fit-content;
+                align-self: flex-start;
+                position: sticky;
+                top: 2rem;
+            }
         }
         
-        .modal .helper-text {
-            margin-top: 0.5rem;
-            color: #6c757d;
-            font-size: 0.9rem;
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column !important;
+                gap: 0 !important;
+            }
+            
+            .content-main {
+                flex: none !important;
+                width: 100% !important;
+                padding-right: 0 !important;
+            }
+            
+            .contact-container {
+                padding: 1rem !important;
+                padding-bottom: 120px !important;
+            }
+            
+            .contact-section {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
         }
         
-        .cancel-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 0.5rem;
-            width: 100%;
-            transition: background-color 0.2s ease;
-        }
-        
-        .cancel-btn:hover {
-            background: #5a6268;
-        }        /* AGGRESSIVE Square Payment Form CSS Reset - Override ALL global styles */
-        #existing-card-element, #card-element {
-            /* Container styling to match working debug page exactly */
-            border: 1px solid #ccc !important;
-            padding: 10px !important;
-            margin: 10px 0 !important;
-            background-color: #ffffff !important;
-            min-height: 56px !important;
-            width: auto !important;
-            box-sizing: border-box !important;
-            font-family: inherit !important;
-            font-size: inherit !important;
-        }
-        
-        #existing-card-element:focus-within, #card-element:focus-within {
-            border-color: #667eea !important;
-        }
-        
-        /* NUCLEAR OPTION - Reset ALL nested elements */
-        #existing-card-element *,
-        #existing-card-element *:before,
-        #existing-card-element *:after,
-        #card-element *,
-        #card-element *:before, 
-        #card-element *:after {
-            all: unset !important;
-            display: revert !important;
-            position: revert !important;
-            font-family: inherit !important;
-        }
-        
-        /* Restore iframe functionality */
-        #existing-card-element iframe, 
-        #card-element iframe {
-            border: none !important;
-            background: transparent !important;
-            width: 100% !important;
-            height: auto !important;
-            min-height: 40px !important;
-            display: block !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        
-        /* Ensure Square's div containers work properly */
-        #existing-card-element > div,
-        #card-element > div {
-            width: 100% !important;
-            height: auto !important;
-            display: block !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            background: transparent !important;
-        }
-        
-        /* Override any Bootstrap or global form styles specifically */
-        .form-group #existing-card-element,
-        .form-group #card-element,
-        .form-group #existing-card-element *,
-        .form-group #card-element * {
-            border: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            outline: none !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-            transition: none !important;
-            transform: none !important;
-            width: auto !important;
-            height: auto !important;
-        }
-        
-        /* FINAL NUCLEAR OPTION - Complete CSS isolation for Square forms */
-        #existing-card-element,
-        #card-element {
-            /* Complete reset and isolation */
-            all: initial !important;
-            /* Restore only what we need */
-            display: block !important;
-            border: 1px solid #ccc !important;
-            padding: 10px !important;
-            margin: 10px 0 !important;
-            background-color: #ffffff !important;
-            min-height: 56px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            font-family: inherit !important;
-            position: relative !important;
-        }
-        
-        /* Completely isolate all children */
-        #existing-card-element *,
-        #card-element * {
-            all: unset !important;
-            display: revert !important;
-            position: revert !important;
-            font-family: inherit !important;
-        }
-        
-        /* Restore iframe behavior specifically */
-        #existing-card-element iframe,
-        #card-element iframe {
-            display: block !important;
-            width: 100% !important;
-            height: auto !important;
-            min-height: 40px !important;
-            border: none !important;
-            background: transparent !important;
-            margin: 0 !important;
-            padding: 0 !important;
+        @media (max-width: 480px) {
+            .contact-container {
+                padding: 0.75rem !important;
+                padding-bottom: 120px !important;
+            }
+            
+            .contact-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .section-header h4 {
+                font-size: 1.1rem;
+            }
+            
+            .section-header i {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
@@ -533,13 +453,6 @@
             <!-- Progress Indicator -->
             <%- include("../partials/progress-indicator", { step: 4 }) %>
             
-            <!-- Back Button -->
-            <!-- <div style="margin-bottom: 2rem;">
-                <a class="button" href="/availability/<%= teamMemberBookingProfile.teamMemberId %>/<%= serviceVariation.id %>?version=<%= serviceVersion %>">
-                    <span class="icon back-arrow"></span> Back to Date & Time
-                </a>
-            </div> -->
-            
             <div class="contact-container">
                 <!-- Error Message -->
                 <% if (typeof error !== 'undefined' && error) { %>
@@ -553,7 +466,8 @@
                 <% } %>
 
                 <!-- Step 1: Phone Number Entry -->
-                <div id="phoneStep" class="contact-section">                    <div class="step-indicator">
+                <div id="phoneStep" class="contact-section">
+                    <div class="step-indicator">
                         <strong>Step 1 of 2:</strong> Phone Number Lookup
                     </div>
                     
@@ -561,14 +475,15 @@
                         <i class="fas fa-phone"></i>
                         <h4>Phone Number</h4>
                     </div>
-                      <p style="color: #6c757d; margin-bottom: 1.5rem;">
+                    
+                    <p style="color: #6c757d; margin-bottom: 1.5rem;">
                         Enter your phone number to check if you're an existing customer or to create a new account.
                     </p>
                     
                     <div class="form-group">
                         <label for="phoneNumber">Phone number *</label>
                         <div class="phone-input-group">
-                           <div class="country-code">
+                            <div class="country-code">
                                 <img 
                                     src="https://flagcdn.com/us.svg"
                                     width="24"
@@ -579,7 +494,6 @@
                                 />
                                 <span>+1</span>
                             </div>
-
                             <input 
                                 type="tel" 
                                 id="phoneNumber"
@@ -592,55 +506,14 @@
                         <div class="helper-text">
                             We'll check if you're an existing customer to streamline your booking.
                         </div>
-                    </div>                    <!-- Customer lookup results will appear here -->
-                    <div id="customerLookupResult" style="display: none; margin-top: 1rem;">
-                        <!-- Dynamic content populated by JavaScript -->
                     </div>
+                    
+                    <div id="customerLookupResult" style="display: none; margin-top: 1rem;"></div>
                 </div>
 
-                <!-- Step 2: SMS Verification -->
-                <div id="smsStep" class="contact-section" style="display: none;">
+                <!-- Step 2A: Existing Customer Booking -->
+                <div id="existingCustomerStep" class="contact-section" style="display: none;">
                     <div class="step-indicator">
-                        <strong>Step 2 of 3:</strong> Phone Verification
-                    </div>
-                    
-                    <div class="section-header">
-                        <i class="fas fa-sms"></i>
-                        <h4>Verify Your Phone Number</h4>
-                    </div>
-                    
-                    <p style="color: #6c757d; margin-bottom: 1.5rem;">
-                        We've sent a 6-digit verification code to <strong id="phoneDisplay"></strong>. 
-                        Please enter it below to continue.
-                    </p>
-                    
-                    <div class="form-group">
-                        <label for="verificationCode">Verification Code *</label>
-                        <input 
-                            type="text" 
-                            id="verificationCode"
-                            placeholder="Enter 6-digit code"
-                            maxlength="6"
-                            style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2rem;"
-                        />
-                        <div class="helper-text">
-                            Didn't receive the code? <a href="#" id="resendCode" style="color: #667eea;">Resend code</a>
-                        </div>
-                    </div>
-
-                    <button type="button" id="verifyCodeBtn" class="submit-btn" disabled>
-                        <i class="fas fa-check"></i>
-                        Verify Code
-                    </button>
-                    
-                    <button type="button" id="changePhoneBtn" style="background: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; margin-top: 1rem; width: 100%;">
-                        <i class="fas fa-arrow-left"></i>
-                        Use Different Phone Number
-                    </button>
-                </div>
-
-                <!-- Step 3A: Existing Customer Booking -->
-                <div id="existingCustomerStep" class="contact-section" style="display: none;">                    <div class="step-indicator">
                         <strong>Step 2 of 2:</strong> Complete Your Booking
                     </div>
                     
@@ -649,14 +522,8 @@
                         <h4>Welcome Back!</h4>
                     </div>
                     
-                    <div id="existingCustomerInfo" class="customer-info-display">
-                        <!-- Customer info will be populated here -->
-                    </div>
+                    <div id="existingCustomerInfo" class="customer-info-display"></div>
                     
-                    <p style="color: #6c757d; margin-bottom: 1.5rem;">
-                        Your information has been verified. You can now complete your booking.
-                    </p>
-
                     <form id="existingCustomerForm" method="POST" action="/booking/create?serviceId=<%= serviceVariation.id %>&staffId=<%= teamMemberBookingProfile.teamMemberId %>&version=<%= serviceVersion %>&startAt=<%= startAt %>">
                         <!-- Hidden fields for multi-service support -->
                         <% if (selectedServices && selectedServices.length > 1) { %>
@@ -674,6 +541,7 @@
                         <input type="hidden" id="existingGivenName" name="givenName" value="">
                         <input type="hidden" id="existingFamilyName" name="familyName" value="">
                         <input type="hidden" id="existingEmailAddress" name="emailAddress" value="">
+                        <input type="hidden" id="existingCardNonce" name="cardNonce" value="">
 
                         <div class="form-group">
                             <label for="existingCustomerNote">Special requests or notes (optional)</label>
@@ -705,14 +573,15 @@
                         </button>
                     </form>
                     
-                    <button type="button" id="changePhoneExistingBtn" style="background: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; margin-top: 1rem; width: 100%;">
+                    <button type="button" id="changePhoneExistingBtn" class="cancel-btn">
                         <i class="fas fa-arrow-left"></i>
                         Use Different Phone Number
                     </button>
                 </div>
 
-                <!-- Step 3B: New Customer Information -->
-                <div id="newCustomerStep" class="contact-section" style="display: none;">                    <div class="step-indicator">
+                <!-- Step 2B: New Customer Information -->
+                <div id="newCustomerStep" class="contact-section" style="display: none;">
+                    <div class="step-indicator">
                         <strong>Step 2 of 2:</strong> Create Your Profile & Book
                     </div>
                     
@@ -778,11 +647,11 @@
                                 required 
                                 maxlength="320" 
                                 placeholder="Email"
-                                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" 
-                                title="Please enter a valid email address"
                                 autocomplete="email"
                             />
-                        </div>                        <!-- Service Request Field -->
+                        </div>
+
+                        <!-- Service Request Field -->
                         <div class="form-group">
                             <label for="serviceNote">
                                 <% if (serviceDetails && serviceDetails.length > 0) { %>
@@ -797,78 +666,7 @@
                                 placeholder="Any special requests for your appointment..."
                                 maxlength="1500" 
                                 rows="4"
-                            ></textarea>                        </div>                        <!-- Cancellation Policy Section -->
-                        <div class="form-group">
-                            <div class="section-header" style="margin-bottom: 1rem;">
-                                <i class="fas fa-calendar-times"></i>
-                                <h5 style="margin: 0; color: #333; font-size: 1.1rem;">Cancellation Policy</h5>
-                            </div>
-                            
-                            <div style="background: #fff8e5; border: 1px solid #ffeaa7; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                                <div style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem;">
-                                    <i class="fas fa-exclamation-triangle" style="color: #f39c12; margin-top: 0.25rem;"></i>
-                                    <span style="color: #856404; font-weight: 600; font-size: 1rem;">Important Cancellation Terms</span>
-                                </div>
-                                
-                                <div style="color: #856404; line-height: 1.5; margin-bottom: 1rem;">
-                                    <p style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">
-                                        <strong>Appointment Reservation:</strong> We’ll save your spot by keeping your payment info on file. This helps us protect against last-minute cancellations or no-shows.
-                                    </p>
-                                    <p style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">
-                                        <strong>Service Payment:</strong> You’ll pay for your haircut or service <strong>in person</strong> after your appointment.
-                                    </p>
-                                    <p style="margin: 0 0 0.75rem 0; font-size: 0.95rem;">
-                                        <strong>Cancellation Policy:</strong>
-                                    </p>
-                                    <!-- Clean 2-Hour Cancellation Policy -->
-                                    <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
-                                        <li style="margin-bottom: 0.5rem;">Cancel 2+ hours before: <strong>No charge</strong></li>
-                                        <li style="margin-bottom: 0.5rem;">Cancel within 2 hours: <strong>50% of service fee charged</strong></li>
-                                        <li style="margin-bottom: 0.5rem;">No-show: <strong>50% of service fee charged</strong></li>
-                                    </ul>
-                                    <!-- Policy Description -->
-                                    <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(52, 152, 219, 0.1); border-radius: 4px; border-left: 3px solid #3498db;">
-                                        <p style="margin: 0; font-size: 0.85rem; color: #2c3e50; font-style: italic;">
-                                            <strong>Please reschedule or cancel at least 2 hours before your appointment. If you cancel late or don’t show up, you may be charged a cancellation fee.</strong>
-                                        </p>
-                                    </div>
-                                    <!-- Card Authorization -->
-                                    <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(243, 156, 18, 0.1); border-radius: 4px; border-left: 3px solid #f39c12;">
-                                        <p style="margin: 0; font-size: 0.85rem; color: #856404;">
-                                            <i class="fas fa-credit-card" style="color: #f39c12; margin-right: 0.5rem;"></i>
-                                            <strong>Card Authorization:</strong> We’ll place a hold on your card to secure your spot and protect against no-shows.<br>
-                                            By booking, you agree to our cancellation policy and understand that late cancellations may result in charges.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                
-                                <!-- Booking Approval Policy -->
-                                <% if (typeof bookingConfig !== 'undefined' && bookingConfig && bookingConfig.booking.requiresApproval) { %>
-                                    <div style="background: rgba(52, 152, 219, 0.1); border-radius: 6px; padding: 1rem; margin-top: 1rem;">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                                            <i class="fas fa-clock" style="color: #3498db; font-size: 0.875rem;"></i>
-                                            <span style="color: #2c3e50; font-size: 0.875rem; font-weight: 500;">
-                                                <strong>Approval Required:</strong>
-                                            </span>
-                                        </div>
-                                        <p style="margin: 0; color: #34495e; font-size: 0.85rem; line-height: 1.4;">
-                                            Your booking request will be reviewed and you'll receive confirmation within 24 hours. 
-                                            We'll contact you via email or phone to confirm your appointment.
-                                        </p>
-                                    </div>
-                               
-                                <% } %>
-                                
-                                <div style="background: rgba(243, 156, 18, 0.1); border-radius: 6px; padding: 1rem; margin-top: 1rem;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="fas fa-info-circle" style="color: #f39c12; font-size: 0.875rem;"></i>
-                                        <span style="color: #856404; font-size: 0.875rem; font-weight: 500;">
-                                            By proceeding, you agree to our cancellation policy and understand that late cancellations may result in charges.
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                            ></textarea>
                         </div>
 
                         <!-- Card on File Section -->
@@ -885,22 +683,15 @@
                                 </div>
                                 <p style="margin: 0 0 1rem 0; color: #6c757d; font-size: 0.95rem; line-height: 1.4;">
                                     A valid payment method is required to secure your appointment. Your card will not be charged until your appointment is completed.
-                                </p>                                <!-- Square Web Payments SDK Card Form -->
+                                </p>
+                                
                                 <div id="card-container" style="margin-bottom: 1rem;">
                                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Card Details *</label>
-                                    <div style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #6c757d;">
-                                        Enter card number, expiry (MM/YY), and CVV in the field below
-                                    </div>                                    <!-- EXACT debug page structure for Square form -->
-                                    <div id="card-element" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-                                        Loading...
-                                    </div>
+                                    <div id="card-element">Loading...</div>
                                     <div id="card-errors" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.5rem; display: none;"></div>
                                 </div>
                                 
-                                <!-- Hidden field for card nonce -->
                                 <input type="hidden" id="cardNonce" name="cardNonce" value="">
-                                
-                               
                                 
                                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
                                     <i class="fas fa-lock" style="color: #28a745; font-size: 0.875rem;"></i>
@@ -922,21 +713,21 @@
                             </div>
                         </div>
 
-                        <!-- Submit Button -->
                         <button type="submit" class="submit-btn" id="submitBtn">
                             <i class="fas fa-calendar-check"></i>
                             Book Appointment
                         </button>
                     </form>
                     
-                    <button type="button" id="changePhoneNewBtn" style="background: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; margin-top: 1rem; width: 100%;">
+                    <button type="button" id="changePhoneNewBtn" class="cancel-btn">
                         <i class="fas fa-arrow-left"></i>
                         Use Different Phone Number
                     </button>
                 </div>
             </div>
         </div>
-          <!-- Include the appointment summary partial -->
+        
+        <!-- Include the appointment summary partial -->
         <%- include("../partials/appointment-summary") %>
     </div>
 
@@ -950,7 +741,7 @@
             <div class="modal-body">
                 <p style="color: #6c757d; margin-bottom: 1.5rem;">
                     We've sent a 6-digit verification code to <strong id="modalPhoneDisplay"></strong>. 
-                    Please enter it below to continue creating your account.
+                    Please enter it below to continue.
                 </p>
                 
                 <div class="form-group">
@@ -962,7 +753,7 @@
                         maxlength="6"
                         style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2rem; width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px;"
                     />
-                    <div class="helper-text" style="margin-top: 0.5rem; color: #6c757d; font-size: 0.9rem;">
+                    <div class="helper-text">
                         Didn't receive the code? <a href="#" id="modalResendCode" style="color: #667eea;">Resend code</a>
                     </div>
                 </div>
@@ -970,16 +761,18 @@
             <div class="modal-footer">
                 <button type="button" id="modalVerifyCodeBtn" class="submit-btn" disabled>
                     <i class="fas fa-check"></i>
-                    Verify & Create Account
-                </button>                <button type="button" class="cancel-btn" onclick="closeSMSModal()" style="background: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; margin-top: 0.5rem; width: 100%;">
+                    Verify & Continue
+                </button>
+                <button type="button" class="cancel-btn" onclick="closeSMSModal()">
                     Cancel
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Invisible reCAPTCHA container for Firebase -->
-    <div id="recaptcha-container"></div><script>
+    <div id="recaptcha-container"></div>
+
+    <script>
         // Firebase configuration
         const firebaseConfig = {
             apiKey: "<%= process.env.FIREBASE_API_KEY %>",
@@ -990,201 +783,17 @@
             appId: "<%= process.env.FIREBASE_APP_ID %>"
         };
         
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         
-        // Firebase variables
         let recaptchaVerifier;
         let confirmationResult;
-
-        // Global state variables
         let currentPhoneNumber = '';
         let customerExists = false;
         let customerData = null;
         let isCheckingPhone = false;
-          // Modal JavaScript Functions
-          // Setup reCAPTCHA verifier for Firebase
-        function setupRecaptcha() {
-            if (!recaptchaVerifier) {
-                recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                    'size': 'invisible',
-                    'callback': function(response) {
-                        console.log('reCAPTCHA verified');
-                    },
-                    'expired-callback': function() {
-                        console.log('reCAPTCHA expired');
-                    }
-                });
-            }
-        }
-        
-        // Send SMS verification using Firebase
-        async function sendSMSVerification(phoneNumber) {
-            try {
-                setupRecaptcha();
-                
-                // Format phone number for Firebase (must include country code)
-                const formattedPhone = phoneNumber.startsWith('+1') ? phoneNumber : '+1' + phoneNumber.replace(/\D/g, '');
-                
-                console.log('Sending SMS to:', formattedPhone);
-                
-                // Send SMS via Firebase
-                confirmationResult = await auth.signInWithPhoneNumber(formattedPhone, recaptchaVerifier);
-                console.log('SMS sent successfully');
-                
-                return true;
-            } catch (error) {
-                console.error('Error sending SMS:', error);
-                throw error;
-            }
-        }
-          // Show SMS verification modal
-        window.showSMSModal = async function() {
-            try {
-                // Send SMS verification
-                await sendSMSVerification(currentPhoneNumber);
-                
-                // Show modal
-                const modal = document.getElementById('smsVerificationModal');
-                const phoneDisplay = document.getElementById('modalPhoneDisplay');
-                const verificationInput = document.getElementById('modalVerificationCode');
-                
-                phoneDisplay.textContent = currentPhoneNumber;
-                modal.style.display = 'block';
-                
-                // Focus on verification code input
-                setTimeout(() => {
-                    verificationInput.focus();
-                }, 300);
-                
-            } catch (error) {
-                console.error('Error sending verification code:', error);
-                alert('Error sending verification code. Please try again.');
-            }
-        }
-        
-        // Show SMS verification modal for existing customers
-        window.showSMSModalForExistingCustomer = async function() {
-            try {
-                // Send SMS verification
-                await sendSMSVerification(currentPhoneNumber);
-                
-                // Show modal with different button text for existing customers
-                const modal = document.getElementById('smsVerificationModal');
-                const phoneDisplay = document.getElementById('modalPhoneDisplay');
-                const verificationInput = document.getElementById('modalVerificationCode');
-                const verifyButton = document.getElementById('modalVerifyCodeBtn');
-                
-                phoneDisplay.textContent = currentPhoneNumber;
-                verifyButton.innerHTML = '<i class="fas fa-check"></i> Verify & Continue';
-                modal.style.display = 'block';
-                
-                // Focus on verification code input
-                setTimeout(() => {
-                    verificationInput.focus();
-                }, 300);
-                
-            } catch (error) {
-                console.error('Error sending verification code:', error);
-                alert('Error sending verification code. Please try again.');
-            }
-        }
-        
-        // Close SMS verification modal
-        window.closeSMSModal = function() {
-            const modal = document.getElementById('smsVerificationModal');
-            modal.style.display = 'none';
-            
-            // Clear the input
-            document.getElementById('modalVerificationCode').value = '';
-            document.getElementById('modalVerifyCodeBtn').disabled = true;
-        }
-        
-        // Handle modal verification code input
-        function setupModalVerificationHandlers() {
-            const modalVerificationCode = document.getElementById('modalVerificationCode');
-            const modalVerifyCodeBtn = document.getElementById('modalVerifyCodeBtn');
-            const modalResendCode = document.getElementById('modalResendCode');
-            
-            if (modalVerificationCode) {
-                modalVerificationCode.addEventListener('input', function(e) {
-                    const code = e.target.value.replace(/\D/g, '');
-                    e.target.value = code;
-                    
-                    // Enable verify button when 6 digits entered
-                    modalVerifyCodeBtn.disabled = code.length !== 6;
-                });
-            }
-            
-            if (modalVerifyCodeBtn) {
-                modalVerifyCodeBtn.addEventListener('click', async function() {
-                    const code = modalVerificationCode.value;
-                    
-                    if (code.length !== 6) {
-                        alert('Please enter the 6-digit verification code');
-                        return;
-                    }
-                    
-                    // Show loading state
-                    const originalText = modalVerifyCodeBtn.innerHTML;
-                    modalVerifyCodeBtn.innerHTML = '<span class="loading-spinner"></span> Verifying...';
-                    modalVerifyCodeBtn.disabled = true;                    try {
-                        // Verify code using Firebase confirmationResult
-                        if (confirmationResult) {
-                            const result = await confirmationResult.confirm(code);
-                            const user = result.user;
-                            console.log('Phone verification successful:', user);
-                            
-                            // Close modal
-                            closeSMSModal();
-                            
-                            // Route to appropriate step based on customer status
-                            if (customerExists && customerData) {
-                                // Existing customer - show existing customer step
-                                showExistingCustomerStep();
-                            } else {
-                                // New customer - show new customer step
-                                showNewCustomerStep();
-                            }
-                        } else {
-                            alert('No verification in progress. Please try again.');
-                            modalVerifyCodeBtn.innerHTML = originalText;
-                            modalVerifyCodeBtn.disabled = false;
-                        }
-                        
-                    } catch (error) {
-                        console.error('Error verifying code:', error);
-                        if (error.code === 'auth/invalid-verification-code') {
-                            alert('Invalid verification code. Please try again.');
-                        } else {
-                            alert('Error verifying code. Please try again.');
-                        }
-                        modalVerifyCodeBtn.innerHTML = originalText;
-                        modalVerifyCodeBtn.disabled = false;
-                    }
-                });
-            }
-            
-            if (modalResendCode) {
-                modalResendCode.addEventListener('click', async function(e) {
-                    e.preventDefault();
-                    
-                    try {
-                        await sendSMSVerification(currentPhoneNumber);
-                        alert('Verification code resent!');
-                    } catch (error) {
-                        console.error('Error resending code:', error);
-                        alert('Error resending code. Please try again.');
-                    }
-                });
-            }        }
 
-        // Make service details and booking info available to appointment summary JavaScript
-    </script>
-    
-    <script>
-        // Initialize global variables
+        // Initialize global variables for appointment summary
         <% if (typeof serviceDetails !== 'undefined' && serviceDetails) { %>
         window.serviceDetails = <%- JSON.stringify(serviceDetails) %>;
         <% } else { %>
@@ -1204,8 +813,6 @@
             description: ""
         };
         <% } %>
-        
-        // Tax data is included in serviceDetails for each service - no global tax rate needed
 
         <% if (typeof startAt !== 'undefined' && startAt && typeof location !== 'undefined' && location) { %>
         window.selectedDateTime = {
@@ -1216,55 +823,121 @@
         };
         <% } else { %>
         window.selectedDateTime = null;
-        <% } %>        document.addEventListener('DOMContentLoaded', function() {// Get DOM elements
+        <% } %>
+
+        // Firebase functions
+        function setupRecaptcha() {
+            if (!recaptchaVerifier) {
+                recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                    'size': 'invisible'
+                });
+            }
+        }
+        
+        async function sendSMSVerification(phoneNumber) {
+            try {
+                setupRecaptcha();
+                const formattedPhone = phoneNumber.startsWith('+1') ? phoneNumber : '+1' + phoneNumber.replace(/\D/g, '');
+                confirmationResult = await auth.signInWithPhoneNumber(formattedPhone, recaptchaVerifier);
+                return true;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Modal functions
+        window.showSMSModal = async function() {
+            try {
+                await sendSMSVerification(currentPhoneNumber);
+                const modal = document.getElementById('smsVerificationModal');
+                const phoneDisplay = document.getElementById('modalPhoneDisplay');
+                const verificationInput = document.getElementById('modalVerificationCode');
+                
+                phoneDisplay.textContent = currentPhoneNumber;
+                modal.style.display = 'block';
+                
+                setTimeout(() => verificationInput.focus(), 300);
+            } catch (error) {
+                alert('Error sending verification code. Please try again.');
+            }
+        }
+
+        window.showSMSModalForExistingCustomer = async function() {
+            try {
+                await sendSMSVerification(currentPhoneNumber);
+                const modal = document.getElementById('smsVerificationModal');
+                const phoneDisplay = document.getElementById('modalPhoneDisplay');
+                const verifyButton = document.getElementById('modalVerifyCodeBtn');
+                
+                phoneDisplay.textContent = currentPhoneNumber;
+                verifyButton.innerHTML = '<i class="fas fa-check"></i> Verify & Continue';
+                modal.style.display = 'block';
+            } catch (error) {
+                alert('Error sending verification code. Please try again.');
+            }
+        }
+        
+        window.closeSMSModal = function() {
+            const modal = document.getElementById('smsVerificationModal');
+            modal.style.display = 'none';
+            document.getElementById('modalVerificationCode').value = '';
+            document.getElementById('modalVerifyCodeBtn').disabled = true;
+        }
+
+        // Main initialization
+        document.addEventListener('DOMContentLoaded', function() {
             const phoneInput = document.getElementById('phoneNumber');
             const customerLookupResult = document.getElementById('customerLookupResult');
-            
-            // Step containers
             const phoneStep = document.getElementById('phoneStep');
             const existingCustomerStep = document.getElementById('existingCustomerStep');
             const newCustomerStep = document.getElementById('newCustomerStep');
             
-            // Forms
-            const existingCustomerForm = document.getElementById('existingCustomerForm');
-            const bookingForm = document.getElementById('bookingForm');
-            
-            // Initialize button state - disable until Square form is ready
-            const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
-                submitBtn.style.opacity = '0.6';
-                console.log('🔧 [Init] Submit button initially disabled until Square form loads');
-            }
-            
-            // Change phone buttons
-            const changePhoneExistingBtn = document.getElementById('changePhoneExistingBtn');
-            const changePhoneNewBtn = document.getElementById('changePhoneNewBtn');            // Setup modal verification handlers
-            setupModalVerificationHandlers();
-              // Show new customer step function
-            window.showNewCustomerStep = function() {
-                phoneStep.style.display = 'none';
-                newCustomerStep.style.display = 'block';
+            let lastValue = '';
+
+            // Phone number formatting and validation
+            phoneInput.addEventListener('input', function(e) {
+                const currentValue = e.target.value;
+                const cursorPos = e.target.selectionStart;
+                const isDeleting = currentValue.length < lastValue.length;
                 
-                // Set verified phone number
-                document.getElementById('verifiedPhoneNumber').value = currentPhoneNumber;
+                let digits = currentValue.replace(/\D/g, '');
                 
-                // Disable submit button initially until Square form is ready
-                const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
-                    submitBtn.style.opacity = '0.6';
+                if (isDeleting && digits.length <= 3) {
+                    e.target.value = digits;
+                    lastValue = digits;
+                    customerLookupResult.style.display = 'none';
+                    return;
                 }
                 
-                // Focus on first name field
-                setTimeout(() => {
-                    document.getElementById('givenName').focus();
-                }, 100);
-            }
+                let formatted = '';
+                if (digits.length >= 10) {
+                    formatted = digits.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+                } else if (digits.length >= 6) {
+                    formatted = digits.replace(/(\d{3})(\d{3})(\d{0,4})/, '($1) $2-$3');
+                } else if (digits.length >= 3) {
+                    formatted = digits.replace(/(\d{3})(\d{0,3})/, '($1) $2');
+                } else {
+                    formatted = digits;
+                }
+                
+                e.target.value = formatted;
+                lastValue = formatted;
+                
+                let newCursorPos = cursorPos;
+                if (!isDeleting && formatted.length > currentValue.length) {
+                    const addedChars = formatted.length - currentValue.length;
+                    newCursorPos = cursorPos + addedChars;
+                }
+                e.target.setSelectionRange(newCursorPos, newCursorPos);
+                
+                if (digits.length === 10) {
+                    setTimeout(() => checkPhoneNumber(formatted), 500);
+                } else if (digits.length < 10) {
+                    customerLookupResult.style.display = 'none';
+                }
+            });
 
-            // Function to check phone number
+            // Phone number checking
             async function checkPhoneNumber(phoneValue) {
                 if (isCheckingPhone) return;
                 
@@ -1274,7 +947,6 @@
                 isCheckingPhone = true;
                 currentPhoneNumber = phoneValue;
                 
-                // Show loading state
                 customerLookupResult.style.display = 'block';
                 customerLookupResult.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 0.5rem; padding: 1rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
@@ -1284,18 +956,16 @@
                 `;
                 
                 try {
-                    // Check if customer exists
                     const checkResponse = await fetch('/customer/check-phone', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ phoneNumber: phoneValue })
                     });
                     
                     const checkResult = await checkResponse.json();
                     customerExists = checkResult.exists;
-                    customerData = checkResult.customer || null;                    // Show results
+                    customerData = checkResult.customer || null;
+
                     if (customerExists && customerData) {
                         customerLookupResult.innerHTML = `
                             <div class="customer-info-display">
@@ -1326,15 +996,14 @@
                                 </h6>
                                 <p style="margin: 0 0 1rem 0; color: #856404;">
                                     No account found with this phone number. We'll create a new account for you.
-                                </p>                                <button type="button" class="submit-btn" onclick="showSMSModal()" style="background: #28a745;">
+                                </p>
+                                <button type="button" class="submit-btn" onclick="showSMSModal()" style="background: #28a745;">
                                     <i class="fas fa-user-plus"></i> Create new account
                                 </button>
                             </div>
                         `;
                     }
-                    
                 } catch (error) {
-                    console.error('Error checking phone number:', error);
                     customerLookupResult.innerHTML = `
                         <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 1rem;">
                             <i class="fas fa-exclamation-triangle" style="color: #721c24;"></i>
@@ -1345,103 +1014,12 @@
                     isCheckingPhone = false;
                 }
             }
-            
-            // Phone number formatting
-            let lastValue = '';
-            
-            if (phoneInput) {
-                phoneInput.addEventListener('input', function(e) {
-                    const currentValue = e.target.value;
-                    const cursorPos = e.target.selectionStart;
-                    const isDeleting = currentValue.length < lastValue.length;
-                    
-                    // Get just the digits
-                    let digits = currentValue.replace(/\D/g, '');
-                      // Don't format if user is deleting and would result in same formatted value
-                    if (isDeleting && digits.length <= 3) {
-                        e.target.value = digits;
-                        lastValue = digits;
-                        // Hide lookup result if less than 10 digits
-                        customerLookupResult.style.display = 'none';
-                        return;
-                    }
-                    
-                    // Format the number
-                    let formatted = '';
-                    if (digits.length >= 10) {
-                        formatted = digits.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-                    } else if (digits.length >= 6) {
-                        formatted = digits.replace(/(\d{3})(\d{3})(\d{0,4})/, '($1) $2-$3');
-                    } else if (digits.length >= 3) {
-                        formatted = digits.replace(/(\d{3})(\d{0,3})/, '($1) $2');
-                    } else {
-                        formatted = digits;
-                    }
-                    
-                    e.target.value = formatted;
-                    lastValue = formatted;
-                    
-                    // Restore cursor position intelligently
-                    let newCursorPos = cursorPos;
-                    if (!isDeleting && formatted.length > currentValue.length) {
-                        const addedChars = formatted.length - currentValue.length;
-                        newCursorPos = cursorPos + addedChars;
-                    }
-                    e.target.setSelectionRange(newCursorPos, newCursorPos);
-                      // Enable/disable auto-lookup based on phone length
-                    if (digits.length === 10) {
-                        // Auto-check phone number when 10 digits are entered
-                        setTimeout(() => checkPhoneNumber(formatted), 500);
-                    } else if (digits.length < 10) {
-                        // Hide lookup result if less than 10 digits
-                        customerLookupResult.style.display = 'none';
-                    }
-                });
-                
-                // Handle backspace and delete keys specifically
-                phoneInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Backspace' || e.key === 'Delete') {
-                        const cursorPos = e.target.selectionStart;
-                        const currentValue = e.target.value;
-                          // If cursor is after a formatting character, skip over it
-                        if (e.key === 'Backspace' && cursorPos > 0) {
-                            const charBefore = currentValue[cursorPos - 1];
-                            if (charBefore === '(' || charBefore === ')' || charBefore === ' ' || charBefore === '-') {
-                                e.target.setSelectionRange(cursorPos - 1, cursorPos - 1);
-                            }
-                        }
-                    }
-                });
-            }
-            
-            // Change phone number handlers
-            function resetToPhoneStep() {
-                phoneStep.style.display = 'block';
-                existingCustomerStep.style.display = 'none';
-                newCustomerStep.style.display = 'none';
-                
-                // Reset form state
-                phoneInput.value = '';
-                customerLookupResult.style.display = 'none';
-                
-                // Focus on phone input
-                setTimeout(() => {
-                    phoneInput.focus();
-                }, 100);
-            }
-            
-            if (changePhoneExistingBtn) {
-                changePhoneExistingBtn.addEventListener('click', resetToPhoneStep);
-            }
-            
-            if (changePhoneNewBtn) {
-                changePhoneNewBtn.addEventListener('click', resetToPhoneStep);            }            // Show existing customer step (make global for onclick)
+
+            // Step navigation functions
             window.showExistingCustomerStep = async function() {
-                console.log('showExistingCustomerStep called - customerData:', customerData);
                 phoneStep.style.display = 'none';
                 existingCustomerStep.style.display = 'block';
                 
-                // Show loading state while checking cards
                 const customerInfo = document.getElementById('existingCustomerInfo');
                 customerInfo.innerHTML = `
                     <div style="text-align: center; padding: 2rem;">
@@ -1451,26 +1029,17 @@
                 `;
                 
                 try {
-                    // Check customer's cards on file
                     const cardsResponse = await fetch(`/payment/customer/${customerData.id}/cards`);
                     const cardsResult = await cardsResponse.json();
                     
-                    console.log('Customer cards:', cardsResult);
-                    
-                    // Check if customer has valid cards
                     const hasValidCards = cardsResult.success && cardsResult.enabledCards && cardsResult.enabledCards.length > 0;
                     
                     if (hasValidCards) {
-                        // Customer has valid cards - show normal existing customer flow
                         showExistingCustomerWithCards(cardsResult.enabledCards);
                     } else {
-                        // Customer has no valid cards - require card addition
                         showExistingCustomerRequireCard();
                     }
-                    
                 } catch (error) {
-                    console.error('Error checking customer cards:', error);
-                    // Fallback to require card addition if API fails
                     showExistingCustomerRequireCard();
                 }
                 
@@ -1481,15 +1050,12 @@
                 document.getElementById('existingFamilyName').value = customerData.familyName || '';
                 document.getElementById('existingEmailAddress').value = customerData.emailAddress || '';
             }
-            
-            // Show existing customer with valid cards
+
             function showExistingCustomerWithCards(cards) {
                 const customerInfo = document.getElementById('existingCustomerInfo');
-                
                 const cardSummary = cards.slice(0, 2).map(card => 
                     `${card.cardBrand} ending in ${card.last4}`
                 ).join(', ');
-                
                 const additionalCards = cards.length > 2 ? ` (+${cards.length - 2} more)` : '';
                 
                 customerInfo.innerHTML = `
@@ -1511,17 +1077,10 @@
                             <i class="fas fa-credit-card" style="color: #28a745;"></i>
                             <span><strong>Payment Methods:</strong> ${cardSummary}${additionalCards}</span>
                         </div>
-                        <div style="background: #fff; border-radius: 6px; padding: 1rem; margin-top: 1rem;">
-                            <p style="margin: 0; font-size: 0.9rem; color: #155724;">
-                                <i class="fas fa-check-circle" style="color: #28a745; margin-right: 0.5rem;"></i>
-                                Your card will be used for no-show protection and cancellation fees per our policy.
-                            </p>
-                        </div>
                     </div>
                 `;
             }
-            
-            // Show existing customer requiring card addition
+
             function showExistingCustomerRequireCard() {
                 const customerInfo = document.getElementById('existingCustomerInfo');
                 customerInfo.innerHTML = `
@@ -1541,58 +1100,24 @@
                         </div>
                         
                         <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 1rem; margin-top: 1rem;">
-                            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
-                                <i class="fas fa-exclamation-triangle" style="color: #721c24; margin-top: 0.125rem;"></i>
-                                <div>
-                                    <p style="margin: 0 0 0.5rem 0; font-weight: 500; color: #721c24;">
-                                        Payment Method Required
-                                    </p>
-                                    <p style="margin: 0; font-size: 0.9rem; color: #721c24; line-height: 1.4;">
-                                        You don't have any payment methods on file. A valid payment method is required to secure your appointment and for our cancellation policy.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Cancellation Policy Display -->
-                    <div style="background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                        <h6 style="margin: 0 0 1rem 0; color: #1565c0;">
-                            <i class="fas fa-info-circle"></i> Cancellation Policy
-                        </h6>
-                        <div style="font-size: 0.9rem; color: #1565c0; line-height: 1.5;">
-                            <p style="margin: 0 0 0.75rem 0;">
-                                <strong>Cancel 2+ hours before:</strong> No charge
+                            <p style="margin: 0; font-size: 0.9rem; color: #721c24; font-weight: 500;">
+                                <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>
+                                Payment Method Required
                             </p>
-                            <p style="margin: 0 0 0.75rem 0;">
-                                <strong>Cancel within 2 hours:</strong> 50% of service fee
+                            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #721c24;">
+                                A payment method is required for our cancellation policy.
                             </p>
-                            <p style="margin: 0 0 1rem 0;">
-                                <strong>No-show:</strong> 50% of service fee
-                            </p>
-                            <div style="background: rgba(255, 255, 255, 0.7); border-radius: 4px; padding: 0.75rem;">
-                                <p style="margin: 0; font-size: 0.85rem;">
-                                    <i class="fas fa-shield-alt" style="margin-right: 0.5rem;"></i>
-                                    Your card will only be charged if you cancel within 2 hours or don't show up for your appointment.
-                                </p>
-                            </div>
                         </div>
                     </div>
                 `;
                 
-                // Show card addition section in the existing customer form
                 showCardAdditionForExistingCustomer();
             }
-            
-            // Show card addition section for existing customer
+
             function showCardAdditionForExistingCustomer() {
                 const existingForm = document.getElementById('existingCustomerForm');
                 const submitBtn = document.getElementById('existingCustomerSubmitBtn');
                 
-                // Find the special requests textarea
-                const textareaGroup = existingForm.querySelector('.form-group');
-                
-                // Insert card section before the marketing consent
                 const cardSection = document.createElement('div');
                 cardSection.id = 'existingCustomerCardSection';
                 cardSection.innerHTML = `
@@ -1601,303 +1126,217 @@
                             <h6 style="margin: 0 0 1rem 0; color: #333;">
                                 <i class="fas fa-credit-card"></i> Add Payment Method
                             </h6>
-                            <p style="margin: 0 0 1.5rem 0; color: #6c757d; font-size: 0.95rem;">
-                                Please add a payment method to secure your appointment and comply with our cancellation policy.
-                            </p>                            <!-- Square Web Payments SDK Card Form -->                            <div id="existing-card-container">
+                            <div id="existing-card-container">
                                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Card Details *</label>
-                                <div style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #6c757d;">
-                                    Enter card number, expiry (MM/YY), and CVV in the field below
-                                </div>                                <!-- EXACT debug page structure for Square form -->
-                                <div id="existing-card-element" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-                                    Loading...
-                                </div>
+                                <div id="existing-card-element">Loading...</div>
                                 <div id="existing-card-errors" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.5rem; display: none;"></div>
-                            </div>                            <!-- Hidden field for card nonce -->
-                            <input type="hidden" id="existingCardNonce" name="cardNonce" value="">
-                            
-                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-lock" style="color: #28a745; font-size: 0.875rem;"></i>
-                                    <span style="color: #6c757d; font-size: 0.875rem;">Your payment information is encrypted and secure with Square</span>
-                                </div>
                             </div>
                         </div>
                     </div>
                 `;
                 
-                // Insert before marketing consent
                 const marketingConsent = existingForm.querySelector('.marketing-consent');
                 existingForm.insertBefore(cardSection, marketingConsent);
                 
-                // Disable submit button until card is added
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
                 submitBtn.style.opacity = '0.6';
                 
-                // Initialize Square payments for existing customer card
-                initializeSquarePaymentsForExistingCustomer();
+                setTimeout(() => initializeSquarePaymentsForExistingCustomer(), 100);
             }
-            
-            // Show new customer step (make global for onclick)
+
             window.showNewCustomerStep = function() {
                 phoneStep.style.display = 'none';
                 newCustomerStep.style.display = 'block';
                 
-                // Set verified phone number
                 document.getElementById('verifiedPhoneNumber').value = currentPhoneNumber;
                 
-                // Focus on first name field
-                setTimeout(() => {
-                    document.getElementById('givenName').focus();
-                }, 100);
-            }            // Form submission handlers (existing customer handled by Square initialization)
-            // Note: existingCustomerForm submission is handled in initializeSquarePaymentsForExistingCustomer()
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+                    submitBtn.style.opacity = '0.6';
+                }
+                
+                setTimeout(() => document.getElementById('givenName').focus(), 100);
+            }
+
+            // Change phone handlers
+            function resetToPhoneStep() {
+                phoneStep.style.display = 'block';
+                existingCustomerStep.style.display = 'none';
+                newCustomerStep.style.display = 'none';
+                
+                phoneInput.value = '';
+                customerLookupResult.style.display = 'none';
+                
+                setTimeout(() => phoneInput.focus(), 100);
+            }
+
+            document.getElementById('changePhoneExistingBtn').addEventListener('click', resetToPhoneStep);
+            document.getElementById('changePhoneNewBtn').addEventListener('click', resetToPhoneStep);
+
+            // Modal verification handlers
+            const modalVerificationCode = document.getElementById('modalVerificationCode');
+            const modalVerifyCodeBtn = document.getElementById('modalVerifyCodeBtn');
+            const modalResendCode = document.getElementById('modalResendCode');
             
-            if (bookingForm) {
-                bookingForm.addEventListener('submit', function(e) {
-                    const email = document.getElementById('emailAddress');
-                    const firstName = document.getElementById('givenName');
-                    const lastName = document.getElementById('familyName');
-                    const submitBtn = document.getElementById('submitBtn');
-                    
-                    // Validate required fields
-                    if (!firstName.value.trim() || !lastName.value.trim() || !email.value.trim()) {
-                        e.preventDefault();
-                        alert('Please fill in all required fields.');
-                        return;
-                    }
-                    
-                    // Email validation
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(email.value)) {
-                        e.preventDefault();
-                        alert('Please enter a valid email address.');
-                        return;
-                    }
-                    
-                    // Show loading state
-                    if (submitBtn) {
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating Booking...';
-                    }
-                });            }
+            modalVerificationCode.addEventListener('input', function(e) {
+                const code = e.target.value.replace(/\D/g, '');
+                e.target.value = code;
+                modalVerifyCodeBtn.disabled = code.length !== 6;
+            });
             
-            // Square Web Payments SDK Integration
+            modalVerifyCodeBtn.addEventListener('click', async function() {
+                const code = modalVerificationCode.value;
+                
+                if (code.length !== 6) {
+                    alert('Please enter the 6-digit verification code');
+                    return;
+                }
+                
+                const originalText = modalVerifyCodeBtn.innerHTML;
+                modalVerifyCodeBtn.innerHTML = '<span class="loading-spinner"></span> Verifying...';
+                modalVerifyCodeBtn.disabled = true;
+                
+                try {
+                    if (confirmationResult) {
+                        const result = await confirmationResult.confirm(code);
+                        closeSMSModal();
+                        
+                        if (customerExists && customerData) {
+                            showExistingCustomerStep();
+                        } else {
+                            showNewCustomerStep();
+                        }
+                    } else {
+                        alert('No verification in progress. Please try again.');
+                        modalVerifyCodeBtn.innerHTML = originalText;
+                        modalVerifyCodeBtn.disabled = false;
+                    }
+                } catch (error) {
+                    if (error.code === 'auth/invalid-verification-code') {
+                        alert('Invalid verification code. Please try again.');
+                    } else {
+                        alert('Error verifying code. Please try again.');
+                    }
+                    modalVerifyCodeBtn.innerHTML = originalText;
+                    modalVerifyCodeBtn.disabled = false;
+                }
+            });
+            
+            modalResendCode.addEventListener('click', async function(e) {
+                e.preventDefault();
+                try {
+                    await sendSMSVerification(currentPhoneNumber);
+                    alert('Verification code resent!');
+                } catch (error) {
+                    alert('Error resending code. Please try again.');
+                }
+            });
+
+            // Initialize Square payments
             if (typeof window.Square !== 'undefined') {
                 initializeSquarePayments();
-            } else {
-                console.error('Square Web Payments SDK not loaded');
             }
         });
-          // Initialize Square Web Payments SDK
+
+        // Square Web Payments SDK Integration
         async function initializeSquarePayments() {
             const appId = '<%= process.env.SQ_APPLICATION_ID %>';
             const locationId = '<%= process.env.SQ_LOCATION_ID %>';
             
-            // Validate Square configuration
-            if (!appId || appId === 'undefined' || appId.includes('PLACEHOLDER')) {
-                console.error('Square Application ID not configured properly');
-                const cardElement = document.getElementById('card-element');
-                if (cardElement) {
-                    cardElement.innerHTML = `
-                        <div style="color: #dc3545; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-                            <p><i class="fas fa-exclamation-triangle"></i> Payment Configuration Error</p>
-                            <p style="font-size: 0.9rem; margin-top: 10px;">
-                                Square Application ID is not properly configured.<br>
-                                Please contact the administrator to set up payment processing.
-                            </p>
-                        </div>
-                    `;
-                }
-                return;
-            }            try {
-                console.log('🔧 [NewCustomer] Starting Square initialization...');
-                console.log('🔧 [NewCustomer] App ID:', appId);
-                console.log('🔧 [NewCustomer] Location ID:', locationId);
-                console.log('🔧 [NewCustomer] Square object available:', !!window.Square);
-                
+            if (!appId || !locationId) return;
+
+            try {
                 const payments = window.Square.payments(appId, locationId);
-                console.log('✅ [NewCustomer] Payments instance created:', payments);
+                const card = await payments.card({ includeInputLabels: true });
                 
-                // Initialize card payment method with improved configuration
-                console.log('🔧 [NewCustomer] Creating card payment method...');
-                const card = await payments.card({
-                    includeInputLabels: true
-                });
-                console.log('✅ [NewCustomer] Card payment method created:', card);
-                
-                // Check if target element exists and is ready
-                const targetElement = document.getElementById('card-element');
-                console.log('🔧 [NewCustomer] Target element:', targetElement);
-                console.log('🔧 [NewCustomer] Target element HTML before attach:', targetElement.innerHTML);
-                  console.log('🔧 [NewCustomer] Attempting to attach card form...');
-                
-                // Clear the initial loading text first
                 const cardElement = document.getElementById('card-element');
                 if (cardElement && cardElement.textContent.trim() === 'Loading...') {
-                    console.log('🧹 [NewCustomer] Clearing initial loading text...');
                     cardElement.textContent = '';
-                }                await card.attach('#card-element');
-                console.log('✅ [NewCustomer] Card form attached successfully!');
+                }
+
+                await card.attach('#card-element');
                 
-                // Listen for input validation changes on the Square card element
                 card.addEventListener('change', (event) => {
                     const submitBtn = document.getElementById('submitBtn');
                     const errorDiv = document.getElementById('card-errors');
 
-                    console.log('🔧 [NewCustomer] Card validation event:', event);
-                    console.log('🔧 [NewCustomer] Event errors:', event.errors);
-                    console.log('🔧 [NewCustomer] Event complete:', event.complete);
-
                     if (event.errors && event.errors.length > 0) {
-                        // Show error messages
                         const errorMessage = event.errors.map(e => e.message).join(', ');
                         errorDiv.textContent = errorMessage;
                         errorDiv.style.display = 'block';
-
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
                         submitBtn.style.opacity = '0.6';
-                        console.log('🔴 [NewCustomer] Button disabled due to validation errors');
                     } else if (event.complete) {
-                        // Card details are complete and valid
                         errorDiv.style.display = 'none';
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
                         submitBtn.style.opacity = '1';
-                        console.log('✅ [NewCustomer] Button enabled - card details complete and valid');
                     } else {
-                        // Card details incomplete but no errors yet
                         errorDiv.style.display = 'none';
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
                         submitBtn.style.opacity = '0.6';
-                        console.log('🟡 [NewCustomer] Button disabled - card details incomplete');
                     }
                 });
 
-                // Button remains disabled until user enters complete card details
-                console.log('🔧 [NewCustomer] Button will be enabled only when card details are complete');
-                
-                // Debug: Check if Square form rendered properly
-                setTimeout(() => {
-                    const cardElement = document.getElementById('card-element');
-                    console.log('🔍 [NewCustomer] Card element after attach:', cardElement);
-                    console.log('🔍 [NewCustomer] Card element children:', cardElement.children.length);
-                    console.log('🔍 [NewCustomer] Card element HTML:', cardElement.innerHTML);
-                    console.log('🔍 [NewCustomer] Card element computed styles:', window.getComputedStyle(cardElement));
-                    
-                    // Check for iframes (Square uses iframes for secure input)
-                    const iframes = cardElement.querySelectorAll('iframe');
-                    console.log('🔍 [NewCustomer] Number of iframes:', iframes.length);
-                    
-                    if (iframes.length === 0) {
-                        console.error('❌ [NewCustomer] No iframes found - Square form may not have rendered properly');
-                        console.log('🔧 [NewCustomer] Element structure:', cardElement.outerHTML);
-                        console.log('🔧 [NewCustomer] Attempting to re-initialize...');
-                        // Could add re-initialization logic here if needed
-                    } else {
-                        console.log('✅ [NewCustomer] Square form iframes detected - form should be interactive');
-                        iframes.forEach((iframe, index) => {
-                            console.log(`🔍 [NewCustomer] Iframe ${index}:`, iframe.src);
-                            console.log(`🔍 [NewCustomer] Iframe ${index} styles:`, window.getComputedStyle(iframe));
-                        });
-                    }
-                    
-                    // Test if we can interact with the element
-                    console.log('🔧 [NewCustomer] Testing element interaction...');
-                    const clickEvent = new Event('click', { bubbles: true });
-                    cardElement.dispatchEvent(clickEvent);
-                    
-                }, 3000);
-                  // Override the existing form submission handler for booking form
+                // Form submission with Square integration
                 const bookingForm = document.getElementById('bookingForm');
                 if (bookingForm) {
-                    // Remove existing event listeners by cloning the form
                     const newBookingForm = bookingForm.cloneNode(true);
-                    newBookingForm.id = "bookingForm"; // Maintain the form ID
+                    newBookingForm.id = "bookingForm";
                     bookingForm.parentNode.replaceChild(newBookingForm, bookingForm);
                     
-                    // Add new event listener with Square integration
                     newBookingForm.addEventListener('submit', async function(e) {
                         e.preventDefault();
                         
                         const email = document.getElementById('emailAddress');
                         const firstName = document.getElementById('givenName');
                         const lastName = document.getElementById('familyName');
-                        const postalCode = document.getElementById('postalCode');
                         const submitBtn = document.getElementById('submitBtn');
                         
-                        // Validate required fields
-                        if (!firstName.value.trim() || !lastName.value.trim() || !email.value.trim() || !postalCode.value.trim()) {
+                        if (!firstName.value.trim() || !lastName.value.trim() || !email.value.trim()) {
                             alert('Please fill in all required fields.');
                             return;
                         }
                         
-                        // Email validation
                         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                         if (!emailRegex.test(email.value)) {
                             alert('Please enter a valid email address.');
                             return;
                         }
-                          // Show loading state
+                        
                         const originalText = submitBtn.innerHTML;
                         submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing Payment...';                        try {
-                            // Using exact working configuration from debug page
-                            console.log('🔧 [NewCustomer] Attempting tokenization with verified working format...');
-                            console.log('� [NewCustomer] Parameters:', {
-                                billingContact: { postalCode: postalCode.value.trim() },
+                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing Payment...';
+                        
+                        try {
+                            const tokenResult = await card.tokenize({
                                 intent: 'STORE',
-                                customerInitiated: true,
-                                sellerKeyedIn: false
-                            });                            const tokenResult = await card.tokenize({
-                                intent: 'STORE', // STORE = Save card only, no amount/currency needed
-                                // Required verification details for STORE intent (flattened structure)
-                                billingContact: {
-                                    postalCode: postalCode.value.trim()
-                                },
+                                billingContact: {},
                                 customerInitiated: true,
                                 sellerKeyedIn: false
                             });
                             
-                            console.log('� [NewCustomer] Tokenization result:', tokenResult);
-                              if (tokenResult.status === 'OK') {
-                                // Set the nonce in the hidden field
+                            if (tokenResult.status === 'OK') {
                                 const token = tokenResult.token || tokenResult.details?.card?.token;
                                 if (token) {
                                     document.getElementById('cardNonce').value = token;
                                 } else {
-                                    console.error('No token found in result:', tokenResult);
                                     throw new Error('Token not found in response');
                                 }
                                 
-                                // Clear any previous errors
                                 const errorDiv = document.getElementById('card-errors');
                                 if (errorDiv) {
                                     errorDiv.style.display = 'none';
                                 }
-                                  // Update button text and submit
+                                
                                 submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating Booking...';
-                                
-                                // Debug: Log the cardNonce value
-                                console.log('🧾 Submitting form with cardNonce:', document.getElementById('cardNonce').value);
-                                
-                                // Add fallback timeout to prevent hanging
-                                const submissionTimeout = setTimeout(() => {
-                                    console.warn('⚠️ Form submission timeout - re-enabling button');
-                                    submitBtn.disabled = false;
-                                    submitBtn.innerHTML = originalText;
-                                    alert('Submission is taking longer than expected. Please try again.');
-                                }, 30000); // 30 second timeout
-                                
-                                // Submit the form
                                 newBookingForm.submit();
-                                
-                                // Clear timeout if submission happens quickly
-                                clearTimeout(submissionTimeout);
                             } else {
-                                // Handle tokenization errors
                                 let errorMessage = 'Invalid payment information';
                                 if (tokenResult.errors && tokenResult.errors.length > 0) {
                                     errorMessage = tokenResult.errors.map(e => e.message).join(', ');
@@ -1909,226 +1348,113 @@
                                     errorDiv.style.display = 'block';
                                 }
                                 
-                                // Reset submit button
                                 submitBtn.disabled = false;
                                 submitBtn.innerHTML = originalText;
                             }
                         } catch (error) {
-                            console.error('Payment tokenization error:', error);
-                            
                             const errorDiv = document.getElementById('card-errors');
                             if (errorDiv) {
                                 errorDiv.textContent = 'Payment processing error. Please try again.';
                                 errorDiv.style.display = 'block';
                             }
                             
-                            // Reset submit button
                             submitBtn.disabled = false;
                             submitBtn.innerHTML = originalText;
                         }
                     });
                 }
-                  } catch (error) {
-                console.error('Error initializing Square payments:', error);
-                
-                // Fallback: show error message
+            } catch (error) {
                 const cardElement = document.getElementById('card-element');
                 if (cardElement) {
-                    cardElement.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;"><p><i class="fas fa-exclamation-triangle"></i> Payment form could not load.</p><p style="font-size: 0.9rem; margin-top: 10px;">Please refresh the page and try again.</p></div>';
+                    cardElement.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;"><p><i class="fas fa-exclamation-triangle"></i> Payment form could not load.</p></div>';
                 }
             }
-        }          // Initialize Square Web Payments SDK for existing customer card addition
-        async function initializeSquarePaymentsForExistingCustomer() {
-  const appId = '<%= process.env.SQ_APPLICATION_ID %>';
-  const locationId = '<%= process.env.SQ_LOCATION_ID %>';
-
-  console.log('[Square Init] Starting payment form setup...');
-
-  if (!appId || !locationId || typeof window.Square === 'undefined') {
-    console.error('[Square Init] Missing App ID, Location ID, or Square SDK');
-    return;
-  }
-
-  const waitForElement = async (selector, timeout = 3000) => {
-    const start = Date.now();
-    while (Date.now() - start < timeout) {
-      const el = document.querySelector(selector);
-      if (el && el.offsetParent !== null) return el;
-      await new Promise(res => setTimeout(res, 100));
-    }
-    throw new Error(`[Square Init] Element ${selector} not visible in time`);
-  };
-
-  try {
-    const cardElement = await waitForElement('#existing-card-element');
-    const payments = window.Square.payments(appId, locationId);    const card = await payments.card({ includeInputLabels: true });
-
-    // Clear initial placeholder content
-    cardElement.textContent = '';
-    await card.attach('#existing-card-element');
-    console.log('[Square Init] Card element attached');
-    
-    // Immediately attach event listener after successful attachment
-    console.log('🔧 [ExistingCustomer] Attaching change event listener...');
-    card.addEventListener('change', (event) => {
-      const submitBtn = document.getElementById('existingCustomerSubmitBtn');
-      const errorDiv = document.getElementById('existing-card-errors');
-
-      console.log('🔧 [ExistingCustomer] Card validation event:', event);
-      console.log('🔧 [ExistingCustomer] Event errors:', event.errors);
-      console.log('🔧 [ExistingCustomer] Event complete:', event.complete);
-
-      if (event.errors && event.errors.length > 0) {
-        // Show error messages
-        const errorMessage = event.errors.map(e => e.message).join(', ');
-        errorDiv.textContent = errorMessage;
-        errorDiv.style.display = 'block';
-
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
-        submitBtn.style.opacity = '0.6';
-        console.log('🔴 [ExistingCustomer] Button disabled due to validation errors');
-      } else if (event.complete) {
-        // Card details are complete and valid
-        errorDiv.style.display = 'none';
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
-        submitBtn.style.opacity = '1';
-        console.log('✅ [ExistingCustomer] Button enabled - card details complete and valid');
-      } else {
-        // Card details incomplete but no errors yet
-        errorDiv.style.display = 'none';
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
-        submitBtn.style.opacity = '0.6';
-        console.log('🟡 [ExistingCustomer] Button disabled - card details incomplete');
-      }
-    });
-    console.log('✅ [ExistingCustomer] Change event listener attached');
-    
-    // Add enhanced debugging to verify form is interactive
-    setTimeout(() => {
-      const cardEl = document.getElementById('existing-card-element');
-      console.log('🔍 [ExistingCustomer] Card element after attach:', cardEl);
-      console.log('🔍 [ExistingCustomer] Card element children:', cardEl.children.length);
-      console.log('🔍 [ExistingCustomer] Card element iframes:', cardEl.querySelectorAll('iframe').length);
-      
-      if (cardEl.querySelectorAll('iframe').length === 0) {
-        console.error('❌ [ExistingCustomer] No iframes found - Square form may not have rendered');
-      } else {
-        console.log('✅ [ExistingCustomer] Square form iframes detected');      }
-    }, 2000);
-
-    // Add debug functions to window for manual testing
-    window.enableExistingCustomerButton = function() {
-      const submitBtn = document.getElementById('existingCustomerSubmitBtn');
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
-        submitBtn.style.opacity = '1';
-        console.log('🔧 [Debug] Manually enabled existing customer submit button');
-      }
-    };
-    
-    window.testCardValidation = function() {
-      console.log('🔧 [Debug] Testing card validation...');
-      const submitBtn = document.getElementById('existingCustomerSubmitBtn');
-      const errorDiv = document.getElementById('existing-card-errors');
-      
-      // Simulate a complete card event
-      console.log('🔧 [Debug] Simulating complete card event');
-      errorDiv.style.display = 'none';
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
-      submitBtn.style.opacity = '1';      console.log('✅ [Debug] Button should now be enabled');
-    };
-      window.checkFormElements = function() {
-      console.log('🔍 [Debug] Checking form elements...');
-      const elements = {
-        form: document.getElementById('existingCustomerForm'),
-        submitBtn: document.getElementById('existingCustomerSubmitBtn'),
-        cardElement: document.getElementById('existing-card-element'),
-        errorDiv: document.getElementById('existing-card-errors'),
-        cardNonce: document.getElementById('existingCardNonce')
-        // Note: Postal code is handled by Square form internally
-      };
-      
-      Object.entries(elements).forEach(([name, element]) => {
-        console.log(`${element ? '✅' : '❌'} ${name}:`, element);
-      });
-      
-      return elements;
-    };// Get form elements (declared once here)
-    const form = document.getElementById('existingCustomerForm');
-    const submitBtn = document.getElementById('existingCustomerSubmitBtn');
-    
-    // Note: Postal code is collected by Square form automatically with includeInputLabels: true
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const errorDiv = document.getElementById('existing-card-errors');
-
-      // Debug: Check if elements exist
-      console.log('🔧 [ExistingCustomer] Form submission - checking elements...');
-      console.log('🔧 [ExistingCustomer] Error div element:', errorDiv);
-      console.log('🔧 [ExistingCustomer] Submit button element:', submitBtn);
-
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="loading-spinner"></span> Saving Card...';      try {
-        console.log('🔧 [ExistingCustomer] Tokenizing with Square built-in postal code...');        const tokenResult = await card.tokenize({
-          intent: 'STORE', // Square collects postal code automatically with includeInputLabels: true
-          // Required verification details for STORE intent (flattened structure)
-          billingContact: {}, // Empty object since Square form collects billing info
-          customerInitiated: true, // Customer is entering their own card details
-          sellerKeyedIn: false // Customer is entering details, not seller
-        });if (tokenResult.status === 'OK') {
-          document.getElementById('existingCardNonce').value = tokenResult.token;
-          
-          // Debug: Log the cardNonce value for existing customer
-          console.log('🧾 [ExistingCustomer] Submitting form with cardNonce:', tokenResult.token);
-          
-          // Add fallback timeout to prevent hanging
-          const submissionTimeout = setTimeout(() => {
-            console.warn('⚠️ [ExistingCustomer] Form submission timeout - re-enabling button');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
-            alert('Submission is taking longer than expected. Please try again.');
-          }, 30000); // 30 second timeout
-          
-          form.submit();
-          
-          // Clear timeout if submission happens quickly
-          clearTimeout(submissionTimeout);
-        } else {
-          const msg = tokenResult.errors.map(e => e.message).join(', ');
-          errorDiv.textContent = msg || 'Card validation failed';
-          errorDiv.style.display = 'block';
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
         }
-      } catch (err) {
-        console.error('[Square Init] Tokenization failed', err);
-        errorDiv.textContent = 'Payment error. Please try again.';
-        errorDiv.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
-      }
-    });
 
-  } catch (err) {
-    console.error('[Square Init] Error:', err);
-    const el = document.getElementById('existing-card-element');
-    if (el) {
-      el.innerHTML = `
-        <div style="color: #dc3545; padding: 1em; border: 1px dashed #dc3545; border-radius: 4px;">
-          <p><i class="fas fa-exclamation-triangle"></i> Payment form failed to load.</p>
-          <p style="font-size: 0.9em;">${err.message}</p>
-        </div>`;
-    }
-  }
-}
+        async function initializeSquarePaymentsForExistingCustomer() {
+            const appId = '<%= process.env.SQ_APPLICATION_ID %>';
+            const locationId = '<%= process.env.SQ_LOCATION_ID %>';
 
+            if (!appId || !locationId || typeof window.Square === 'undefined') return;
+
+            try {
+                const payments = window.Square.payments(appId, locationId);
+                const card = await payments.card({ includeInputLabels: true });
+
+                const cardElement = document.getElementById('existing-card-element');
+                if (cardElement && cardElement.textContent.trim() === 'Loading...') {
+                    cardElement.textContent = '';
+                }
+                
+                await card.attach('#existing-card-element');
+                
+                card.addEventListener('change', (event) => {
+                    const submitBtn = document.getElementById('existingCustomerSubmitBtn');
+                    const errorDiv = document.getElementById('existing-card-errors');
+
+                    if (event.errors && event.errors.length > 0) {
+                        const errorMessage = event.errors.map(e => e.message).join(', ');
+                        errorDiv.textContent = errorMessage;
+                        errorDiv.style.display = 'block';
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+                        submitBtn.style.opacity = '0.6';
+                    } else if (event.complete) {
+                        errorDiv.style.display = 'none';
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+                        submitBtn.style.opacity = '1';
+                    } else {
+                        errorDiv.style.display = 'none';
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Add Payment Method to Continue';
+                        submitBtn.style.opacity = '0.6';
+                    }
+                });
+
+                // Form submission with Square integration
+                const form = document.getElementById('existingCustomerForm');
+                const submitBtn = document.getElementById('existingCustomerSubmitBtn');
+                
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const errorDiv = document.getElementById('existing-card-errors');
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="loading-spinner"></span> Saving Card...';
+
+                    try {
+                        const tokenResult = await card.tokenize({
+                            intent: 'STORE',
+                            billingContact: {},
+                            customerInitiated: true,
+                            sellerKeyedIn: false
+                        });
+
+                        if (tokenResult.status === 'OK') {
+                            document.getElementById('existingCardNonce').value = tokenResult.token;
+                            form.submit();
+                        } else {
+                            const msg = tokenResult.errors?.map(e => e.message).join(', ') || 'Card validation failed';
+                            errorDiv.textContent = msg;
+                            errorDiv.style.display = 'block';
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+                        }
+                    } catch (err) {
+                        errorDiv.textContent = 'Payment error. Please try again.';
+                        errorDiv.style.display = 'block';
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Appointment';
+                    }
+                });
+            } catch (err) {
+                const el = document.getElementById('existing-card-element');
+                if (el) {
+                    el.innerHTML = '<div style="color: #dc3545; padding: 1em; border: 1px dashed #dc3545; border-radius: 4px;"><p><i class="fas fa-exclamation-triangle"></i> Payment form failed to load.</p></div>';
+                }
+            }
+        }
     </script>
 </body>
 </html>

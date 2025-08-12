@@ -13,6 +13,23 @@ const {
   getCustomerWithCards 
 } = require("../util/card-management");
 
+// Helper function to safely convert BigInt to Number
+function safeBigIntToNumber(value) {
+  if (typeof value === 'bigint') {
+    return Number(value);
+  }
+  if (typeof value === 'string') {
+    // Try to parse as BigInt first, then convert to Number
+    try {
+      return Number(BigInt(value));
+    } catch (e) {
+      // If that fails, try direct Number conversion
+      return Number(value);
+    }
+  }
+  return Number(value) || 0;
+}
+
 /**
  * GET /payment/customer/:customerId/cards
  * List all saved cards for a customer
@@ -22,13 +39,13 @@ router.get("/customer/:customerId/cards", async (req, res, next) => {
     const { customerId } = req.params;
     const customerWithCards = await getCustomerWithCards(customerId);
     
-    res.json({
+    res.json(safeBigIntToNumber({
       success: true,
       customer: customerWithCards.customer,
       cards: customerWithCards.cards,
       hasCards: customerWithCards.hasCards,
       enabledCards: customerWithCards.enabledCards
-    });
+    }));
   } catch (error) {
     console.error('Error fetching customer cards:', error);
     res.status(400).json({
