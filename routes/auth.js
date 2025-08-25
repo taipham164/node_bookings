@@ -146,12 +146,18 @@ router.post("/verify-firebase-token", async (req, res) => {
     
     const customer = customers[0];
     
-    req.session.authenticatedCustomer = {
+    // Convert customer data to safe format (no BigInt values)
+    const safeCustomerData = convertBigIntToNumber({
       id: customer.id,
       givenName: customer.givenName,
       familyName: customer.familyName,
       emailAddress: customer.emailAddress,
       phoneNumber: customer.phoneNumber,
+      version: customer.version
+    });
+    
+    req.session.authenticatedCustomer = {
+      ...safeCustomerData,
       loginTime: Date.now(),
       lastActivity: Date.now(),
       firebaseVerified: true,
@@ -498,16 +504,25 @@ router.post("/update-profile", async (req, res) => {
     
     console.log('Square customer updated successfully:', updatedCustomer.customer.id);
     
-    // Update session with fresh data from Square API response
-    req.session.authenticatedCustomer = {
-      ...customer,
+    // Convert Square API response to safe format before storing in session
+    const safeCustomerData = convertBigIntToNumber({
+      id: updatedCustomer.customer.id,
       givenName: updatedCustomer.customer.givenName,
       familyName: updatedCustomer.customer.familyName,
       emailAddress: updatedCustomer.customer.emailAddress || customer.emailAddress,
       phoneNumber: updatedCustomer.customer.phoneNumber || customer.phoneNumber,
-      lastActivity: Date.now(),
-      // Keep Square customer version for optimistic locking
       version: updatedCustomer.customer.version
+    });
+    
+    // Update session with safe data (no BigInt values)
+    req.session.authenticatedCustomer = {
+      ...customer,
+      ...safeCustomerData,
+      lastActivity: Date.now(),
+      // Keep existing session properties that aren't from Square API
+      loginTime: customer.loginTime,
+      firebaseVerified: customer.firebaseVerified,
+      sessionExpires: customer.sessionExpires
     };
     
     console.log('Session updated with Square data');
@@ -545,15 +560,21 @@ router.get("/refresh-profile", async (req, res) => {
     // Fetch fresh customer data from Square
     const { result: { customer: freshCustomerData } } = await customersApi.retrieveCustomer(customer.id);
     
-    // Update session with latest Square data
-    req.session.authenticatedCustomer = {
-      ...customer,
+    // Convert to safe format before storing in session
+    const safeCustomerData = convertBigIntToNumber({
+      id: freshCustomerData.id,
       givenName: freshCustomerData.givenName,
       familyName: freshCustomerData.familyName,
       emailAddress: freshCustomerData.emailAddress,
       phoneNumber: freshCustomerData.phoneNumber,
-      lastActivity: Date.now(),
       version: freshCustomerData.version
+    });
+    
+    // Update session with latest Square data (safe format)
+    req.session.authenticatedCustomer = {
+      ...customer,
+      ...safeCustomerData,
+      lastActivity: Date.now()
     };
     
     res.redirect('/auth/appointments?success=profile_refreshed');
@@ -840,13 +861,97 @@ router.get("/customer/:customerId/cards", async (req, res) => {
 });
 
 /**
+ * GET /auth/check-customer/:phoneNumber
+ * Check if a customer exists with the given phone number
+ */
+router.get("/check-customer/:phoneNumber", async (req, res) => {
+  try {
+    const { phoneNumber } = req.params;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({ 
+        exists: false, 
+        error: 'Phone number is required' 
+      });
+    }
+    
+    // Decode URL-encoded phone number (%2B becomes +)
+    const decodedPhone = decodeURIComponent(phoneNumber);
+    const normalizedPhone = normalizePhoneNumber(decodedPhone);
+    
+    if (!/^\+\d{10,15}$/.test(normalizedPhone)) {
+      return res.status(400).json({ 
+        exists: false, 
+        error: 'Invalid phone number format' 
+      });
+    }
+    
+    console.log('Checking customer existence for phone:', normalizedPhone);
+    
+    if (!customersApi) {
+      return res.status(500).json({ 
+        exists: false, 
+        error: 'Square API not configured' 
+      });
+    }
+    
+    // Search for customer by phone number
+    const { result: { customers } } = await customersApi.searchCustomers({
+      query: {
+        filter: {
+          phoneNumber: {
+            exact: normalizedPhone
+          }
+        }
+      }
+    });
+    
+    if (customers && customers.length > 0) {
+      const customer = customers[0];
+      
+      // Convert to safe format for JSON response
+      const safeCustomerData = convertBigIntToNumber({
+        id: customer.id,
+        givenName: customer.givenName,
+        familyName: customer.familyName,
+        emailAddress: customer.emailAddress,
+        phoneNumber: customer.phoneNumber
+      });
+      
+      res.json({
+        exists: true,
+        customer: safeCustomerData
+      });
+    } else {
+      res.json({
+        exists: false,
+        message: 'No customer found with this phone number'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error checking customer existence:', error);
+    res.status(500).json({
+      exists: false,
+      error: 'Server error while checking customer'
+    });
+  }
+});
+
+/**
  * POST /auth/logout
  */
 router.post("/logout", (req, res) => {
-  if (req.session) {
-    delete req.session.authenticatedCustomer;
+  if (req.session?.authenticatedCustomer) {
+    const customer = req.session.authenticatedCustomer;
+    if (req.session) {
+      delete req.session.authenticatedCustomer;
+    } else {
+      res.json({ success: true, sessionValid: true });
+    }
+  } else {
+    res.json({ success: false, sessionValid: false });
   }
-  res.redirect('/services');
 });
 
 /**
@@ -855,10 +960,10 @@ router.post("/logout", (req, res) => {
 router.post("/ping", (req, res) => {
   if (req.session?.authenticatedCustomer) {
     const customer = req.session.authenticatedCustomer;
+    customer.lastActivity = Date.now();
+    req.session.authenticatedCustomer = customer;
     
     if (!customer.sessionExpires || Date.now() < customer.sessionExpires) {
-      customer.lastActivity = Date.now();
-      req.session.authenticatedCustomer = customer;
       res.json({ success: true, sessionValid: true });
     } else {
       delete req.session.authenticatedCustomer;

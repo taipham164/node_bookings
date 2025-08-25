@@ -31,7 +31,12 @@ router.use("/auth", authRoute); // Add auth routes
 router.use("/customer", customerRoute); // Add customer routes
 router.use("/payment", paymentRoute); // Add payment routes
 
-
+/**
+ * Handle favicon requests to prevent 404 errors
+ */
+router.get('/favicon.ico', (req, res) => {
+  res.status(204).end(); // No content response
+});
 
 /**
  * GET /
