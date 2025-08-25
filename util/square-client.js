@@ -37,6 +37,10 @@ const {
   paymentsApi
 } = new Client(config);
 
+// Remove this duplicate line if it exists:
+// const cardsApi = new CardsApi(squareClient);
+
+// Make sure cardsApi is only declared once and properly exported
 module.exports = {
   bookingsApi,
   catalogApi,

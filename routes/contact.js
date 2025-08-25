@@ -218,7 +218,11 @@ router.get("/", async (req, res) => {
       policyTerms,
       bookingConfig,
       requiresApproval: bookingConfig.booking.requiresApproval,
-      bookingFlow: bookingConfig.flow
+      bookingFlow: bookingConfig.flow,
+      // Add Square configuration for payment processing
+      squareAppId: process.env.SQ_APPLICATION_ID,
+      squareLocationId: process.env.SQ_LOCATION_ID,
+      squareEnvironment: process.env.SQ_ENVIRONMENT || 'sandbox'
     });
     
   } catch (error) {

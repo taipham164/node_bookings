@@ -188,16 +188,5 @@ router.post("/charge-saved-card", async (req, res) => {
   }
 });
 
-/**
- * GET /test
- * Test endpoint for payment integration
- */
-router.get("/test", (req, res) => {
-  res.json({
-    success: true,
-    message: "Payment API is working",
-    timestamp: new Date().toISOString()
-  });
-});
 
 module.exports = router;
