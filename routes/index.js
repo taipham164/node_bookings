@@ -20,10 +20,7 @@ const servicesRoute = require("./services");
 const staffRoute = require("./staff");
 const authRoute = require("./auth"); // Add the new auth route
 const customerRoute = require("./customer"); // Add the new customer route
-const testPolicyRoute = require("./test-policy"); // Add the test policy route
 const paymentRoute = require("./payment"); // Add the payment route
-const testBookingPolicyRoute = require("./test-booking-policy"); // Add booking policy test route
-const debugBookingRoute = require("./debug-booking"); // Add debug booking route
 
 router.use("/availability", availabilityRoute);
 router.use("/contact", contactRoute);
@@ -32,45 +29,9 @@ router.use("/staff", staffRoute);
 router.use("/booking", bookingRoute);
 router.use("/auth", authRoute); // Add auth routes
 router.use("/customer", customerRoute); // Add customer routes
-router.use("/test-policy", testPolicyRoute); // Add test policy route
 router.use("/payment", paymentRoute); // Add payment routes
-router.use("/test-booking-policy", testBookingPolicyRoute); // Add booking policy test route
-router.use("/debug", debugBookingRoute); // Add debug booking route
 
-// Debug route for Square payment form
-router.get("/square-debug", function(req, res, next) {
-  res.render("pages/square-debug", {
-    title: "Square Payment Debug"
-  });
-});
 
-// Minimal debug route for Square payment form
-router.get("/square-debug-minimal", function(req, res, next) {
-  res.render("pages/square-debug-minimal", {
-    title: "Square Debug Minimal"
-  });
-});
-
-// Sandbox test route for Square payment form
-router.get("/square-sandbox-test", function(req, res, next) {
-  res.render("pages/square-sandbox-test", {
-    title: "Square Sandbox Test"
-  });
-});
-
-// Test route for availability layout
-router.get('/test-availability', (req, res) => {
-  res.render('pages/availability-test', {
-    location: { businessName: 'Test Business' }
-  });
-});
-
-// Test route for Square payment form
-router.get("/square-test", function(req, res, next) {
-  res.render("pages/square-test", {
-    title: "Square Payment Test"
-  });
-});
 
 /**
  * GET /

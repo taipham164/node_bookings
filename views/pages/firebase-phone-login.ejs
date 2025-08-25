@@ -22,19 +22,55 @@
     
     <style>
         .login-container {
-            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             align-items: center;
+            justify-content: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
         }
+        
+        .container {
+            width: auto !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        .row {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: auto !important;
+        }
+        
+        .col-md-6 {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: auto !important;
+            flex: none !important;
+            max-width: none !important;
+        }
+        
         .login-card {
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
-            max-width: 400px;
-            width: 100%;
+            width: 400px !important;
+            min-width: 400px !important;
+            max-width: 400px !important;
+            margin: 0 !important;
+            position: relative;
         }
+        
+        /* Remove explicit reCAPTCHA styling to allow normal behavior */
+        /* The reCAPTCHA will now work normally - hidden badge that expands when clicked */
+        
         .login-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -124,140 +160,191 @@
             margin-bottom: 20px;
             text-align: center;
         }
+
+        /* Mobile responsive - only change width for very small screens */
+        @media (max-width: 450px) {
+            .login-card {
+                width: 350px !important;
+                min-width: 350px !important;
+                max-width: 350px !important;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .login-card {
+                width: 320px !important;
+                min-width: 320px !important;
+                max-width: 320px !important;
+            }
+        }
+        
+        @media (max-width: 350px) {
+            .login-card {
+                width: 300px !important;
+                min-width: 300px !important;
+                max-width: 300px !important;
+            }
+        }
+        
+        /* Remove any Bootstrap responsive behavior that might interfere */
+        @media (min-width: 768px) {
+            .login-card {
+                width: 400px !important;
+                min-width: 400px !important;
+                max-width: 400px !important;
+            }
+        }
+        
+        @media (min-width: 992px) {
+            .login-card {
+                width: 400px !important;
+                min-width: 400px !important;
+                max-width: 400px !important;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .login-card {
+                width: 400px !important;
+                min-width: 400px !important;
+                max-width: 400px !important;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="login-card">
-                        <div class="login-header">
-                            <h2><i class="fas fa-mobile-alt me-2"></i>Phone Login</h2>
-                            <p class="mb-0">Access your appointments with your phone number</p>
-                        </div>
-                        
-                        <div class="login-body">
-                            <!-- Step Indicator -->
-                            <div class="step-indicator">
-                                <div class="step active" id="step1">1</div>
-                                <div class="step" id="step2">2</div>
-                            </div>
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-mobile-alt"></i>
+                <h2>Phone Verification</h2>
+                <p>Enter your phone number to access your appointments</p>
+                <div class="security-info">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Your session will remain active for 24 hours for your convenience
+                    </small>
+                </div>
+            </div>
+            
+            <div class="login-body">
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" id="step1">1</div>
+                    <div class="step" id="step2">2</div>
+                </div>
 
-                            <!-- Error Message -->
-                            <% if (error) { %>
-                                <div class="alert alert-danger" role="alert" id="error-alert">
-                                    <i class="fas fa-exclamation-triangle me-2"></i><%= error %>
-                                </div>
-                            <% } %>
+                <!-- Error Message -->
+                <% if (error) { %>
+                    <div class="alert alert-danger" role="alert" id="error-alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i><%= error %>
+                    </div>
+                <% } %>
 
-                            <!-- Success Message -->
-                            <div class="alert alert-success" role="alert" id="success-alert" style="display: none;">
-                                <i class="fas fa-check-circle me-2"></i>
-                                <span id="success-message"></span>
-                            </div>
+                <!-- Success Message -->
+                <div class="alert alert-success" role="alert" id="success-alert" style="display: none;">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span id="success-message"></span>
+                </div>
 
-                            <!-- Loading Indicator -->
-                            <div class="text-center loading" id="loading">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <div class="mt-2">
-                                    <small id="loading-message">Processing...</small>
-                                </div>
-                            </div>
+                <!-- Loading Indicator -->
+                <div class="text-center loading" id="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="mt-2">
+                        <small id="loading-message">Processing...</small>
+                    </div>
+                </div>
 
-                            <!-- Step 1: Phone Number Input -->
-                            <div id="phone-step">
-                                <div class="mb-4">
-                                    <label for="phoneNumber" class="form-label">
-                                        <i class="fas fa-phone me-2"></i>Phone Number
-                                    </label>
-                                    <input 
-                                        type="tel" 
-                                        class="form-control" 
-                                        id="phoneNumber" 
-                                        placeholder="(916) 123-4567"
-                                        autocomplete="tel"
-                                    >
-                                    <div class="form-text">
-                                        Enter the phone number associated with your appointments
-                                    </div>
-                                </div>
-                                
-                                <!-- Customer Info Display (hidden initially) -->
-                                <div class="customer-info" id="customer-info" style="display: none;">
-                                    <h6 class="mb-1">Account Found!</h6>
-                                    <div id="customer-name"></div>
-                                </div>                                <!-- reCAPTCHA Container -->
-                                <div id="recaptcha-container"></div>
-                                
-                                <button type="button" class="btn btn-primary" id="send-code-btn">
-                                    <i class="fas fa-paper-plane me-2"></i>
-                                    <span class="btn-text">Send Verification Code</span>
-                                    <span class="spinner-border spinner-border-sm ms-2 loading" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </span>
-                                </button>
-                            </div>
-
-                            <!-- Step 2: Verification Code Input (hidden initially) -->
-                            <div id="verification-step" style="display: none;">
-                                <div class="phone-display">
-                                    <h6 class="mb-1">Verification code sent to:</h6>
-                                    <strong id="display-phone"></strong>
-                                </div>
-
-                                <div class="mb-4">
-                                    <label for="verificationCode" class="form-label">
-                                        <i class="fas fa-key me-2"></i>Enter 6-Digit Code
-                                    </label>
-                                    <input 
-                                        type="text" 
-                                        class="form-control verification-code-input" 
-                                        id="verificationCode" 
-                                        placeholder="000000"
-                                        maxlength="6"
-                                        pattern="\d{6}"
-                                        autocomplete="one-time-code"
-                                    >
-                                    <div class="form-text">
-                                        Check your messages for the 6-digit verification code
-                                    </div>
-                                </div>
-                                
-                                <button type="button" class="btn btn-primary mb-3" id="verify-code-btn">
-                                    <i class="fas fa-sign-in-alt me-2"></i>
-                                    <span class="btn-text">Verify & Login</span>
-                                    <span class="spinner-border spinner-border-sm ms-2 loading" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </span>
-                                </button>
-
-                                <!-- Resend Code Option -->
-                                <div class="text-center">
-                                    <p class="mb-2">Didn't receive the code?</p>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="resend-code-btn">
-                                        <i class="fas fa-redo me-2"></i>Resend Code
-                                    </button>
-                                </div>
-
-                                <!-- Change Phone Number -->
-                                <div class="text-center mt-3">
-                                    <button type="button" class="btn btn-link text-muted" id="change-phone-btn">
-                                        <i class="fas fa-arrow-left me-2"></i>Use Different Phone Number
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Back to Booking -->
-                            <div class="text-center mt-4 pt-3 border-top">
-                                <a href="/services" class="text-muted">
-                                    <i class="fas fa-calendar-plus me-2"></i>Make New Appointment
-                                </a>
-                            </div>
+                <!-- Step 1: Phone Number Input -->
+                <div id="phone-step">
+                    <div class="mb-4">
+                        <label for="phoneNumber" class="form-label">
+                            <i class="fas fa-phone me-2"></i>Phone Number
+                        </label>
+                        <input 
+                            type="tel" 
+                            class="form-control" 
+                            id="phoneNumber" 
+                            placeholder="(916) 123-4567"
+                            autocomplete="tel"
+                        >
+                        <div class="form-text">
+                            Enter the phone number associated with your appointments
                         </div>
                     </div>
+                    
+                    <!-- Customer Info Display (hidden initially) -->
+                    <div class="customer-info" id="customer-info" style="display: none;">
+                        <h6 class="mb-1">Account Found!</h6>
+                        <div id="customer-name"></div>
+                    </div>                                <!-- reCAPTCHA Container -->
+                    <div id="recaptcha-container"></div>
+                    
+                    <button type="button" class="btn btn-primary" id="send-code-btn">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        <span class="btn-text">Send Verification Code</span>
+                        <span class="spinner-border spinner-border-sm ms-2 loading" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Step 2: Verification Code Input (hidden initially) -->
+                <div id="verification-step" style="display: none;">
+                    <div class="phone-display">
+                        <h6 class="mb-1">Verification code sent to:</h6>
+                        <strong id="display-phone"></strong>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="verificationCode" class="form-label">
+                            <i class="fas fa-key me-2"></i>Enter 6-Digit Code
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control verification-code-input" 
+                            id="verificationCode" 
+                            placeholder="000000"
+                            maxlength="6"
+                            pattern="\d{6}"
+                            autocomplete="one-time-code"
+                        >
+                        <div class="form-text">
+                            Check your messages for the 6-digit verification code
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary mb-3" id="verify-code-btn">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        <span class="btn-text">Verify & Login</span>
+                        <span class="spinner-border spinner-border-sm ms-2 loading" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </span>
+                    </button>
+
+                    <!-- Resend Code Option -->
+                    <div class="text-center">
+                        <p class="mb-2">Didn't receive the code?</p>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="resend-code-btn">
+                            <i class="fas fa-redo me-2"></i>Resend Code
+                        </button>
+                    </div>
+
+                    <!-- Change Phone Number -->
+                    <div class="text-center mt-3">
+                        <button type="button" class="btn btn-link text-muted" id="change-phone-btn">
+                            <i class="fas fa-arrow-left me-2"></i>Use Different Phone Number
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Back to Booking -->
+                <div class="text-center mt-4 pt-3 border-top">
+                    <a href="/services" class="text-muted">
+                        <i class="fas fa-calendar-plus me-2"></i>Make New Appointment
+                    </a>
                 </div>
             </div>
         </div>

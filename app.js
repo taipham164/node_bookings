@@ -71,10 +71,16 @@ app.use(express.urlencoded({
 
 app.use(cookieParser());
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  secret: process.env.SESSION_SECRET || 'your-session-secret-key-change-this-in-production',
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false } // Set to true if using HTTPS
+  saveUninitialized: false,
+  cookie: { 
+    secure: false, // Set to true in production with HTTPS
+    httpOnly: true, // Prevent XSS attacks
+    maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+    sameSite: 'lax' // CSRF protection
+  },
+  name: 'bookingSessionId' // Custom session name for security
 }));
 app.use("/", routes);
 
