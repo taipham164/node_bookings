@@ -14,147 +14,129 @@ limitations under the License.
 */
 
 const express = require("express");
-const logger = require("morgan");
+const morganLogger = require("morgan");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
-const app = express();
+// Validate environment variables early
+const { validateEnv, isProduction, getSecureFlag } = require("./util/envValidator");
+const { logger, requestLogger } = require("./util/logger");
 
-// Check that all required .env variables exist
-if (!process.env["ENVIRONMENT"]) {
-  console.error(".env file missing required field \"ENVIRONMENT\".");
-  process.exit(1);
-} else if (!process.env["SQ_ACCESS_TOKEN"]) {
-  console.error(".env file missing required field \"SQ_ACCESS_TOKEN\".");
-  process.exit(1);
-} else if (!process.env["SQ_LOCATION_ID"]) {
-  console.error(".env file missing required field \"SQ_LOCATION_ID\".");
-  process.exit(1);
-} else if (!process.env["SQ_APPLICATION_ID"]) {
-  console.error(".env file missing required field \"SQ_APPLICATION_ID\".");
-  console.error("This is required for Square Web Payments SDK to work.");
-  console.error("Please see SQUARE_APPLICATION_ID_SETUP.md for instructions.");
-  process.exit(1);
-} else if (process.env["SQ_APPLICATION_ID"].includes("PLACEHOLDER")) {
-  console.error("SQ_APPLICATION_ID contains placeholder value.");
-  console.error("Please replace with your actual Square Application ID.");
-  console.error("See SQUARE_APPLICATION_ID_SETUP.md for instructions.");
+let env;
+try {
+  env = validateEnv();
+} catch (error) {
+  logger.error(error.message);
   process.exit(1);
 }
 
+const app = express();
+
 const routes = require("./routes/index");
 const { locationsApi } = require("./util/square-client");
+const {
+  errorHandler,
+  notFoundHandler,
+  AsyncError
+} = require("./middleware/errorHandler");
+const { generateCsrfToken } = require("./middleware/authMiddleware");
+const { validateContentType } = require("./middleware/validation");
 
 // Get location information and store it in app.locals so it is accessible in all pages.
-locationsApi.retrieveLocation(process.env["SQ_LOCATION_ID"]).then(function(response) {
-  app.locals.location = response.result.location;
-}).catch(function(error) {
-  if (error.statusCode === 401) {
-    console.error("Configuration has failed. Please verify `.env` file is correct.");
-  }
-  process.exit(1);
-});
+locationsApi.retrieveLocation(process.env["SQ_LOCATION_ID"])
+  .then((response) => {
+    app.locals.location = response.result.location;
+    logger.info("Location information loaded successfully");
+  })
+  .catch((error) => {
+    if (error.statusCode === 401) {
+      logger.error("Configuration failed. Verify `.env` file is correct.");
+    } else {
+      logger.error("Failed to retrieve location information", { error: error.message });
+    }
+    process.exit(1);
+  });
 
-// set the view engine to ejs
+// Set the view engine to ejs
 app.set("view engine", "ejs");
 
-app.use(logger("dev"));
+// Configure trusted proxy for secure cookies behind reverse proxy
+app.set("trust proxy", 1);
 
+// Logging middleware
+app.use(morganLogger(isProduction() ? "combined" : "dev"));
+app.use(requestLogger());
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || "*",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"]
+}));
+
+// Security: Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: "Too many requests, please try again later",
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50, // stricter for API endpoints
+  skipSuccessfulRequests: true
+});
+
+app.use(limiter);
+app.use("/auth", apiLimiter);
+app.use("/booking", apiLimiter);
+app.use("/payment", apiLimiter);
+
+// Static files
 app.use(express.static(__dirname + "/public"));
 app.use("/web", express.static(__dirname + "/public/web"));
 
-app.use(express.json());
+// Request parsing with size limits
+app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({
-  extended: false
+  extended: false,
+  limit: "10kb"
 }));
+app.use(validateContentType);
 
 app.use(cookieParser());
+
+// Session configuration with security best practices
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-session-secret-key-change-this-in-production',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { 
-    secure: false, // Set to true in production with HTTPS
+  cookie: {
+    secure: getSecureFlag(), // true only in production with HTTPS
     httpOnly: true, // Prevent XSS attacks
     maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
-    sameSite: 'lax' // CSRF protection
+    sameSite: "lax", // CSRF protection
+    domain: process.env.COOKIE_DOMAIN || undefined
   },
-  name: 'bookingSessionId' // Custom session name for security
+  name: "bookingSessionId" // Custom session name for security
 }));
+
+// CSRF token generation middleware
+app.use(generateCsrfToken);
+
+// Routes
 app.use("/", routes);
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-  const err = new Error("Not Found");
-  err.status = 404;
-  next(err);
-});
+// 404 handler
+app.use(notFoundHandler);
 
-// error handlers
-// For simplicity, we print all error information
-app.use(function (err, req, res, next) {
-  res.status(err.status || 500);
-  // when errors is not iterable - return a generic 500 page
-  if (!err.errors || !err.errors.length) {
-    return res.render("pages/formatted-error", {
-      code: 500,
-      description: "Something went wrong",
-      shortDescription: "Internal Server Error",
-    });
-  }
-  // error when time slot is not available when creating a booking
-  const timeNotAvailable = err.errors.find(e => e.detail.match(/That time slot is no longer available/));
-  if (timeNotAvailable) {
-    return res.render("pages/formatted-error", {
-      code: err.statusCode,
-      description: "Opps! This appointment time is no longer available. Please try booking again.",
-      shortDescription: "Bad Request",
-    });
-  }
-  // error when the service version is stale when creating a booking
-  const staleVersion = err.errors.find(e => e.detail.match(/Stale version/));
-  if (staleVersion) {
-    return res.render("pages/formatted-error", {
-      code: err.statusCode,
-      description: "The service has been updated since selecting it. Please try booking it again.",
-      shortDescription: "Bad Request",
-    });
-  }
-  // error when the booking is past the cancellation period when cancelling a booking
-  const pastCancellationPeriod = err.errors.find(e => e.detail.match(/cannot cancel past cancellation period end/));
-  const endedCancellationPeriod = err.errors.find(e => e.detail.match(/The cancellation period for this booking has ended/));
-  if (pastCancellationPeriod || endedCancellationPeriod) {
-    return res.render("pages/formatted-error", {
-      code: err.statusCode,
-      description: "Sorry! The booking is past the cancellation period so cannot be cancelled or rescheduled.",
-      shortDescription: "Bad Request",
-    });
-  }
-  // if not found
-  if (err.statusCode === 404) {
-    return res.render("pages/formatted-error", {
-      code: err.statusCode,
-      description: "The resource was not found",
-      shortDescription: "Not Found",
-    });
-  }
-  // if fault
-  if (err.statusCode === 500) {
-    return res.render("pages/formatted-error", {
-      code: err.statusCode,
-      description: "Something went wrong",
-      shortDescription: "Internal Server Error",
-    });
-  }
-  // other errors
-  return res.render("pages/formatted-error", {
-    code: err.statusCode,
-    description: err.errors ? JSON.stringify(err.errors, (key, value) => 
-      typeof value === 'bigint' ? value.toString() : value, 4) : err.stack,
-    shortDescription: err.message,
-  });
-});
-
+// Unified error handler (must be last)
+app.use(errorHandler);
 
 module.exports = app;
