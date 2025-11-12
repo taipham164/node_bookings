@@ -13,6 +13,10 @@ module.exports = {
     "**/__tests__/**/*.js",
     "**/?(*.)+(spec|test).js"
   ],
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/__tests__/setup.js"
+  ],
   testTimeout: 10000,
   verbose: true,
   coverageThreshold: {
