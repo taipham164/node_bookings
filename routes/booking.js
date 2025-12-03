@@ -13,301 +13,161 @@ limitations under the License.
 
 const dateHelpers = require("../util/date-helpers");
 const { safeNumberConversion, safeJSONStringify, convertMsToMins, convertVersion, hasSquareError } = require("../util/bigint-helpers");
+const { normalizePhoneNumber, isValidPhoneNumber, isValidEmail, isValidPostalCode } = require("../util/validators");
+const { logger, logApiCall, logApiResponse } = require("../util/logger");
 const express = require("express");
 const router = express.Router();
 const {
   bookingsApi,
   catalogApi,
   customersApi,
-  cardsApi,
+  cardsApi
 } = require("../util/square-client");
+const { asyncHandler, ValidationError, SquareApiError } = require("../middleware/errorHandler");
 const crypto = require("crypto");
 
 require("dotenv").config();
 const locationId = process.env["SQ_LOCATION_ID"];
 
 /**
- * Normalize phone number to E.164 format for consistency
- * @param {string} phone - Raw phone number input
- * @returns {string} - Normalized phone number
- */
-function normalizePhoneNumber(phone) {
-  if (!phone) return null;
-  
-  // Remove all non-digits
-  const digits = phone.replace(/\D/g, '');
-  
-  // Add country code if missing (assuming US)
-  if (digits.length === 10) {
-    return `+1${digits}`;
-  } else if (digits.length === 11 && digits.startsWith('1')) {
-    return `+${digits}`;
-  }
-  
-  // Return as-is if already formatted or international
-  return `+${digits}`;
-}
-
-/**
  * POST /booking/create
- *
- * Create a new booking, booking details and customer information is submitted
- * by form data. Create a new customer if necessary, otherwise use an existing
- * customer that matches the `firstName`, `lastName` and `emailAddress`
- * to create the booking.
- *
- * accepted query params are:
- * `serviceId` - the ID of the service
- * `staffId` - the ID of the staff
- * `startAt` - starting time of the booking
- * `serviceVariationVersion` - the version of the service initially selected
+ * Create a new booking with customer information
  */
-router.post("/create", async (req, res, next) => {
-  try {
-    // Ensure session exists
-    if (!req.session) {
-      req.session = {};
-    }
-    
-    // Debug: log session at booking step
-    console.log('DEBUG: /booking/create session.selectedServices', req.session.selectedServices);
-    console.log('DEBUG: /booking/create session.quantities', req.session.quantities);
-    
-    // Multi-service support: prefer session if not present in body
-    let selectedServices = req.body["services[]"] || req.body.services;
-    
-    // Fallback to session if not present in body (e.g., user navigates directly to booking)
-    if (!selectedServices && req.session.selectedServices) {
-      selectedServices = req.session.selectedServices;
-    } else if (!selectedServices) {
-      selectedServices = [req.query.serviceId];
-    }
-    
-    const serviceVariationVersion = req.query.version;
-    const staffId = req.query.staffId;
-    const startAt = req.query.startAt;    // Handle customerNote from either existing or new customer forms
-    const customerNote = req.body.existingCustomerNote || req.body.serviceNote || "";// Handle both new and existing customer data
-    const customerId = req.body.customerId; // For existing customers
-    const emailAddress = req.body.emailAddress;
-    const familyName = req.body.familyName;
-    const givenName = req.body.givenName;
-    const phoneNumber = req.body.phoneNumber; // This should always be present now
-    
-    // Debug: Log all customer data received
-    console.log('DEBUG: Customer data received:', {
-      customerId,
-      emailAddress,
-      familyName,
-      givenName,
-      phoneNumber
-    });
-      // Handle card information for new customers
-    const cardNonce = req.body.cardNonce; // Square SDK tokenized card data
-    const postalCode = req.body.postalCode; // For billing address
-
-    // Validate phone number (required in new flow)
-    if (!phoneNumber || !phoneNumber.trim()) {
-      return res.render("pages/formatted-error", { 
-        error: "Phone number is required. Please go back and enter your phone number." 
-      });
-    }    // For existing customers, we might have customerId but still need basic validation
-    if (customerId) {
-      console.log('Processing booking for existing customer:', customerId);
-      // For existing customers, we already have their info, just validate phone
-      const normalizedPhone = normalizePhoneNumber(phoneNumber.trim());
-      if (!normalizedPhone) {
-        return res.render("pages/formatted-error", { 
-          error: "Please enter a valid phone number." 
-        });
-      }
-    } else {
-      // For new customers, validate all required fields including card information
-      if (!emailAddress || !familyName || !givenName) {
-        return res.render("pages/formatted-error", { 
-          error: "Please fill in all required fields: name and email address." 
-        });
-      }
-      
-      // Email validation for new customers
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(emailAddress)) {
-        return res.render("pages/formatted-error", { 
-          error: "Please enter a valid email address." 
-        });
-      }
-        // Card validation for new customers - using Square SDK nonce
-      if (!cardNonce) {
-        return res.render("pages/formatted-error", { 
-          error: "Please provide valid payment information." 
-        });
-      }
-      
-      // Postal code validation
-      if (!postalCode || postalCode.length < 5) {
-        return res.render("pages/formatted-error", { 
-          error: "Please enter a valid postal code." 
-        });
-      }
-        console.log('Processing booking for new customer with card information');
-    }
-
-    // Phone number validation and normalization
-    const normalizedPhone = normalizePhoneNumber(phoneNumber.trim());
-    const phoneRegex = /^\+\d{10,15}$/;
-    if (!phoneRegex.test(normalizedPhone)) {
-      return res.render("pages/formatted-error", { 
-        error: "Please enter a valid phone number." 
-      });
-    }
-
-    // Debug logs for service selection and quantities
-    console.log('DEBUG: selectedServices', selectedServices);
-    
-    // If multiple services, create appointment segments for each
-    let appointmentSegments = [];
-    const serviceIds = Array.isArray(selectedServices) ? selectedServices : [selectedServices];
-    
-    for (const serviceId of serviceIds) {
-      // Retrieve catalog object by the variation ID
-      const { result: { object: catalogItemVariation } } = await catalogApi.retrieveCatalogObject(serviceId);
-      const durationMinutes = convertMsToMins(catalogItemVariation.itemVariationData.serviceDuration);
-      const version = convertVersion(catalogItemVariation.version); // Safe conversion for BigInt
-      
-      appointmentSegments.push({
-        durationMinutes,
-        serviceVariationId: serviceId,
-        serviceVariationVersion: version,
-        teamMemberId: staffId,
-      });
-    }
-    
-    if (appointmentSegments.length === 0) {
-      // No valid services selected
-      return res.render("pages/formatted-error", { error: "No valid services selected for booking." });
-    }
-    
-    // Debug: print appointmentSegments before booking (with BigInt handling)
-    console.log('DEBUG: appointmentSegments', safeJSONStringify(appointmentSegments));    // Determine customer ID - use existing customer ID or create new customer
-    let finalCustomerId;
-    if (customerId) {
-      // Use existing customer
-      finalCustomerId = customerId;
-      console.log('Using existing customer ID:', finalCustomerId);
-      
-      // For existing customers, check if they provided a card nonce (new card to save)
-      if (cardNonce) {
-        try {
-          console.log('Saving new card for existing customer using nonce:', finalCustomerId);
-          
-          // Create card on file using the tokenized nonce
-          const { result } = await cardsApi.createCard({
-            idempotencyKey: crypto.randomUUID(),
-            sourceId: cardNonce, // The nonce from Square Web Payments SDK
-            card: {
-              customerId: finalCustomerId,
-              billingAddress: {
-                postalCode: postalCode,
-                country: 'US'
-              }
-            }
-          });
-          
-          console.log('Card saved successfully for existing customer with ID:', result.card.id);
-        } catch (cardError) {
-          console.error('Error saving card for existing customer:', cardError);
-          // Don't fail the booking if card saving fails
-        }
-      } else {
-        console.log('Existing customer using saved payment method on file');
-      }
-    } else {
-      // Create new customer
-      finalCustomerId = await getCustomerID(givenName, familyName, emailAddress, normalizedPhone);
-      console.log('Created new customer ID:', finalCustomerId);      // For new customers, save their card using the nonce from Square SDK
-      if (cardNonce) {
-        try {
-          console.log('Saving card for new customer using nonce:', finalCustomerId);
-          
-          // Create card on file using the tokenized nonce (following Square API pattern)
-          const { result } = await cardsApi.createCard({
-            idempotencyKey: crypto.randomUUID(),
-            sourceId: cardNonce, // The nonce from Square Web Payments SDK
-            card: {
-              customerId: finalCustomerId,
-              billingAddress: {
-                postalCode: postalCode,
-                country: 'US'
-              }
-            }
-          });
-          
-          console.log('Card saved successfully with ID:', result.card.id);
-        } catch (cardError) {
-          console.error('Error saving card with nonce:', cardError);
-          // Don't fail the booking if card saving fails
-        }
-      }
-    }// Create booking with source tracking
-    const { result: { booking } } = await bookingsApi.createBooking({
-      booking: {
-        appointmentSegments,
-        customerId: finalCustomerId,
-        customerNote,
-        locationId,
-        startAt,
-        // Note: Removing source field as CUSTOM_APP is not a valid enum value
-        // The booking will be tracked via other means (user-agent header, etc.)
-      },
-      idempotencyKey: crypto.randomUUID(),
-    });
-    
-    res.redirect("/booking/" + booking.id);
-  } catch (error) {
-    // Handle invalid email error gracefully using safe error checking
-    if (hasSquareError(error, 'INVALID_VALUE', 'email')) {
-      // Fetch actual service details for better UX
-      let serviceDetails = [];
-      if (req.session?.selectedServices?.length) {
-        for (const sid of req.session.selectedServices) {
-          try {
-            const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
-            const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
-            serviceDetails.push({
-              id: sid,
-              name: item.itemData.name + (variation.itemVariationData.name ? (" - " + variation.itemVariationData.name) : ""),
-              duration: variation.itemVariationData.serviceDuration
-            });
-          } catch (e) {
-            serviceDetails.push({ id: sid, name: '[Service unavailable]', duration: 0 });
-          }
-        }
-      }
-      
-      return res.render("pages/contact", {
-        serviceDetails,
-        selectedServices: req.session.selectedServices || [],
-        teamMemberBookingProfile: req.session.teamMemberBookingProfile || {},
-        serviceVariation: req.session.serviceVariation || {},
-        serviceVersion: req.query.version || '',
-        startAt: req.query.startAt || '',
-        location: req.app.locals.location,
-        error: 'The provided email address is invalid. Please enter a valid email address.'
-      });
-    }
-    
-    // Log the full error for debugging
-    console.error('Booking creation error:', error);
-    
-    // Generic error handling
-    if (error.message) {
-      return res.render("pages/formatted-error", { 
-        error: `Booking failed: ${error.message}` 
-      });
-    }
-    
-    next(error);
+router.post("/create", asyncHandler(async (req, res, next) => {
+  // Ensure session exists
+  if (!req.session) {
+    req.session = {};
   }
-});
+
+  // Multi-service support: prefer session if not present in body
+  let selectedServices = req.body["services[]"] || req.body.services;
+  if (!selectedServices && req.session.selectedServices) {
+    selectedServices = req.session.selectedServices;
+  } else if (!selectedServices) {
+    selectedServices = [req.query.serviceId];
+  }
+
+  const staffId = req.query.staffId;
+  const startAt = req.query.startAt;
+  const customerNote = req.body.existingCustomerNote || req.body.serviceNote || "";
+  const customerId = req.body.customerId;
+  const emailAddress = req.body.emailAddress;
+  const familyName = req.body.familyName;
+  const givenName = req.body.givenName;
+  const phoneNumber = req.body.phoneNumber;
+  const cardNonce = req.body.cardNonce;
+  const postalCode = req.body.postalCode;
+
+  // Validate phone number
+  if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
+    throw new ValidationError("Please enter a valid phone number.");
+  }
+
+  // Validate new customer fields if creating new customer
+  if (!customerId) {
+    if (!givenName || !familyName) {
+      throw new ValidationError("Please fill in all required fields: name and email address.");
+    }
+    if (!isValidEmail(emailAddress)) {
+      throw new ValidationError("Please enter a valid email address.");
+    }
+    if (!cardNonce) {
+      throw new ValidationError("Please provide valid payment information.");
+    }
+    if (!isValidPostalCode(postalCode)) {
+      throw new ValidationError("Please enter a valid postal code.");
+    }
+  }
+
+  const normalizedPhone = normalizePhoneNumber(phoneNumber.trim());
+  logger.info("Creating booking", { customerId: customerId || "new", staffId });
+
+  // Build appointment segments for multiple services
+  const appointmentSegments = [];
+  const serviceIds = Array.isArray(selectedServices) ? selectedServices : [selectedServices];
+
+  for (const serviceId of serviceIds) {
+    logApiCall("catalogApi.retrieveCatalogObject", "GET", { serviceId });
+    const { result: { object: catalogItemVariation } } = await catalogApi.retrieveCatalogObject(serviceId);
+    const durationMinutes = convertMsToMins(catalogItemVariation.itemVariationData.serviceDuration);
+    const version = convertVersion(catalogItemVariation.version);
+
+    appointmentSegments.push({
+      durationMinutes,
+      serviceVariationId: serviceId,
+      serviceVariationVersion: version,
+      teamMemberId: staffId
+    });
+  }
+
+  if (appointmentSegments.length === 0) {
+    throw new ValidationError("No valid services selected for booking.");
+  }
+
+  // Determine customer ID
+  let finalCustomerId;
+  if (customerId) {
+    finalCustomerId = customerId;
+    logger.info("Using existing customer", { customerId });
+
+    // Save new card for existing customer if provided
+    if (cardNonce) {
+      try {
+        logApiCall("cardsApi.createCard", "POST", { customerId });
+        await cardsApi.createCard({
+          idempotencyKey: crypto.randomUUID(),
+          sourceId: cardNonce,
+          card: {
+            customerId: finalCustomerId,
+            billingAddress: { postalCode, country: "US" }
+          }
+        });
+        logger.info("Card saved for existing customer", { customerId });
+      } catch (cardError) {
+        logger.warn("Failed to save card for existing customer", { customerId, error: cardError.message });
+        // Don't fail the booking if card saving fails
+      }
+    }
+  } else {
+    // Create new customer
+    finalCustomerId = await getCustomerID(givenName, familyName, emailAddress, normalizedPhone);
+    logger.info("Created new customer", { customerId: finalCustomerId });
+
+    // Save card for new customer
+    if (cardNonce) {
+      try {
+        logApiCall("cardsApi.createCard", "POST", { customerId: finalCustomerId });
+        await cardsApi.createCard({
+          idempotencyKey: crypto.randomUUID(),
+          sourceId: cardNonce,
+          card: {
+            customerId: finalCustomerId,
+            billingAddress: { postalCode, country: "US" }
+          }
+        });
+        logger.info("Card saved for new customer", { customerId: finalCustomerId });
+      } catch (cardError) {
+        logger.warn("Failed to save card for new customer", { customerId: finalCustomerId, error: cardError.message });
+      }
+    }
+  }
+
+  // Create booking
+  logApiCall("bookingsApi.createBooking", "POST", { customerId: finalCustomerId, staffId });
+  const { result: { booking } } = await bookingsApi.createBooking({
+    booking: {
+      appointmentSegments,
+      customerId: finalCustomerId,
+      customerNote,
+      locationId,
+      startAt
+    },
+    idempotencyKey: crypto.randomUUID()
+  });
+
+  logger.info("Booking created successfully", { bookingId: booking.id });
+  res.redirect("/booking/" + booking.id);
+}));
 
 /**
  * POST /booking/:bookingId/reschedule
