@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/stylesheets/style.css">
+  <link rel="stylesheet" href="/stylesheets/admin-dashboard.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div class="admin-logo">
+        <h2>Admin Panel</h2>
+      </div>
+
+      <nav class="admin-nav">
+        <ul>
+          <li class="nav-item">
+            <a href="/admin" class="nav-link">
+              <i class="icon-dashboard"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item active">
+            <a href="/admin/appointments" class="nav-link">
+              <i class="icon-calendar"></i> Appointments
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="/admin/customers" class="nav-link">
+              <i class="icon-users"></i> Customers
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="/admin/staff" class="nav-link">
+              <i class="icon-team"></i> Staff
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="/admin/services" class="nav-link">
+              <i class="icon-services"></i> Services
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="/admin/reports" class="nav-link">
+              <i class="icon-chart"></i> Reports
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="admin-user-info">
+        <div class="user-avatar"><%= user.givenName.charAt(0).toUpperCase() %></div>
+        <div class="user-details">
+          <p class="user-name"><%= user.givenName %> <%= user.familyName %></p>
+          <p class="user-role"><%= getRoleDisplayName(user.role) %></p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Top Bar -->
+      <div class="admin-topbar">
+        <h1 class="page-title"><%= title %></h1>
+        <div class="topbar-actions">
+          <a href="/auth/logout" class="btn btn-logout">Logout</a>
+        </div>
+      </div>
+
+      <!-- Page Content -->
+      <div class="admin-content">
+        <!-- Filters -->
+        <div class="section">
+          <h3>Filters</h3>
+          <form method="GET" style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 150px;">
+              <label>Date:</label>
+              <input type="date" name="date" value="<%= selectedDate %>" style="width: 100%; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px;">
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+              <label>Status:</label>
+              <select name="status" style="width: 100%; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                <option value="">All Statuses</option>
+                <% statuses.forEach(status => { %>
+                  <option value="<%= status %>" <%= selectedStatus === status ? 'selected' : '' %>>
+                    <%= status %>
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+            <div style="align-self: flex-end;">
+              <button type="submit" class="btn btn-primary">Apply Filters</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Appointments Table -->
+        <div class="section">
+          <div class="section-header">
+            <h2>Appointments</h2>
+            <span><%= appointments.length %> appointments found</span>
+          </div>
+
+          <% if (appointments && appointments.length > 0) { %>
+            <div class="appointments-list">
+              <% appointments.forEach((apt) => { %>
+                <div class="appointment-item">
+                  <div class="apt-time">
+                    <%= new Date(apt.startAt).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) %>
+                  </div>
+                  <div class="apt-duration">
+                    <%= formatDuration(apt.appointmentSegments?.[0]?.durationMinutes * 60000 || 0) %>
+                  </div>
+                  <div class="apt-info">
+                    <div class="apt-customer">ID: <%= apt.id.substring(0, 12) %>...</div>
+                    <div class="apt-status status-<%= apt.status?.toLowerCase() %>"><%= apt.status %></div>
+                  </div>
+                  <div class="apt-actions">
+                    <a href="/admin/appointments/<%= apt.id %>" class="btn-small btn-view">Details</a>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <p>No appointments found for the selected filters.</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

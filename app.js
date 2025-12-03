@@ -36,6 +36,7 @@ try {
 const app = express();
 
 const routes = require("./routes/index");
+const adminRoutes = require("./routes/admin");
 const { locationsApi } = require("./util/square-client");
 const {
   errorHandler,
@@ -43,6 +44,7 @@ const {
   AsyncError
 } = require("./middleware/errorHandler");
 const { generateCsrfToken } = require("./middleware/authMiddleware");
+const { attachUserToLocals, attachAdminUtils } = require("./middleware/adminMiddleware");
 const { validateContentType } = require("./middleware/validation");
 
 // Get location information and store it in app.locals so it is accessible in all pages.
@@ -130,8 +132,13 @@ app.use(session({
 // CSRF token generation middleware
 app.use(generateCsrfToken);
 
+// Admin utilities middleware
+app.use(attachUserToLocals);
+app.use(attachAdminUtils);
+
 // Routes
 app.use("/", routes);
+app.use("/admin", adminRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
