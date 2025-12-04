@@ -1,0 +1,1628 @@
+<% include("../functions") %>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Select Date & Time - <%= location?.businessName || 'Booking System' %></title>
+    <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
+    <link href="/stylesheets/datepicker.css" rel="stylesheet" type="text/css">
+    <link href="/stylesheets/sidebar.css" rel="stylesheet" type="text/css">
+    <link href="/stylesheets/progress-indicator.css" rel="stylesheet" type="text/css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="/js/session-persistence.js?v=<%= Date.now() %>" defer></script>
+    <script src="/js/firebase-session-manager.js?v=<%= Date.now() %>" defer></script>
+    <script src="/javascripts/appointment-summary.js?v=<%= Date.now() %>" defer></script>
+    <style>
+        /* Global responsive fixes */
+        * {
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+        
+        .availability-container {
+            max-width: none;
+            margin: 0;
+            padding: 2rem 0;
+            padding-bottom: 120px; /* Add space for floating button */
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+        
+        .calendar-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .calendar-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { background-position: 200% 0; }
+            50% { background-position: -200% 0; }
+        }
+        
+        .calendar-section:hover {
+            box-shadow: 0 8px 40px rgba(102, 126, 234, 0.15), 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .times-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .times-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981 0%, #34d399 50%, #10b981 100%);
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        .times-section:hover {
+            box-shadow: 0 8px 40px rgba(16, 185, 129, 0.15), 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f1f5f9;
+            position: relative;
+        }
+        
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 1px;
+        }
+        
+        .section-header h4 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+        
+        .section-header i {
+            color: #667eea;
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Enhanced timezone warning */
+        .timezone-warning {
+            background: linear-gradient(135deg, #fef3cd 0%, #fde68a 100%);
+            color: #92400e;
+            border: 1px solid #f59e0b;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.1);
+            animation: pulse-warning 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-warning {
+            0%, 100% { box-shadow: 0 4px 15px rgba(245, 158, 11, 0.1); }
+            50% { box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2); }
+        }
+        
+        .timezone-warning i {
+            color: #f59e0b;
+            font-size: 1.5rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-5px); }
+            60% { transform: translateY(-3px); }
+        }
+        
+        /* Enhanced info notice */
+        .info-notice {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
+        }
+        
+        .info-notice i {
+            color: #3b82f6;
+            font-size: 1.5rem;
+        }
+        
+        /* Loading skeleton */
+        .loading-skeleton {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .skeleton-slot {
+            height: 80px;
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 12px;
+        }
+        
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Enhanced times grid */
+        .times-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.5rem;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden; /* Prevent horizontal overflow */
+        }
+        
+        /* Enhanced time slot styling */
+        .time-slot {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transform: translateY(0) scale(1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.1);
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .time-slot::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.15), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .time-slot::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 14px;
+        }
+        
+        .time-slot:hover::before {
+            left: 100%;
+        }
+        
+        .time-slot:hover::after {
+            opacity: 0.05;
+        }
+        
+        .time-slot:hover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.3), 0 4px 12px rgba(0,0,0,0.1);
+            color: #4338ca;
+        }
+        
+        .time-slot:active {
+            transform: translateY(-3px) scale(1.01);
+            transition: all 0.15s ease;
+        }
+        
+        .time-slot i {
+            display: block;
+            color: #667eea;
+            font-size: 1.25rem;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+        
+        .time-slot:hover i {
+            color: #4338ca;
+            transform: scale(1.1);
+        }
+        
+        .time-slot span {
+            position: relative;
+            z-index: 1;
+            font-size: 1rem;
+            letter-spacing: -0.025em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        /* Enhanced no times available */
+        .no-times {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #64748b;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            border: 2px dashed #cbd5e1;
+        }
+        
+        .no-times i {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.6;
+            background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .no-times h5 {
+            color: #334155;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        /* Next available button styling */
+        .btn-next-available {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        
+        .btn-next-available:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .next-date-info {
+            color: #059669;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        /* Enhanced selected date display */
+        .selected-date-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            display: none;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .selected-date-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="70" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="70" cy="40" r="1" fill="rgba(255,255,255,0.05)"/></svg>');
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .selected-date-display.show {
+            display: block;
+            animation: slideInDown 0.5s ease-out;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .selected-date-display h5,
+        .selected-date-display p {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .selected-date-display h5 {
+            margin: 0 0 0.75rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+        
+        .selected-date-display p {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+        
+        /* Layout adjustments for the new flex structure */
+        .content {
+            min-height: calc(100vh - 200px);
+            max-width: 100vw;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+        
+        .content-main {
+            box-sizing: border-box;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        /* Enhanced accessibility */
+        .time-slot:focus {
+            outline: 3px solid #667eea;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        
+        .calendar-section:focus-within,
+        .times-section:focus-within {
+            outline: 2px solid #667eea;
+            outline-offset: 4px;
+        }
+        
+        /* Keyboard navigation indicators */
+        .time-slot[tabindex="0"]:focus {
+            background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+            color: white;
+            transform: translateY(-4px) scale(1.02);
+        }
+        
+        /* Enhanced loading animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .time-slot {
+            animation: fadeInUp 0.6s ease-out both;
+        }
+        
+        /* Staggered animation for time slots */
+        .time-slot:nth-child(1) { animation-delay: 0.1s; }
+        .time-slot:nth-child(2) { animation-delay: 0.2s; }
+        .time-slot:nth-child(3) { animation-delay: 0.3s; }
+        .time-slot:nth-child(4) { animation-delay: 0.4s; }
+        .time-slot:nth-child(5) { animation-delay: 0.5s; }
+        .time-slot:nth-child(6) { animation-delay: 0.6s; }
+        
+        /* Desktop layout improvements */
+        @media (min-width: 769px) {
+            .content-main {
+                padding-right: 1rem;
+            }
+            
+            /* Ensure appointment summary is visible and properly sized */
+            #appointment-summary {
+                flex: 1 1 0;
+                min-width: 300px;
+                max-width: 400px;
+                position: static !important;
+                transform: none !important;
+                height: fit-content;
+                align-self: flex-start;
+                position: sticky;
+                top: 2rem;
+            }
+            
+            /* Enhanced hover effects for desktop */
+            .time-slot:hover {
+                cursor: pointer;
+            }
+            
+            .calendar-section,
+            .times-section {
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column !important;
+                gap: 0 !important;
+            }
+            
+            .content-main {
+                flex: none !important;
+                width: 100% !important;
+                padding-right: 0 !important;
+            }
+            
+            .availability-container {
+                padding: 1rem !important;
+                padding-bottom: 120px !important;
+            }
+            .calendar-section, .times-section {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            .times-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 1rem;
+            }
+            .time-slot {
+                padding: 1rem;
+                font-size: 0.95rem;
+                min-height: 60px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            .time-slot i {
+                font-size: 1rem;
+                margin-bottom: 0.25rem;
+            }
+            .time-slot span {
+                font-size: 0.9rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .availability-container {
+                padding: 0.75rem !important;
+                padding-bottom: 120px !important;
+            }
+            .calendar-section, .times-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .times-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 0.75rem;
+            }
+            .time-slot {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+                min-height: 55px;
+            }
+            .time-slot i {
+                font-size: 0.9rem;
+                margin-bottom: 0.25rem;
+            }
+            .time-slot span {
+                font-size: 0.85rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                text-align: center;
+            }
+            .section-header h4 {
+                font-size: 1.1rem;
+            }
+            .section-header i {
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .availability-container {
+                padding: 0.5rem !important;
+                padding-bottom: 120px !important;
+            }
+            .calendar-section, .times-section {
+                padding: 0.75rem;
+                border-radius: 10px;
+            }
+            .times-grid {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                gap: 0.5rem;
+            }
+            .time-slot {
+                padding: 0.5rem;
+                font-size: 0.85rem;
+                min-height: 50px;
+                border-radius: 8px;
+            }
+            .time-slot i {
+                font-size: 0.8rem;
+                margin-bottom: 0.2rem;
+            }
+            .time-slot span {
+                font-size: 0.8rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                text-align: center;
+            }
+            .section-header {
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            .section-header h4 {
+                font-size: 1rem;
+            }
+            .section-header i {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Extra small screens - 320px and below */
+        @media (max-width: 320px) {
+            .availability-container {
+                padding: 0.25rem !important;
+                padding-bottom: 120px !important;
+                overflow-x: hidden;
+            }
+            
+            .calendar-section, .times-section {
+                padding: 0.5rem;
+                border-radius: 8px;
+                margin-bottom: 0.75rem;
+            }
+            
+            .times-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.375rem;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+            
+            .time-slot {
+                padding: 0.375rem;
+                font-size: 0.8rem;
+                min-height: 45px;
+                border-radius: 6px;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                word-break: break-word;
+                hyphens: auto;
+                line-height: 1.2;
+            }
+            
+            .time-slot i {
+                font-size: 0.75rem;
+                margin-bottom: 0.125rem;
+            }
+            
+            .time-slot span {
+                font-size: 0.75rem;
+                line-height: 1.1;
+            }
+            
+            .section-header {
+                gap: 0.375rem;
+                margin-bottom: 0.75rem;
+                padding: 0.25rem 0;
+            }
+            
+            .section-header h4 {
+                font-size: 0.95rem;
+                line-height: 1.2;
+            }
+            
+            .section-header i {
+                font-size: 1rem;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Ensure progress indicator fits on very small screens - use global styles */
+            
+            /* Compact no-times styling */
+            .no-times {
+                padding: 2rem 1rem;
+                text-align: center;
+            }
+            
+            .no-times i {
+                font-size: 2.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .no-times h5 {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .no-times p {
+                font-size: 0.85rem;
+            }
+            
+            /* Compact selected date display */
+            .selected-date-display {
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 8px;
+            }
+            
+            .selected-date-display h5 {
+                font-size: 0.95rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .selected-date-display p {
+                font-size: 1.1rem;
+            }
+            
+            /* Ensure datepicker fits */
+            #datepicker {
+                max-width: 100%;
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* Medium small screens - 321px to 359px */
+        @media (min-width: 321px) and (max-width: 359px) {
+            .times-grid {
+                grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+                gap: 0.5rem;
+            }
+            
+            .time-slot {
+                padding: 0.5rem;
+                font-size: 0.85rem;
+                min-height: 48px;
+            }
+            
+            .time-slot i {
+                font-size: 0.8rem;
+            }
+            
+            .time-slot span {
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* Enhanced datepicker styling */
+        #datepicker {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            background: white;
+        }
+        
+        #datepicker.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        /* Custom scrollbar for webkit browsers */
+        .times-section::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .times-section::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        .times-section::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+        
+        .times-section::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+        }
+        
+        /* Enhanced button styling */
+        .button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        /* Loading spinner for date selection */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Enhanced focus indicators */
+        *:focus {
+            outline: none;
+        }
+        
+        .calendar-section *:focus,
+        .times-section *:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+            border-radius: 6px;
+        }
+        
+        /* Improved text selection */
+        ::selection {
+            background: rgba(102, 126, 234, 0.2);
+            color: #1e293b;
+        }
+        
+        ::-moz-selection {
+            background: rgba(102, 126, 234, 0.2);
+            color: #1e293b;
+        }
+        
+        /* Print styles */
+        @media print {
+            .progress-indicator,
+            .section-header::after,
+            .calendar-section::before,
+            .times-section::before,
+            .time-slot::before,
+            .time-slot::after {
+                display: none !important;
+            }
+            
+            .calendar-section,
+            .times-section {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+            }
+            
+            .time-slot {
+                border: 1px solid #666 !important;
+                background: white !important;
+                box-shadow: none !important;
+            }
+        }
+        
+        /* Reduced motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+            
+            .time-slot:hover {
+                transform: none !important;
+            }
+            
+            .calendar-section:hover,
+            .times-section:hover {
+                transform: none !important;
+            }
+        }
+        
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .calendar-section,
+            .times-section {
+                border: 2px solid #000;
+                background: #fff;
+            }
+            
+            .time-slot {
+                border: 2px solid #000;
+                background: #fff;
+                color: #000;
+            }
+            
+            .time-slot:hover {
+                background: #000;
+                color: #fff;
+            }
+            
+            .progress-step.active {
+                background: #000;
+                color: #fff;
+            }
+        }
+        
+        /* Hide continue buttons on availability page */
+        #continue-btn,
+        #summary-bar-next,
+        #summary-sheet-next {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <%- include("../partials/header") %>
+    </header>
+    
+    <div class="content" style="display: flex; flex-direction: row; gap: 2.5em; max-width: 100vw; overflow-x: hidden; box-sizing: border-box;">
+        <!-- Main availability selection -->
+        <div class="content-main" style="flex: 2 1 0; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+            <!-- Progress Indicator -->
+            <%- include("../partials/progress-indicator", { step: 3 }) %>
+            
+            <!-- Back Button -->
+            <!-- <div style="margin-bottom: 2rem;">
+                <a class="button" href="/staff/<%= serviceId %>?version=<%= serviceVersion %>" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); color: #475569; border: 2px solid #cbd5e1; transition: all 0.3s ease; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600;">
+                    <span class="icon back-arrow"></span> Back to Staff Selection
+                </a>
+            </div> -->
+            
+            <div class="availability-container">
+                <!-- Timezone Warning -->
+                <% if (getLocalTimezone() !== location.timezone) { %>
+                    <div class="timezone-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>Different Timezone Detected!</strong><br>
+                            Times below are shown in <%= location.timezone %> time (business local time).
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Info Notice -->
+                <div class="info-notice">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        You can schedule an appointment between 4 hours and 30 days ahead of time.
+                    </div>
+                </div>
+
+                <!-- Calendar Section -->
+                <div class="calendar-section">
+                    <div class="section-header">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h4>Select Appointment Date</h4>
+                    </div>
+                    <div id="datepicker"></div>
+                </div>
+
+                <!-- Selected Date Display -->
+                <div id="selected-date-display" class="selected-date-display">
+                    <h5 style="margin: 0 0 0.5rem 0;">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        Selected Date
+                    </h5>
+                    <p style="margin: 0; font-size: 1.1rem;" id="selected-date-text"></p>
+                </div>
+
+                <!-- Times Section -->
+                <div class="times-section">
+                    <div class="section-header">
+                        <i class="fas fa-clock"></i>
+                        <h4>Available Times</h4>
+                    </div>
+                    
+                    <div id="available-times">
+                        <div class="no-times">
+                            <i class="fas fa-calendar-day"></i>
+                            <h5>Select a Date</h5>
+                            <p>Please select a date from the calendar above to view available time slots.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Include the appointment summary partial -->
+        <%- include("../partials/appointment-summary") %>
+    </div>
+
+    <!-- Scripts -->
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="/js/date-picker-handler.js"></script>
+    
+    <script>
+        $(function() {
+            $("#datepicker").datepicker({
+                beforeShowDay: function(date) {
+                    return datePickerHandler.isSelectable(date);
+                },
+                dateFormat: 'yy-mm-dd',
+                minDate: 0,
+                maxDate: "30d",
+                onSelect: function(dateText) {
+                    console.log('Date selected:', dateText);
+                    
+                    // Update selected date display
+                    // Parse the date string safely to avoid timezone issues
+                    const [year, month, day] = dateText.split('-').map(num => parseInt(num, 10));
+                    const selectedDate = new Date(year, month - 1, day); // month is 0-indexed
+                    console.log('Parsed date object:', selectedDate);
+                    console.log('Selected day:', selectedDate.getDate());
+                    
+                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                    const formattedDate = selectedDate.toLocaleDateString('en-US', options);
+                    console.log('Formatted date:', formattedDate);
+                    
+                    document.getElementById('selected-date-text').textContent = formattedDate;
+                    document.getElementById('selected-date-display').classList.add('show');
+                    
+                    // Update available times
+                    datePickerHandler.selectNewDate(dateText);
+                }
+            });
+            
+            $("#datepicker").on("change", function() {
+                datePickerHandler.selectNewDate($(this).val());
+            });
+        });
+
+        // Enhanced DatePickerHandler to improve UI
+        class EnhancedDatePickerHandler extends DatePickerHandler {
+            constructor(availabilityMap, serviceId, serviceVersion, bookingId, timezone) {
+                super(availabilityMap, serviceId, serviceVersion, bookingId, timezone);
+                this.isLoading = false;
+            }
+            
+            selectNewDate(date) {
+                const availableTimesDiv = document.getElementById("available-times");
+                
+                // Show loading state
+                this.showLoadingState(availableTimesDiv);
+                
+                // Simulate loading delay for better UX
+                setTimeout(() => {
+                    this.renderAvailabilities(date, availableTimesDiv);
+                }, 300);
+            }
+            
+            showLoadingState(container) {
+                this.isLoading = true;
+                container.innerHTML = `
+                    <div class="loading-skeleton">
+                        ${Array(6).fill().map(() => '<div class="skeleton-slot"></div>').join('')}
+                    </div>
+                `;
+            }
+            
+            renderAvailabilities(date, container) {
+                this.isLoading = false;
+                container.innerHTML = "";
+                
+                const availabilities = this.availabilityMap[date];
+                
+                if (!availabilities) {
+                    this.renderNoAvailabilities(date, container);
+                    return;
+                }
+                
+                this.renderTimeSlots(availabilities, container);
+            }
+            
+            renderNoAvailabilities(date, container) {
+                const noTimesContainer = document.createElement("div");
+                noTimesContainer.className = "no-times-available-container";
+                
+                const noTimesDiv = document.createElement("div");
+                noTimesDiv.className = "no-times";
+                noTimesDiv.innerHTML = `
+                    <i class="fas fa-calendar-times"></i>
+                    <h5>No Times Available</h5>
+                    <p>There are no available time slots for this date.</p>
+                `;
+                
+                // Check if there's a next available date
+                const nextDate = this.findNextAvailableDate(date);
+                if (nextDate) {
+                    const nextAvailableBtn = document.createElement("button");
+                    nextAvailableBtn.className = "btn-next-available";
+                    nextAvailableBtn.type = "button";
+                    nextAvailableBtn.innerHTML = `
+                        <i class="fas fa-arrow-right"></i>
+                        Go to Next Available
+                    `;
+                    nextAvailableBtn.onclick = () => this.goToNextAvailable(date);
+                    
+                    const nextDateFormatted = this.formatDateForDisplay(nextDate);
+                    
+                    const nextDateInfo = document.createElement("p");
+                    nextDateInfo.className = "next-date-info";
+                    nextDateInfo.innerHTML = `Next available: ${nextDateFormatted}`;
+                    
+                    noTimesContainer.appendChild(noTimesDiv);
+                    noTimesContainer.appendChild(nextDateInfo);
+                    noTimesContainer.appendChild(nextAvailableBtn);
+                } else {
+                    noTimesDiv.querySelector('p').innerHTML = "There are no available time slots for this date. Please select a different date.";
+                    noTimesContainer.appendChild(noTimesDiv);
+                }
+                
+                container.appendChild(noTimesContainer);
+            }
+            
+            renderTimeSlots(availabilities, container) {
+                // Create times grid container
+                const timesGrid = document.createElement("div");
+                timesGrid.className = "times-grid";
+                
+                availabilities.forEach((availability, index) => {
+                    const form = document.createElement("form");
+                    form.action = this.bookingId ? 
+                        `/booking/${this.bookingId}/reschedule?startAt=${availability.date}` : 
+                        "/contact";
+                    form.method = this.bookingId ? "post" : "get";
+                    
+                    // Create hidden parameters for GET contact action
+                    if (form.method === "get") {
+                        const queryParams = {
+                            serviceId: this.serviceId,
+                            staff: availability.teamMemberId,
+                            startAt: availability.date,
+                            version: this.serviceVersion,
+                        };
+                        Object.keys(queryParams).forEach(queryParam => {
+                            const input = document.createElement("input");
+                            input.type = "hidden";
+                            input.name = queryParam;
+                            input.value = queryParams[queryParam];
+                            form.appendChild(input);
+                        });
+                    }
+                    
+                    const timeSlot = document.createElement("button");
+                    timeSlot.className = "time-slot";
+                    timeSlot.type = "submit";
+                    timeSlot.style.animationDelay = `${index * 0.1}s`;
+                    timeSlot.innerHTML = `
+                        <i class="fas fa-clock"></i>
+                        <span>${availability.time}</span>
+                    `;
+                    
+                    // Add click analytics
+                    timeSlot.addEventListener('click', () => {
+                        this.trackTimeSlotSelection(availability);
+                    });
+                    
+                    form.appendChild(timeSlot);
+                    timesGrid.appendChild(form);
+                });
+                
+                // Add entrance animation
+                timesGrid.style.opacity = '0';
+                timesGrid.style.transform = 'translateY(20px)';
+                container.appendChild(timesGrid);
+                
+                // Animate in
+                requestAnimationFrame(() => {
+                    timesGrid.style.transition = 'all 0.5s ease-out';
+                    timesGrid.style.opacity = '1';
+                    timesGrid.style.transform = 'translateY(0)';
+                });
+            }
+            
+            trackTimeSlotSelection(availability) {
+                console.log('Time slot selected:', {
+                    time: availability.time,
+                    date: availability.date,
+                    teamMemberId: availability.teamMemberId
+                });
+                
+                // Add visual feedback
+                const selectedSlot = event.target.closest('.time-slot');
+                if (selectedSlot) {
+                    selectedSlot.style.background = 'linear-gradient(135deg, #10b981 0%, #34d399 100%)';
+                    selectedSlot.style.color = 'white';
+                    selectedSlot.style.transform = 'scale(0.95)';
+                }
+            }
+            
+            goToNextAvailable(currentDate) {
+                const nextDate = this.findNextAvailableDate(currentDate);
+                if (nextDate) {
+                    // Update the datepicker widget
+                    $("#datepicker").datepicker("setDate", nextDate);
+                    
+                    // Update the date title display
+                    const formattedDate = this.formatDateForDisplay(nextDate);
+                    const selectedDateText = document.getElementById('selected-date-text');
+                    if (selectedDateText) {
+                        selectedDateText.textContent = formattedDate;
+                    }
+                    const selectedDateDisplay = document.getElementById('selected-date-display');
+                    if (selectedDateDisplay) {
+                        selectedDateDisplay.classList.add('show');
+                    }
+                    
+                    // Trigger the date selection
+                    this.selectNewDate(nextDate);
+                }
+            }
+        }
+
+        // Initialize enhanced date picker handler
+        const datePickerHandler = new EnhancedDatePickerHandler(
+            <%- JSON.stringify(availabilities) %>, 
+            "<%- serviceId %>", 
+            "<%- serviceVersion %>", 
+            "<%- locals.bookingId %>", 
+            "<%- location.timezone %>"
+        );
+
+        // Add smooth scrolling to times section when date is selected
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize accessibility features
+            initializeAccessibility();
+            
+            // Initialize enhanced interactions
+            initializeEnhancedInteractions();
+            
+            const originalSelectNewDate = datePickerHandler.selectNewDate.bind(datePickerHandler);
+            datePickerHandler.selectNewDate = function(date) {
+                originalSelectNewDate(date);
+                
+                // Smooth scroll to times section with offset for mobile
+                setTimeout(() => {
+                    const timesSection = document.querySelector('.times-section');
+                    const isMobile = window.innerWidth <= 768;
+                    const offset = isMobile ? 100 : 50;
+                    
+                    const elementPosition = timesSection.offsetTop;
+                    const offsetPosition = elementPosition - offset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+            };
+        });
+        
+        // Initialize accessibility features
+        function initializeAccessibility() {
+            // Add keyboard navigation for time slots
+            document.addEventListener('keydown', function(e) {
+                const timeSlots = document.querySelectorAll('.time-slot');
+                const focusedElement = document.activeElement;
+                const currentIndex = Array.from(timeSlots).indexOf(focusedElement);
+                
+                if (currentIndex === -1) return;
+                
+                let nextIndex;
+                switch(e.key) {
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        nextIndex = Math.min(currentIndex + 1, timeSlots.length - 1);
+                        timeSlots[nextIndex].focus();
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        nextIndex = Math.max(currentIndex - 1, 0);
+                        timeSlots[nextIndex].focus();
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        // Move to next row (assuming 3 columns on mobile, 4 on desktop)
+                        const columnsPerRow = window.innerWidth <= 768 ? 2 : 3;
+                        nextIndex = Math.min(currentIndex + columnsPerRow, timeSlots.length - 1);
+                        timeSlots[nextIndex].focus();
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        // Move to previous row
+                        const columnsPerRowUp = window.innerWidth <= 768 ? 2 : 3;
+                        nextIndex = Math.max(currentIndex - columnsPerRowUp, 0);
+                        timeSlots[nextIndex].focus();
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        e.preventDefault();
+                        focusedElement.click();
+                        break;
+                }
+            });
+            
+            // Add screen reader announcements
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.target.id === 'available-times') {
+                        const timeSlots = mutation.target.querySelectorAll('.time-slot');
+                        if (timeSlots.length > 0) {
+                            announceToScreenReader(`${timeSlots.length} time slots available`);
+                        } else if (mutation.target.querySelector('.no-times')) {
+                            announceToScreenReader('No time slots available for this date');
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(document.getElementById('available-times'), {
+                childList: true,
+                subtree: true
+            });
+        }
+        
+        // Initialize enhanced interactions
+        function initializeEnhancedInteractions() {
+            // Add ripple effect to time slots
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.time-slot')) {
+                    createRippleEffect(e, e.target.closest('.time-slot'));
+                }
+            });
+            
+            // Add haptic feedback on mobile
+            if ('vibrate' in navigator) {
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('.time-slot')) {
+                        navigator.vibrate(50);
+                    }
+                });
+            }
+            
+            // Progressive enhancement for date picker
+            enhanceDatePicker();
+        }
+        
+        // Create ripple effect
+        function createRippleEffect(event, element) {
+            const ripple = document.createElement('span');
+            const rect = element.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = event.clientX - rect.left - size / 2;
+            const y = event.clientY - rect.top - size / 2;
+            
+            ripple.style.cssText = `
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                left: ${x}px;
+                top: ${y}px;
+                background: rgba(255, 255, 255, 0.6);
+                border-radius: 50%;
+                transform: scale(0);
+                animation: ripple 0.6s ease-out;
+                pointer-events: none;
+                z-index: 10;
+            `;
+            
+            // Add ripple animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(2);
+                        opacity: 0;
+                    }
+                }
+            `;
+            if (!document.querySelector('style[data-ripple]')) {
+                style.setAttribute('data-ripple', 'true');
+                document.head.appendChild(style);
+            }
+            
+            element.style.position = 'relative';
+            element.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        }
+        
+        // Screen reader announcements
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.style.cssText = `
+                position: absolute;
+                left: -10000px;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+            `;
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+        
+        // Enhance date picker with better UX
+        function enhanceDatePicker() {
+            // Add loading state to date picker
+            const datepicker = document.getElementById('datepicker');
+            if (datepicker) {
+                datepicker.addEventListener('beforeShow', function() {
+                    datepicker.classList.add('loading');
+                });
+                
+                datepicker.addEventListener('onShow', function() {
+                    datepicker.classList.remove('loading');
+                });
+            }
+            
+            // Add better mobile date picker experience
+            if (window.innerWidth <= 768) {
+                // Add swipe gestures for month navigation
+                let startX, startY, distX, distY;
+                
+                datepicker.addEventListener('touchstart', function(e) {
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                });
+                
+                datepicker.addEventListener('touchmove', function(e) {
+                    if (!startX || !startY) return;
+                    
+                    distX = e.touches[0].clientX - startX;
+                    distY = e.touches[0].clientY - startY;
+                });
+                
+                datepicker.addEventListener('touchend', function(e) {
+                    if (!distX || !distY) return;
+                    
+                    // Horizontal swipe
+                    if (Math.abs(distX) > Math.abs(distY)) {
+                        if (distX > 50) {
+                            // Swipe right - previous month
+                            $("#datepicker").datepicker("option", "defaultDate", "-1m");
+                        } else if (distX < -50) {
+                            // Swipe left - next month
+                            $("#datepicker").datepicker("option", "defaultDate", "+1m");
+                        }
+                    }
+                    
+                    startX = startY = distX = distY = null;
+                });
+            }
+        }
+    </script>
+    
+    <script>
+        // Debug what data is available from the server - RAW EJS
+        console.log('DEBUG: EJS serviceDetails available:', <% if (typeof serviceDetails !== 'undefined') { %>true<% } else { %>false<% } %>);
+        console.log('DEBUG: EJS bookingProfile available:', <% if (typeof bookingProfile !== 'undefined') { %>true<% } else { %>false<% } %>);
+        
+        // Debug what data is available from the server
+        console.log('DEBUG: Server data check:');
+        console.log('DEBUG: typeof serviceDetails:', typeof serviceDetails);
+        console.log('DEBUG: serviceDetails:', typeof serviceDetails !== 'undefined' ? serviceDetails : 'UNDEFINED');
+        console.log('DEBUG: typeof bookingProfile:', typeof bookingProfile);
+        console.log('DEBUG: bookingProfile:', typeof bookingProfile !== 'undefined' ? bookingProfile : 'UNDEFINED');
+        console.log('DEBUG: All template variables available:');
+        console.log('  - serviceDetails:', typeof serviceDetails !== 'undefined');
+        console.log('  - bookingProfile:', typeof bookingProfile !== 'undefined');
+        console.log('  - availabilities:', typeof availabilities !== 'undefined');
+        console.log('  - serviceId:', typeof serviceId !== 'undefined');
+        console.log('  - selectedServices:', typeof selectedServices !== 'undefined');
+        console.log('  - quantities:', typeof quantities !== 'undefined');
+        
+        // Make service details available to appointment summary JavaScript
+        <% if (typeof serviceDetails !== 'undefined' && serviceDetails) { %>
+            window.serviceDetails = <%- JSON.stringify(serviceDetails) %>;
+            console.log('DEBUG: serviceDetails SET from server data');
+        <% } else { %>
+            window.serviceDetails = [];
+            console.log('DEBUG: serviceDetails set to EMPTY ARRAY - server had no data');
+        <% } %>
+        
+        <% if (typeof bookingProfile !== 'undefined' && bookingProfile) { %>
+            window.selectedStaff = {
+                id: "<%= bookingProfile.teamMemberId %>",
+                name: "<%= bookingProfile.displayName %>",
+                description: <%- JSON.stringify(bookingProfile.description || '') %>
+            };
+            console.log('DEBUG: selectedStaff SET from bookingProfile');
+        <% } else { %>
+            window.selectedStaff = {
+                id: "anyStaffMember",
+                name: "Any Available Staff",
+                description: ""
+            };
+            console.log('DEBUG: selectedStaff set to ANY STAFF - no bookingProfile from server');
+        <% } %>
+        
+        console.log('DEBUG: window.serviceDetails set to:', window.serviceDetails);
+        console.log('DEBUG: window.selectedStaff set to:', window.selectedStaff);
+        console.log('DEBUG: typeof window.serviceDetails:', typeof window.serviceDetails);
+        console.log('DEBUG: Array.isArray(window.serviceDetails):', Array.isArray(window.serviceDetails));
+        console.log('DEBUG: window.serviceDetails.length:', window.serviceDetails ? window.serviceDetails.length : 'undefined');
+        
+        // Session restoration for back navigation
+        <% if (typeof preservedSession !== 'undefined' && preservedSession && isBackNavigation) { %>
+            console.log('DEBUG: Back navigation detected - restoring session data');
+            
+            // Restore date and time selection if available
+            <% if (preservedSession.selectedDateTime) { %>
+                console.log('DEBUG: Restoring selected date/time:', '<%= preservedSession.selectedDateTime %>');
+                // Store for restoration after DOM loads
+                window.preservedDateTime = '<%= preservedSession.selectedDateTime %>';
+            <% } %>
+            
+            <% if (preservedSession.selectedSlot) { %>
+                console.log('DEBUG: Restoring selected slot:', <%- JSON.stringify(preservedSession.selectedSlot) %>);
+                window.preservedSlot = <%- JSON.stringify(preservedSession.selectedSlot) %>;
+            <% } %>
+        <% } %>
+        
+        // Ensure appointment summary is initialized
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Availability page loaded');
+            
+            // Additional debugging for appointment summary initialization
+            console.log('DEBUG: DOM loaded - window.serviceDetails:', window.serviceDetails);
+            console.log('DEBUG: DOM loaded - window.selectedStaff:', window.selectedStaff);
+            
+            // Restore preserved session data for back navigation
+            if (window.preservedDateTime || window.preservedSlot) {
+                console.log('DEBUG: Restoring preserved session data');
+                
+                // Restore date selection
+                if (window.preservedDateTime) {
+                    console.log('DEBUG: Attempting to restore date:', window.preservedDateTime);
+                    // Try to find and click the date if it exists in the calendar
+                    const dateStr = window.preservedDateTime.split('T')[0]; // Get just the date part
+                    const dateElements = document.querySelectorAll('.date-option[data-date]');
+                    dateElements.forEach(el => {
+                        if (el.getAttribute('data-date') === dateStr) {
+                            console.log('DEBUG: Found matching date element, clicking');
+                            el.click();
+                        }
+                    });
+                }
+                
+                // Restore time slot selection
+                if (window.preservedSlot) {
+                    console.log('DEBUG: Attempting to restore time slot:', window.preservedSlot);
+                    setTimeout(() => {
+                        // Look for time slot buttons with matching time
+                        const timeButtons = document.querySelectorAll('.time-option');
+                        timeButtons.forEach(btn => {
+                            const timeText = btn.textContent.trim();
+                            const slotTime = new Date(window.preservedSlot.startAt).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            });
+                            if (timeText.includes(slotTime)) {
+                                console.log('DEBUG: Found matching time slot, selecting');
+                                btn.click();
+                            }
+                        });
+                    }, 500); // Wait for time slots to load
+                }
+            }
+            
+            // Initialize availability page appointment summary
+            if (typeof initAvailabilityPageSummary === 'function') {
+                setTimeout(function() {
+                    console.log('DEBUG: About to call initAvailabilityPageSummary');
+                    initAvailabilityPageSummary();
+                }, 100);
+            } else {
+                console.error('DEBUG: initAvailabilityPageSummary function not found');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<% include("../functions") %>
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Booking Confirmed - <%= location?.businessName || 'Booking System' %></title>
+  <link href="/stylesheets/style.css" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/progress-indicator.css" rel="stylesheet" type="text/css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .confirmation-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 2rem;
+      text-align: center;
+    }
+    .success-icon {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 2rem;
+      box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+    }
+    .success-icon i {
+      font-size: 2.5rem;
+      color: white;
+    }
+    .confirmation-title {
+      color: #28a745;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .confirmation-subtitle {
+      color: #6c757d;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+    .appointment-card {
+      background: #f8f9fa;
+      border-radius: 15px;
+      padding: 2rem;
+      margin: 2rem 0;
+      border-left: 4px solid #28a745;
+      text-align: left;
+    }
+    .appointment-datetime {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .appointment-datetime h4 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+    .staff-section {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: white;
+      border-radius: 10px;
+    }
+    .staff-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1.5rem;
+      margin-right: 1rem;
+    }
+    .services-list {
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .service-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .service-item:last-child {
+      border-bottom: none;
+    }    .service-total {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    .customer-info {
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .location-info {
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #495057;
+      border: 1px solid #dee2e6;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .phone-login-cta {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      text-align: center;
+    }
+    .phone-login-cta h5 {
+      margin: 0 0 0.5rem 0;
+      font-weight: 600;
+    }
+    .phone-login-cta p {
+      margin: 0 0 1rem 0;
+      opacity: 0.9;
+    }
+    .phone-login-btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+    .phone-login-btn:hover {
+      background: rgba(255,255,255,0.3);
+      color: white;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 768px) {
+      .confirmation-container {
+        padding: 1rem;
+      }
+      .action-buttons {
+        grid-template-columns: 1fr;
+      }
+      .staff-section {
+        flex-direction: column;
+        text-align: center;
+      }
+      .staff-avatar {
+        margin-right: 0;
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <%- include("../partials/header") %>
+  </header>
+  
+  <div class="confirmation-container">
+    <!-- Progress Indicator -->
+    <%- include("../partials/progress-indicator", { step: 5 }) %>
+    
+    <!-- Success Icon -->
+    <div class="success-icon">
+      <i class="fas fa-check"></i>
+    </div>
+    
+    <!-- Success Message -->
+    <h1 class="confirmation-title">Booking Confirmed!</h1>
+    <p class="confirmation-subtitle">Thank you for booking with us. Your appointment has been successfully scheduled.</p>
+    
+    <!-- Appointment Details Card -->
+    <div class="appointment-card">
+      <!-- Date and Time -->
+      <div class="appointment-datetime">
+        <% if (booking && booking.appointmentSegments && booking.appointmentSegments.length > 0 && location && location.timezone) { %>
+          <% const dateParts = formatDateToParts(booking.startAt, location.timezone, booking.appointmentSegments[0].durationMinutes); %>
+          <h4><i class="fas fa-calendar me-2"></i><%= dateParts[0] %></h4>
+          <p style="margin: 0.5rem 0 0 0; opacity: 0.9;"><i class="fas fa-clock me-2"></i><%= dateParts[1] %></p>
+        <% } else { %>
+          <h4>Time information unavailable</h4>
+        <% } %>
+      </div>
+      
+      <!-- Staff Information -->
+      <% if (teamMemberProfiles && teamMemberProfiles.length > 0) { %>
+        <% teamMemberProfiles.forEach(function(profile) { %>
+          <% if (profile && profile.displayName) { %>
+            <div class="staff-section">
+              <div class="staff-avatar">
+                <% if (profile.profileImageUrl) { %>
+                  <img src="<%= profile.profileImageUrl %>" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
+                <% } else { %>
+                  <%= getStaffInitials(profile.displayName) %>
+                <% } %>
+              </div>
+              <div>
+                <h5 style="margin: 0 0 0.25rem 0; color: #333;">
+                  <i class="fas fa-user-tie me-2"></i>Scheduled with
+                </h5>
+                <h4 style="margin: 0; color: #667eea;"><%= profile.displayName %></h4>
+              </div>
+            </div>
+          <% } %>
+        <% }); %>
+      <% } %>
+      
+      <!-- Services List -->
+      <div class="services-list">
+        <h5 style="margin: 0 0 1rem 0; color: #333;">
+          <i class="fas fa-cut me-2"></i>Services
+        </h5>
+        <% if (serviceDetails && serviceDetails.length > 0) { %>
+          <% let totalDuration = 0; let totalAmount = 0; %>
+          <% serviceDetails.forEach(function(s) { %>
+            <% if (s && s.name && s.duration) { %>
+              <div class="service-item">
+                <div>
+                  <strong><%= s.name %></strong>
+                  <% if (s.quantity > 1) { %> <span style="color: #667eea;">(x<%= s.quantity %>)</span><% } %>
+                  <div style="color: #6c757d; font-size: 0.9rem;">
+                    <i class="fas fa-clock me-1"></i><%= formatTime(s.duration) %>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <% if (s.priceMoney) { %>
+                    <strong style="color: #28a745;"><%= formatMoney(s.priceMoney.amount * s.quantity, s.priceMoney.currency) %></strong>
+                  <% } %>
+                </div>
+              </div>
+              <% totalDuration += s.duration * s.quantity; %>
+              <% if (s.priceMoney) totalAmount += s.priceMoney.amount * s.quantity; %>
+            <% } %>
+          <% }); %>
+          
+          <div class="service-total">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fas fa-clock me-2"></i>Total Duration: <strong><%= formatTime(totalDuration) %></strong></span>
+              <% if (totalAmount > 0 && serviceDetails[0] && serviceDetails[0].priceMoney) { %>
+                <span><i class="fas fa-dollar-sign me-2"></i>Total: <strong><%= formatMoney(totalAmount, serviceDetails[0].priceMoney.currency) %></strong></span>
+              <% } %>
+            </div>
+          </div>
+        <% } else { %>
+          <p>No service details available.</p>
+        <% } %>      </div>
+      
+      <!-- Customer Information -->
+      <div class="customer-info">
+        <h5 style="margin: 0 0 1rem 0; color: #333;">
+          <i class="fas fa-user me-2"></i>Customer
+        </h5>
+        <% if (customerInfo) { %>
+          <div style="color: #495057;">
+            <p style="margin: 0 0 0.5rem 0;">
+              <strong><%= customerInfo.givenName || '' %> <%= customerInfo.familyName || '' %></strong>
+            </p>
+            <% if (customerInfo.emailAddress) { %>
+              <p style="margin: 0 0 0.5rem 0; color: #6c757d; font-size: 0.9rem;">
+                <i class="fas fa-envelope me-1"></i><%= customerInfo.emailAddress %>
+              </p>
+            <% } %>
+            <% if (customerInfo.phoneNumber) { %>
+              <p style="margin: 0; color: #6c757d; font-size: 0.9rem;">
+                <i class="fas fa-phone me-1"></i><%= customerInfo.phoneNumber %>
+              </p>
+            <% } %>
+          </div>
+        <% } else { %>
+          <p style="color: #6c757d;">Customer information not available</p>
+        <% } %>
+      </div>
+      
+      <!-- Location Information -->
+      <div class="location-info">
+        <h5 style="margin: 0 0 1rem 0; color: #333;">
+          <i class="fas fa-map-marker-alt me-2"></i>Location
+        </h5>
+        <% if (location.address) { %>
+          <p style="margin: 0; color: #495057;">
+            <% if (location.address.addressLine1) { %>
+              <%= location.address.addressLine1 %><br>
+            <% } %>
+            <% if (location.address.addressLine2) { %>
+              <%= location.address.addressLine2 %><br>
+            <% } %>
+            <%= location.address.locality %>, <%= location.address.administrativeDistrictLevel1 %> <%= location.address.postalCode %>
+          </p>
+          <% 
+            const address = `${location.address.addressLine1 || ''} ${location.address.addressLine2 || ''} ${location.address.locality}, ${location.address.administrativeDistrictLevel1} ${location.address.postalCode}`;
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+          %>
+          <a href="<%= mapsUrl %>" target="_blank" style="color: #667eea; text-decoration: none; margin-top: 0.5rem; display: inline-block;">
+            <i class="fas fa-directions me-1"></i>Get Directions
+          </a>
+        <% } else { %>
+          <p>No location information available</p>
+        <% } %>
+      </div>
+    </div>
+    
+    <!-- Phone Login CTA (only if customer provided phone number) -->
+    <div class="phone-login-cta">
+      <h5><i class="fas fa-mobile-alt me-2"></i>Manage Your Appointments</h5>
+      <p>Access your appointment anytime with phone login. View upcoming bookings, reschedule, or book additional services.</p>
+      <a href="/auth/login" class="phone-login-btn">
+        <i class="fas fa-sign-in-alt"></i>
+        Access My Appointments
+      </a>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <a href="/booking/<%= booking.id %>/reschedule" class="btn btn-primary">
+        <i class="fas fa-edit me-2"></i>Reschedule
+      </a>
+      <form action="/booking/<%= booking.id %>/delete" method="POST" style="margin: 0;">
+        <button type="submit" class="btn btn-secondary" style="width: 100%;" onclick="return confirm('Are you sure you want to cancel this appointment?')">
+          <i class="fas fa-times me-2"></i>Cancel Booking
+        </button>
+      </form>
+    </div>
+    
+    <!-- Book Another Appointment -->
+    <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #dee2e6;">
+      <a href="/services" class="btn btn-primary" style="display: inline-block;">
+        <i class="fas fa-plus me-2"></i>Book Another Appointment
+      </a>
+    </div>
+  </div>
+  
+  <script>
+    // Auto-hide any flash messages after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => {
+        setTimeout(() => {
+          alert.style.opacity = '0';
+          setTimeout(() => alert.remove(), 300);
+        }, 5000);
+      });
+    });
+  </script>
+</body>
+
+</html>
