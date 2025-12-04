@@ -76,7 +76,7 @@ model Customer {
   squareCustomerId String?   @unique
   firstName        String
   lastName         String
-  phone            String?
+  phone            String
   email            String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -94,7 +94,7 @@ model Appointment {
   barberId        String
   serviceId       String
   customerId      String
-  squareBookingId String?           @unique
+  squareBookingId String?
   startAt         DateTime
   endAt           DateTime
   status          AppointmentStatus @default(SCHEDULED)
