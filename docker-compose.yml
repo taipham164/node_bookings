@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: tyler-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tyler
+      POSTGRES_PASSWORD: 0909191473
+      POSTGRES_DB: tyler_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

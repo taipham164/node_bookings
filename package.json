@@ -5,8 +5,14 @@
   "description": "Tyler Platform - Monorepo with Square Bookings API",
   "scripts": {
     "dev:legacy": "pnpm --filter legacy-express start",
+    "dev:backend": "pnpm --filter backend start:dev",
+    "build:backend": "pnpm --filter backend build",
+    "start:backend": "pnpm --filter backend start",
+    "install:backend": "pnpm install --filter backend",
     "test": "pnpm --filter legacy-express test",
-    "lint": "pnpm --filter legacy-express lint"
+    "test:backend": "pnpm --filter backend test",
+    "lint": "pnpm --filter legacy-express lint",
+    "lint:backend": "pnpm --filter backend lint"
   },
   "engines": {
     "node": ">=10",
