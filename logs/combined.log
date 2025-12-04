@@ -1,0 +1,1255 @@
+2025-12-03 18:27:29 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:27:52 [[31merror[39m]: Cannot read properties of undefined (reading 'role') {
+  "service": "bookings-api",
+  "stack": "TypeError: Cannot read properties of undefined (reading 'role')\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:30:15\n    at requireAuth (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:14:12)\n    at requireAdmin (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:26:3)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at attachAdminUtils (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:126:3)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)",
+  "context": {
+    "path": "/admin",
+    "method": "GET",
+    "body": {},
+    "params": {}
+  }
+}
+2025-12-03 18:27:52 [[33mwarn[39m]: HTTP Request {
+  "service": "bookings-api",
+  "method": "GET",
+  "path": "/admin",
+  "status": 500,
+  "duration": "24ms",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+}
+2025-12-03 18:27:52 [[31merror[39m]: Cannot read properties of undefined (reading 'role') {
+  "service": "bookings-api",
+  "stack": "TypeError: Cannot read properties of undefined (reading 'role')\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:30:15\n    at requireAuth (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:14:12)\n    at requireAdmin (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:26:3)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at attachAdminUtils (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:126:3)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)",
+  "context": {
+    "path": "/admin",
+    "method": "GET",
+    "body": {},
+    "params": {}
+  }
+}
+2025-12-03 18:27:52 [[33mwarn[39m]: HTTP Request {
+  "service": "bookings-api",
+  "method": "GET",
+  "path": "/admin",
+  "status": 500,
+  "duration": "5ms",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+}
+2025-12-03 18:27:53 [[32minfo[39m]: HTTP Request {
+  "service": "bookings-api",
+  "method": "GET",
+  "path": "/stylesheets/style.css",
+  "status": 304,
+  "duration": "2ms",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+}
+2025-12-03 18:27:53 [[32minfo[39m]: HTTP Request {
+  "service": "bookings-api",
+  "method": "GET",
+  "path": "/stylesheets/sidebar.css",
+  "status": 304,
+  "duration": "3ms",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+}
+2025-12-03 18:27:53 [[32minfo[39m]: HTTP Request {
+  "service": "bookings-api",
+  "method": "GET",
+  "path": "/js/global-sidebar.js",
+  "status": 304,
+  "duration": "1ms",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+}
+2025-12-03 18:27:53 [[32minfo[39m]: HTTP Request {
+  "service": "bookings-api",
+  "method": "GET",
+  "path": "/favicon.ico",
+  "status": 204,
+  "duration": "1ms",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+}
+2025-12-03 18:27:55 [[32minfo[39m]: HTTP Request {
+  "service": "bookings-api",
+  "method": "GET",
+  "path": "/stylesheets/style.css",
+  "status": 304,
+  "duration": "1ms",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+}
+2025-12-03 18:27:55 [[32minfo[39m]: HTTP Request {
+  "service": "bookings-api",
+  "method": "GET",
+  "path": "/stylesheets/sidebar.css",
+  "status": 304,
+  "duration": "1ms",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+}
+2025-12-03 18:27:55 [[31merror[39m]: Cannot GET /.well-known/appspecific/com.chrome.devtools.json {
+  "service": "bookings-api",
+  "stack": "Error: Cannot GET /.well-known/appspecific/com.chrome.devtools.json\n    at notFoundHandler (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\errorHandler.js:176:17)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:47:12)",
+  "statusCode": 404,
+  "context": {
+    "path": "/.well-known/appspecific/com.chrome.devtools.json",
+    "method": "GET",
+    "body": {},
+    "params": {}
+  }
+}
+2025-12-03 18:27:55 [[33mwarn[39m]: HTTP Request {
+  "service": "bookings-api",
+  "method": "GET",
+  "path": "/.well-known/appspecific/com.chrome.devtools.json",
+  "status": 404,
+  "duration": "4ms",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+}
+2025-12-03 18:35:42 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:01 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:03 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:16 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:17 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:26 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:27 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:27 [[32minfo[39m]: Database models synchronized {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:27 [[32minfo[39m]: No admin users found. Creating default super admin... {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:27 [[32minfo[39m]: Default admin user created successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:27 [[32minfo[39m]: Email: admin@barbershop.com {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:27 [[32minfo[39m]: Password: admin123 {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:27 [[33mwarn[39m]: IMPORTANT: Change the default password after first login! {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:27 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:58 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:59 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:59 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:36:59 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:00 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:00 [[32minfo[39m]: Database models synchronized {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:00 [[32minfo[39m]: No admin users found. Creating default super admin... {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:00 [[32minfo[39m]: Default admin user created successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:00 [[32minfo[39m]: Email: admin@barbershop.com {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:00 [[32minfo[39m]: Password: admin123 {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:00 [[33mwarn[39m]: IMPORTANT: Change the default password after first login! {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:00 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:09 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:10 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:10 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:16 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:17 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:17 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:26 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:27 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:27 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:35 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:35 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:35 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:44 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:44 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:44 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:50 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:51 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:37:51 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:59 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:00 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:00 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:38:05 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:06 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:06 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:38:11 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:12 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:12 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:38:18 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:18 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:18 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:38:35 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:35 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:38:35 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:39:06 [[32minfo[39m]: Initializing database... {
+  "service": "bookings-api"
+}
+2025-12-03 18:39:06 [[32minfo[39m]: Database connection established successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:39:06 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:39:19 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:40:52 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:40:53 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:08 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:08 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:15 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:15 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:24 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:25 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:32 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:33 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:41 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:41 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:48 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:48 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:55 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:41:55 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:42:33 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:42:34 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:42:35 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:42:44 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:42:44 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:42:50 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:42:50 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:43:40 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:43:40 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:43:51 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:43:51 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:43:53 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:43:53 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:43:53 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:56:49 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:56:50 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:56:52 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:56:52 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:56:52 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:08 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:57:08 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:57:10 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:10 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:10 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:34 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:57:35 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:57:37 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:37 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:37 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:56 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:57:57 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:57:59 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:59 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:59 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:06 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:58:07 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:58:09 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:09 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:09 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:21 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:58:22 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:58:24 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:24 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:24 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:16 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:59:17 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:59:19 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:19 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:19 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:29 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:59:29 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:59:31 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:31 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:31 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:42 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:59:42 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:59:44 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:44 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:44 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:52 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:59:53 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 18:59:55 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:55 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:55 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:04 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:00:04 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:00:06 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:06 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:06 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:25 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:00:26 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:00:28 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:28 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:28 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:35 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:00:36 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:00:38 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:38 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:38 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:49 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:00:49 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:00:51 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:51 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:51 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:03 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:01:03 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:01:05 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:05 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:05 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:25 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:01:26 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:01:27 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:27 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:27 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:47 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:01:48 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:01:50 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:50 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:50 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:53 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:01:54 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:01:56 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:56 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:56 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:00 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:00 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:02 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:02 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:02 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:09 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:10 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:12 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:12 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:12 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:16 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:16 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:18 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:18 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:18 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:22 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:23 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:25 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:25 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:25 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:29 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:29 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:02:31 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:31 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:31 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:04 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:03:04 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:03:06 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:06 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:06 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:28 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:03:28 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:03:30 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:30 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:30 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:38 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:03:39 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:03:41 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:41 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:41 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:17 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:07:18 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:07:20 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:20 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:20 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:40 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:07:41 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:07:43 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:43 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:43 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:51 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:07:52 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:07:54 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:54 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:54 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:12 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:08:12 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:08:14 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:14 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:14 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:40 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:08:41 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:08:42 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:42 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:42 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:50 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:08:51 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:08:53 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:53 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:53 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:01 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:09:02 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:09:04 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:04 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:04 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:37 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:09:37 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 19:09:39 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:39 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:39 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:11:41 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:11:41 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:11:43 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:11:43 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:11:43 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:11:57 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:11:58 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:12:00 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:00 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:00 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:13 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:12:14 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:12:16 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:16 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:16 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:28 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:12:29 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:12:31 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:31 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:31 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:49 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:12:50 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:12:52 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:52 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:52 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:22 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:13:23 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:13:25 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:25 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:25 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:44 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:13:45 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:13:47 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:47 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:47 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:30 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:14:31 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:14:33 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:33 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:33 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:41 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:14:42 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:14:44 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:44 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:44 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:01 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:15:02 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:15:04 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:04 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:04 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:18 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:15:19 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:15:21 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:21 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:21 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:32 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:15:33 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:15:35 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:35 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:35 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:47 [[32minfo[39m]: Firebase Admin SDK initialized successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:15:47 [[32minfo[39m]: Location information loaded successfully {
+  "service": "bookings-api"
+}
+2025-12-03 23:15:49 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:49 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:49 [[33mwarn[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}

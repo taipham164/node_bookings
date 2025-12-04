@@ -15,6 +15,9 @@ const express = require("express");
 const router = express.Router();
 require("dotenv").config();
 
+const { asyncHandler, ValidationError, AuthenticationError } = require("../middleware/errorHandler");
+const { logger } = require("../util/logger");
+const { validatePhoneNumber, validateEmail } = require("../util/validators");
 const {
   customersApi,
   bookingsApi,
@@ -112,78 +115,74 @@ router.get("/login", (req, res) => {
 /**
  * POST /auth/verify-firebase-token
  */
-router.post("/verify-firebase-token", async (req, res) => {
-  try {
-    const { phoneNumber } = req.body;
+router.post("/verify-firebase-token", asyncHandler(async (req, res) => {
+  const { phoneNumber } = req.body;
+  
+  if (!phoneNumber) {
+    throw new ValidationError('Phone number is required');
+  }
+  
+  if (!validatePhoneNumber(phoneNumber)) {
+    throw new ValidationError('Invalid phone number format');
+  }
+  
+  const normalizedPhone = normalizePhoneNumber(phoneNumber);
+  logger.info('Firebase token verification attempted', { phoneNumber: normalizedPhone });
+  
+  if (!customersApi) {
+    throw new Error('Square API not configured');
+  }
     
-    if (!phoneNumber) {
-      return res.status(400).json({ error: 'Phone number is required' });
-    }
-    
-    const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    
-    if (!/^\+\d{10,15}$/.test(normalizedPhone)) {
-      return res.status(400).json({ error: 'Invalid phone number format' });
-    }
-    
-    if (!customersApi) {
-      return res.status(500).json({ error: 'Square API not configured' });
-    }
-    
-    const { result: { customers } } = await customersApi.searchCustomers({
-      query: {
-        filter: {
-          phoneNumber: {
-            exact: normalizedPhone
-          }
+  const { result: { customers } } = await customersApi.searchCustomers({
+    query: {
+      filter: {
+        phoneNumber: {
+          exact: normalizedPhone
         }
       }
-    });
-    
-    if (!customers || customers.length === 0) {
-      return res.status(404).json({ error: 'No customer found with this phone number' });
     }
-    
-    const customer = customers[0];
-    
-    // Convert customer data to safe format (no BigInt values)
-    const safeCustomerData = convertBigIntToNumber({
-      id: customer.id,
-      givenName: customer.givenName,
-      familyName: customer.familyName,
-      emailAddress: customer.emailAddress,
-      phoneNumber: customer.phoneNumber,
-      version: customer.version
-    });
-    
-    req.session.authenticatedCustomer = {
-      ...safeCustomerData,
-      loginTime: Date.now(),
-      lastActivity: Date.now(),
-      firebaseVerified: true,
-      sessionExpires: Date.now() + (24 * 60 * 60 * 1000)
-    };
-    
-    req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
-    
-    res.json({ success: true, redirectUrl: '/auth/appointments' });
-    
-  } catch (error) {
-    console.error('Error in verify-firebase-token:', error);
-    res.status(500).json({ error: 'Server error during verification' });
+  });
+  
+  if (!customers || customers.length === 0) {
+    logger.warn('Customer not found for phone verification', { phoneNumber: normalizedPhone });
+    throw new AuthenticationError('No customer found with this phone number');
   }
-});
+  
+  const customer = customers[0];
+  
+  // Convert customer data to safe format (no BigInt values)
+  const safeCustomerData = convertBigIntToNumber({
+    id: customer.id,
+    givenName: customer.givenName,
+    familyName: customer.familyName,
+    emailAddress: customer.emailAddress,
+    phoneNumber: customer.phoneNumber,
+    version: customer.version
+  });
+  
+  req.session.authenticatedCustomer = {
+    ...safeCustomerData,
+    loginTime: Date.now(),
+    lastActivity: Date.now(),
+    firebaseVerified: true,
+    sessionExpires: Date.now() + (24 * 60 * 60 * 1000)
+  };
+  
+  req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
+  
+  logger.info('Customer authentication successful', { customerId: customer.id });
+  res.json({ success: true, redirectUrl: '/auth/appointments' });
+}));
 
 /**
  * GET /auth/appointments
  */
-router.get("/appointments", async (req, res) => {
-  try {
-    if (!req.session?.authenticatedCustomer) {
-      return res.redirect('/auth/login');
-    }
-    
-    const customer = req.session.authenticatedCustomer;
+router.get("/appointments", asyncHandler(async (req, res) => {
+  if (!req.session?.authenticatedCustomer) {
+    return res.redirect('/auth/login');
+  }
+  
+  const customer = req.session.authenticatedCustomer;
     
     if (customer.sessionExpires && Date.now() > customer.sessionExpires) {
       delete req.session.authenticatedCustomer;
@@ -323,7 +322,10 @@ router.get("/appointments", async (req, res) => {
                     throw new Error('Team member data incomplete');
                   }
                 } catch (teamError) {
-                  console.warn('Team member fetch failed, using fallback:', teamError.message);
+                  logger.warn('Team member fetch failed, using fallback', { 
+                    teamMemberId: segment.teamMemberId, 
+                    error: teamError.message 
+                  });
                   // Add fallback team member
                   processedBooking.teamMemberProfiles.push({
                     displayName: 'Staff Member',
@@ -357,7 +359,10 @@ router.get("/appointments", async (req, res) => {
           processedBookings.push(processedBooking);
           
         } catch (bookingError) {
-          console.error('Error processing individual booking:', bookingError);
+          logger.warn('Error processing individual booking', { 
+            bookingId: booking.id, 
+            error: bookingError.message 
+          });
           continue;
         }
       }
@@ -366,7 +371,11 @@ router.get("/appointments", async (req, res) => {
         .filter(apt => !apt.isPast)
         .sort((a, b) => a.startAt - b.startAt);
       
-      console.log(`Processed ${processedBookings.length} bookings, ${upcomingAppointments.length} upcoming`);
+      logger.info('Processed customer appointments', { 
+        customerId: customer.id,
+        totalBookings: processedBookings.length, 
+        upcomingAppointments: upcomingAppointments.length 
+      });
       
       return res.render("pages/customer-appointment", {
         customer,
@@ -380,7 +389,7 @@ router.get("/appointments", async (req, res) => {
       });
       
     } catch (apiError) {
-      console.error('Bookings API error:', apiError);
+      logger.error('Bookings API error', { error: apiError.message, customerId: customer.id });
       return res.render("pages/customer-appointment", {
         customer,
         upcomingAppointments: [],
@@ -394,21 +403,7 @@ router.get("/appointments", async (req, res) => {
       });
     }
     
-  } catch (error) {
-    console.error('Route error:', error);
-    res.render("pages/customer-appointment", {
-      customer: req.session?.authenticatedCustomer || { givenName: 'Guest', familyName: '', emailAddress: '', phoneNumber: '' },
-      upcomingAppointments: [],
-      pastAppointments: [],
-      hasAppointments: false,
-      error: `Error: ${error.message}`,
-      location: {
-        businessName: process.env.SQ_APPLICATION_NAME || 'Booking System',
-        logoUrl: null
-      }
-    });
-  }
-});
+}));
 
 /**
  * GET /auth/edit-profile
@@ -454,27 +449,26 @@ router.get("/edit-profile", async (req, res) => {
 /**
  * POST /auth/update-profile
  */
-router.post("/update-profile", async (req, res) => {
-  try {
-    if (!req.session?.authenticatedCustomer) {
-      return res.redirect('/auth/login');
-    }
-    
-    const customer = req.session.authenticatedCustomer;
-    const { givenName, familyName, emailAddress, phoneNumber } = req.body;
-    
-    // Validation
-    if (!givenName || !familyName) {
-      return res.redirect('/auth/edit-profile?error=invalid_name');
-    }
-    
-    if (emailAddress && !/\S+@\S+\.\S+/.test(emailAddress)) {
-      return res.redirect('/auth/edit-profile?error=invalid_email');
-    }
-    
-    if (phoneNumber && !/^\+?\d{10,15}$/.test(phoneNumber.replace(/[\s\-\(\)]/g, ''))) {
-      return res.redirect('/auth/edit-profile?error=invalid_phone');
-    }
+router.post("/update-profile", asyncHandler(async (req, res) => {
+  if (!req.session?.authenticatedCustomer) {
+    return res.redirect('/auth/login');
+  }
+  
+  const customer = req.session.authenticatedCustomer;
+  const { givenName, familyName, emailAddress, phoneNumber } = req.body;
+  
+  // Validation
+  if (!givenName || !familyName) {
+    return res.redirect('/auth/edit-profile?error=invalid_name');
+  }
+  
+  if (emailAddress && !validateEmail(emailAddress)) {
+    return res.redirect('/auth/edit-profile?error=invalid_email');
+  }
+  
+  if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
+    return res.redirect('/auth/edit-profile?error=invalid_phone');
+  }
     
     // Normalize phone number if provided
     let normalizedPhone = customer.phoneNumber;
@@ -497,12 +491,12 @@ router.post("/update-profile", async (req, res) => {
       updateCustomerRequest.phoneNumber = normalizedPhone;
     }
     
-    console.log('Updating Square customer:', customer.id, updateCustomerRequest);
+    logger.info('Updating customer profile', { customerId: customer.id, fields: Object.keys(updateCustomerRequest) });
     
     // Update customer in Square with proper error handling
     const { result: updatedCustomer } = await customersApi.updateCustomer(customer.id, updateCustomerRequest);
     
-    console.log('Square customer updated successfully:', updatedCustomer.customer.id);
+    logger.info('Customer profile updated successfully', { customerId: updatedCustomer.customer.id });
     
     // Convert Square API response to safe format before storing in session
     const safeCustomerData = convertBigIntToNumber({
@@ -525,35 +519,18 @@ router.post("/update-profile", async (req, res) => {
       sessionExpires: customer.sessionExpires
     };
     
-    console.log('Session updated with Square data');
+    logger.info('Customer session updated with fresh data', { customerId: customer.id });
     res.redirect('/auth/edit-profile?success=profile_updated');
-    
-  } catch (error) {
-    console.error('Error updating profile in Square:', error);
-    console.error('Square API error details:', error.message);
-    
-    // Handle specific Square API errors
-    if (error.statusCode === 400) {
-      return res.redirect('/auth/edit-profile?error=invalid_data');
-    } else if (error.statusCode === 409) {
-      return res.redirect('/auth/edit-profile?error=version_conflict');
-    } else if (error.statusCode === 404) {
-      return res.redirect('/auth/edit-profile?error=customer_not_found');
-    }
-    
-    res.redirect('/auth/edit-profile?error=update_failed');
-  }
-});
+}));
 
 /**
  * GET /auth/refresh-profile
  * Refresh customer data from Square API
  */
-router.get("/refresh-profile", async (req, res) => {
-  try {
-    if (!req.session?.authenticatedCustomer) {
-      return res.redirect('/auth/login');
-    }
+router.get("/refresh-profile", asyncHandler(async (req, res) => {
+  if (!req.session?.authenticatedCustomer) {
+    return res.redirect('/auth/login');
+  }
     
     const customer = req.session.authenticatedCustomer;
     
@@ -577,13 +554,8 @@ router.get("/refresh-profile", async (req, res) => {
       lastActivity: Date.now()
     };
     
-    res.redirect('/auth/appointments?success=profile_refreshed');
-    
-  } catch (error) {
-    console.error('Error refreshing customer data from Square:', error);
-    res.redirect('/auth/appointments?error=refresh_failed');
-  }
-});
+  res.redirect('/auth/appointments?success=profile_refreshed');
+}));
 
 /**
  * GET /auth/payment-methods
@@ -616,7 +588,7 @@ router.get("/payment-methods", async (req, res) => {
     'payment_added': 'Payment method added successfully!'
   };
   
-  console.log('Loading payment methods for customer:', customer.id);
+  logger.info('Loading payment methods', { customerId: customer.id });
   
   let paymentMethods = [];
   
@@ -624,7 +596,10 @@ router.get("/payment-methods", async (req, res) => {
     // Use card management utility to get customer with cards
     const customerWithCards = await getCustomerWithCards(customer.id);
     
-    console.log(`Found ${customerWithCards.enabledCards.length} enabled cards`);
+    logger.info('Retrieved customer payment methods', { 
+      customerId: customer.id, 
+      enabledCards: customerWithCards.enabledCards.length 
+    });
     
     // Convert to clean payment methods format
     paymentMethods = customerWithCards.enabledCards.map((card, index) => convertBigIntToNumber({
@@ -642,7 +617,7 @@ router.get("/payment-methods", async (req, res) => {
     }));
     
   } catch (squareError) {
-    console.warn('Square Cards API unavailable, using fallback:', squareError.message);
+    logger.warn('Square Cards API unavailable, using fallback', { error: squareError.message });
     
     // Clean fallback with minimal demo data
     paymentMethods = [
@@ -680,20 +655,19 @@ router.get("/payment-methods", async (req, res) => {
 /**
  * POST /auth/payment-methods/create-card
  */
-router.post("/payment-methods/create-card", async (req, res) => {
-  try {
-    if (!req.session?.authenticatedCustomer) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-    
-    const customer = req.session.authenticatedCustomer;
-    const { sourceId, verificationToken } = req.body;
-    
-    if (!sourceId) {
-      return res.status(400).json({ error: 'Payment token is required' });
-    }
-    
-    console.log('Creating card for customer:', customer.id);
+router.post("/payment-methods/create-card", asyncHandler(async (req, res) => {
+  if (!req.session?.authenticatedCustomer) {
+    throw new AuthenticationError('Not authenticated');
+  }
+  
+  const customer = req.session.authenticatedCustomer;
+  const { sourceId, verificationToken } = req.body;
+  
+  if (!sourceId) {
+    throw new ValidationError('Payment token is required');
+  }
+  
+  logger.info('Creating payment card', { customerId: customer.id });
     
     try {
       // Use card management utility
@@ -708,84 +682,71 @@ router.post("/payment-methods/create-card", async (req, res) => {
         cardData.verificationToken = verificationToken;
       }
       
-      const createdCard = await createCardOnFile(cardData, customer.id);
-      
-      console.log('Card created successfully:', createdCard.cardId);
-      
-      res.json(convertBigIntToNumber({
-        success: true,
-        cardId: createdCard.cardId,
-        last4: createdCard.last4,
-        cardBrand: createdCard.cardBrand,
-        expMonth: createdCard.expMonth,
-        expYear: createdCard.expYear,
-        message: 'Payment method saved successfully'
-      }));
-      
-    } catch (cardError) {
-      console.error('Card creation failed:', cardError.message);
-      
-      // Return error instead of fallback for cleaner UX
-      res.status(400).json(convertBigIntToNumber({
-        success: false,
-        error: 'Unable to save payment method. Please try again.'
-      }));
-    }
+    const createdCard = await createCardOnFile(cardData, customer.id);
     
-  } catch (error) {
-    console.error('Error creating card:', error);
-    res.status(500).json(convertBigIntToNumber({
-      success: false,
-      error: 'Failed to create payment method'
+    logger.info('Payment card created successfully', { 
+      customerId: customer.id, 
+      cardId: createdCard.cardId,
+      last4: createdCard.last4
+    });
+    
+    res.json(convertBigIntToNumber({
+      success: true,
+      cardId: createdCard.cardId,
+      last4: createdCard.last4,
+      cardBrand: createdCard.cardBrand,
+      expMonth: createdCard.expMonth,
+      expYear: createdCard.expYear,
+      message: 'Payment method saved successfully'
     }));
+    
+  } catch (cardError) {
+    logger.error('Card creation failed', { error: cardError.message, customerId: customer.id });
+      
+    // Return error instead of fallback for cleaner UX
+    throw new ValidationError('Unable to save payment method. Please try again.');
   }
-});
+}));
 
 /**
  * POST /auth/payment-methods/delete
  */
-router.post("/payment-methods/delete", async (req, res) => {
+router.post("/payment-methods/delete", asyncHandler(async (req, res) => {
+  if (!req.session?.authenticatedCustomer) {
+    return res.redirect('/auth/login');
+  }
+  
+  const { cardId } = req.body;
+  
+  if (!cardId) {
+    return res.redirect('/auth/payment-methods?error=not_found');
+  }
+  
+  logger.info('Deleting payment method', { cardId });
+    
+  // Handle demo cards
+  if (cardId.startsWith('demo_')) {
+    logger.info('Demo card deletion processed', { cardId });
+    return res.redirect('/auth/payment-methods?success=payment_deleted');
+  }
+  
   try {
-    if (!req.session?.authenticatedCustomer) {
-      return res.redirect('/auth/login');
-    }
+    // Use card management utility to disable card
+    await disableCard(cardId);
+    logger.info('Payment card disabled successfully', { cardId });
+    return res.redirect('/auth/payment-methods?success=payment_deleted');
     
-    const { cardId } = req.body;
-    
-    if (!cardId) {
-      return res.redirect('/auth/payment-methods?error=not_found');
-    }
-    
-    console.log('Deleting payment method:', cardId);
-    
-    // Handle demo cards
-    if (cardId.startsWith('demo_')) {
-      console.log('Demo card deletion - marked as deleted');
-      return res.redirect('/auth/payment-methods?success=payment_deleted');
-    }
-    
-    try {
-      // Use card management utility to disable card
-      await disableCard(cardId);
-      console.log('Card disabled successfully');
-      return res.redirect('/auth/payment-methods?success=payment_deleted');
-      
-    } catch (cardError) {
-      console.error('Card deletion failed:', cardError.message);
+  } catch (cardError) {
+    logger.error('Card deletion failed', { error: cardError.message, cardId });
       
       // If card not found, consider it deleted
       if (cardError.message.includes('not found')) {
         return res.redirect('/auth/payment-methods?success=payment_deleted');
       }
       
-      return res.redirect('/auth/payment-methods?error=delete_failed');
-    }
-    
-  } catch (error) {
-    console.error('Error deleting payment method:', error);
-    res.redirect('/auth/payment-methods?error=delete_failed');
+    return res.redirect('/auth/payment-methods?error=delete_failed');
   }
-});
+}));
 
 /**
  * GET /auth/customer/:customerId/cards (API endpoint using card management utility)
@@ -802,14 +763,17 @@ router.get("/customer/:customerId/cards", async (req, res) => {
     }));
   }
   
-  console.log('=== Cards API Endpoint Called ===');
-  console.log('Fetching cards for customer using utility:', customerId);
+  logger.info('Cards API endpoint called', { customerId });
   
   try {
     // Use card management utility to get customer with cards
     const customerWithCards = await getCustomerWithCards(customerId);
     
-    console.log(`Found ${customerWithCards.cards.length} total cards, ${customerWithCards.enabledCards.length} enabled`);
+    logger.info('Retrieved customer cards', { 
+      customerId, 
+      totalCards: customerWithCards.cards.length, 
+      enabledCards: customerWithCards.enabledCards.length 
+    });
     
     // Format enabled cards for response
     const enabledCards = customerWithCards.enabledCards.map(card => convertBigIntToNumber({
@@ -826,16 +790,15 @@ router.get("/customer/:customerId/cards", async (req, res) => {
     const response = convertBigIntToNumber({
       success: true,
       enabledCards: enabledCards,
-      message: `Found ${enabledCards.length} enabled cards using utility`
+      message: `Found ${enabledCards.length} enabled cards`
     });
     
-    console.log('Returning cards response with', enabledCards.length, 'cards');
+    logger.info('Returning cards API response', { customerId, cardCount: enabledCards.length });
     
     res.json(response);
     
   } catch (error) {
-    console.error('=== ERROR in Cards API using utility ===');
-    console.error('Error message:', error.message);
+    logger.error('Cards API error', { error: error.message, customerId });
     
     // Return session fallback on error
     let fallbackCards = [];
@@ -844,7 +807,7 @@ router.get("/customer/:customerId/cards", async (req, res) => {
         .filter(card => card.enabled !== false)
         .map(card => convertBigIntToNumber(card));
     } catch (sessionError) {
-      console.error('Session fallback also failed:', sessionError);
+      logger.error('Session fallback failed', { error: sessionError.message });
     }
     
     const errorResponse = convertBigIntToNumber({
@@ -854,7 +817,10 @@ router.get("/customer/:customerId/cards", async (req, res) => {
       fallbackUsed: fallbackCards.length > 0
     });
     
-    console.log('Returning error response with', fallbackCards.length, 'fallback cards');
+    logger.warn('Returning cards API error response', { 
+      customerId, 
+      fallbackCardCount: fallbackCards.length 
+    });
     
     res.json(errorResponse);
   }
@@ -864,29 +830,22 @@ router.get("/customer/:customerId/cards", async (req, res) => {
  * GET /auth/check-customer/:phoneNumber
  * Check if a customer exists with the given phone number
  */
-router.get("/check-customer/:phoneNumber", async (req, res) => {
-  try {
-    const { phoneNumber } = req.params;
-    
-    if (!phoneNumber) {
-      return res.status(400).json({ 
-        exists: false, 
-        error: 'Phone number is required' 
-      });
-    }
-    
-    // Decode URL-encoded phone number (%2B becomes +)
-    const decodedPhone = decodeURIComponent(phoneNumber);
-    const normalizedPhone = normalizePhoneNumber(decodedPhone);
-    
-    if (!/^\+\d{10,15}$/.test(normalizedPhone)) {
-      return res.status(400).json({ 
-        exists: false, 
-        error: 'Invalid phone number format' 
-      });
-    }
-    
-    console.log('Checking customer existence for phone:', normalizedPhone);
+router.get("/check-customer/:phoneNumber", asyncHandler(async (req, res) => {
+  const { phoneNumber } = req.params;
+  
+  if (!phoneNumber) {
+    throw new ValidationError('Phone number is required');
+  }
+  
+  // Decode URL-encoded phone number (%2B becomes +)
+  const decodedPhone = decodeURIComponent(phoneNumber);
+  
+  if (!validatePhoneNumber(decodedPhone)) {
+    throw new ValidationError('Invalid phone number format');
+  }
+  
+  const normalizedPhone = normalizePhoneNumber(decodedPhone);
+  logger.info('Checking customer existence', { phoneNumber: normalizedPhone });
     
     if (!customersApi) {
       return res.status(500).json({ 
@@ -922,21 +881,13 @@ router.get("/check-customer/:phoneNumber", async (req, res) => {
         exists: true,
         customer: safeCustomerData
       });
-    } else {
-      res.json({
-        exists: false,
-        message: 'No customer found with this phone number'
-      });
-    }
-    
-  } catch (error) {
-    console.error('Error checking customer existence:', error);
-    res.status(500).json({
+  } else {
+    res.json({
       exists: false,
-      error: 'Server error while checking customer'
+      message: 'No customer found with this phone number'
     });
   }
-});
+}));
 
 /**
  * POST /auth/logout

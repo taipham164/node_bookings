@@ -4,6 +4,7 @@
  */
 
 const { getCancellationPolicy } = require('./cancellation-policy');
+const { logger } = require('./logger');
 
 /**
  * Retrieves the business booking policy settings from Square API
@@ -25,7 +26,7 @@ async function getBookingPolicy() {
       autoApproval: profile.booking_policy === 'ACCEPT_ALL'
     };
   } catch (error) {
-    console.error('Error fetching booking policy:', error);
+    logger.error('Error fetching booking policy:', error);
     // Return default policy
     return getDefaultBookingPolicy();
   }
@@ -105,7 +106,7 @@ async function getBookingConfiguration() {
       }
     };
   } catch (error) {
-    console.error('Error getting booking configuration:', error);
+    logger.error('Error getting booking configuration:', error);
     throw error;
   }
 }

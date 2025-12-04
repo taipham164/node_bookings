@@ -5,6 +5,7 @@
 
 const { cardsApi, customersApi, paymentsApi } = require('./square-client');
 const { randomUUID } = require('crypto');
+const { logger } = require('./logger');
 
 /**
  * Creates a new card on file for a customer
@@ -38,7 +39,7 @@ async function createCardOnFile(cardData, customerId) {
       expYear: result.card.expYear
     };
   } catch (error) {
-    console.error('Error creating card on file:', error);
+    logger.error('Error creating card on file:', error);
     throw new Error(`Failed to save payment method: ${error.message}`);
   }
 }
@@ -65,7 +66,7 @@ async function listCustomerCards(customerId) {
       billingAddress: card.billingAddress
     })) || [];
   } catch (error) {
-    console.error('Error listing customer cards:', error);
+    logger.error('Error listing customer cards:', error);
     return [];
   }
 }
@@ -91,7 +92,7 @@ async function getCard(cardId) {
       billingAddress: result.card.billingAddress
     };
   } catch (error) {
-    console.error('Error retrieving card:', error);
+    logger.error('Error retrieving card:', error);
     throw new Error(`Failed to retrieve payment method: ${error.message}`);
   }
 }
@@ -111,7 +112,7 @@ async function disableCard(cardId) {
       message: 'Payment method disabled successfully'
     };
   } catch (error) {
-    console.error('Error disabling card:', error);
+    logger.error('Error disabling card:', error);
     throw new Error(`Failed to disable payment method: ${error.message}`);
   }
 }
@@ -147,7 +148,7 @@ async function createPaymentWithSavedCard(cardId, paymentData) {
       receiptUrl: result.payment.receiptUrl
     };
   } catch (error) {
-    console.error('Error creating payment with saved card:', error);
+    logger.error('Error creating payment with saved card:', error);
     throw new Error(`Payment failed: ${error.message}`);
   }
 }
@@ -177,7 +178,7 @@ async function getCustomerWithCards(customerId) {
       enabledCards: cards.filter(card => card.enabled)
     };
   } catch (error) {
-    console.error('Error getting customer with cards:', error);
+    logger.error('Error getting customer with cards:', error);
     throw new Error(`Failed to retrieve customer payment methods: ${error.message}`);
   }
 }

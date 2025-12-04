@@ -5,6 +5,7 @@
 
 const { paymentsApi } = require('./square-client');
 const { randomUUID } = require('crypto');
+const { logger } = require('./logger');
 
 /**
  * Create a card authorization (hold) for appointment booking
@@ -46,7 +47,7 @@ async function createCardAuthorization(cardData, appointmentData) {
       holdType: 'NO_SHOW_PROTECTION'
     };
   } catch (error) {
-    console.error('Error creating card authorization:', error);
+    logger.error('Error creating card authorization:', error);
     throw new Error(`Failed to authorize payment method: ${error.message}`);
   }
 }
@@ -74,7 +75,7 @@ async function captureAuthorization(authorizationId, captureAmount = null) {
       reason: 'NO_SHOW_FEE'
     };
   } catch (error) {
-    console.error('Error capturing authorization:', error);
+    logger.error('Error capturing authorization:', error);
     throw new Error(`Failed to capture payment: ${error.message}`);
   }
 }
@@ -99,7 +100,7 @@ async function cancelAuthorization(authorizationId) {
       reason: 'APPOINTMENT_COMPLETED_OR_CANCELED'
     };
   } catch (error) {
-    console.error('Error canceling authorization:', error);
+    logger.error('Error canceling authorization:', error);
     throw new Error(`Failed to release payment hold: ${error.message}`);
   }
 }
@@ -133,7 +134,7 @@ async function getAuthorizationStatus(authorizationId) {
       isExpired: new Date() > new Date(calculateAuthorizationExpiry())
     };
   } catch (error) {
-    console.error('Error getting authorization status:', error);
+    logger.error('Error getting authorization status:', error);
     throw new Error(`Failed to get authorization status: ${error.message}`);
   }
 }
@@ -187,7 +188,7 @@ async function processCancellationFee(authorizationId, cancellationData) {
       };
     }
   } catch (error) {
-    console.error('Error processing cancellation fee:', error);
+    logger.error('Error processing cancellation fee:', error);
     throw new Error(`Failed to process cancellation fee: ${error.message}`);
   }
 }

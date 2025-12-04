@@ -18,6 +18,8 @@ const { bookingsApi, catalogApi, teamMembersApi } = require("../util/square-clie
 const { getCancellationPolicy, getPolicyTerms } = require("../util/cancellation-policy");
 const { getBookingConfiguration } = require("../util/booking-policy");
 const { safeNumberConversion } = require("../util/bigint-helpers");
+const { asyncHandler, ValidationError } = require("../middleware/errorHandler");
+const { logger } = require("../util/logger");
 
 /**
  * Convert BigInt values to regular numbers
@@ -39,7 +41,7 @@ function convertBigIntToNumber(obj) {
 /**
  * GET /contact
  */
-router.get("/", async (req, res) => {
+router.get("/", asyncHandler(async (req, res) => {
   const { serviceId, version: serviceVersion = "", staff: staffId, startAt, back } = req.query;
   const isBackNavigation = back === 'true';
   
@@ -226,7 +228,7 @@ router.get("/", async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error in contact route:', error);
+    logger.error('Error in contact route:', error);
     
     // Emergency fallback
     const fallbackServiceItem = {
@@ -262,6 +264,6 @@ router.get("/", async (req, res) => {
       policyTerms: null
     });
   }
-});
+}));
 
 module.exports = router;

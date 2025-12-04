@@ -22,13 +22,15 @@ const {
 } = require("../util/square-client");
 
 const { safeNumberConversion } = require("../util/bigint-helpers");
+const { asyncHandler, ValidationError } = require("../middleware/errorHandler");
+const { logger } = require("../util/logger");
 
 /**
  * GET /services
  *
  * This endpoint is in charge of retrieving all of the service items that can be booked for the current location.
  */
-router.get("/", async (req, res, next) => {
+router.get("/", asyncHandler(async (req, res, next) => {
   const cancel = req.query.cancel;
   const errorMessage = req.query.error;
   const isBackNavigation = req.query.back === 'true';
@@ -54,7 +56,7 @@ router.get("/", async (req, res, next) => {
       teamMemberBookingProfile: req.session.teamMemberBookingProfile,
       staffProfile: req.session.staffProfile
     };
-    console.log('Back navigation to services - preserving session:', preservedSession);
+    logger.debug('Back navigation to services - preserving session:', preservedSession);
   }
   
   try {
@@ -147,7 +149,7 @@ router.get("/", async (req, res, next) => {
         }
       }
     } catch (err) {
-      console.warn("Could not fetch booking info for services:", err);
+      logger.warn("Could not fetch booking info for services:", err);
     }
 
     // Sum booking counts for each category
@@ -207,7 +209,7 @@ router.get("/", async (req, res, next) => {
             imageMap[imageId] = object.imageData.url;
           }
         } catch (err) {
-          console.warn(`Could not retrieve image ${imageId}:`, err);
+          logger.warn(`Could not retrieve image ${imageId}:`, err);
         }
       }
     }
@@ -225,16 +227,16 @@ router.get("/", async (req, res, next) => {
       isBackNavigation
     });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     next(error);
   }
-});
+}));
 
 /**
  * POST /services/select
  * Handles selection of multiple services and their quantities.
  */
-router.post("/select", async (req, res, next) => {
+router.post("/select", asyncHandler(async (req, res, next) => {
   let selectedServices = req.body["services[]"] || req.body.services || [];
 
   // Robustly parse quantities[<serviceId>] fields from req.body
@@ -306,11 +308,11 @@ router.post("/select", async (req, res, next) => {
           }
         };
         
-        console.log(`DEBUG: Service ${sid} details: duration=${serviceDuration}, amount=${amount}, totalPrice=${totalPrice}`);
+        logger.debug(`Service ${sid} details: duration=${serviceDuration}, amount=${amount}, totalPrice=${totalPrice}`);
       }
     } catch (e) {
       missingPriceIds.push(sid); // If fetch fails, treat as missing price
-      console.error(`Error fetching service details for ${sid}:`, e);
+      logger.error(`Error fetching service details for ${sid}:`, e);
     }
   }
   
@@ -385,7 +387,7 @@ router.post("/select", async (req, res, next) => {
         error: `The following services require an estimate: ${missingNames.join(", ")}. Please call us for a quote before booking.`
       });
     } catch (renderError) {
-      console.error('Error re-rendering services page:', renderError);
+      logger.error('Error re-rendering services page:', renderError);
       return res.redirect('/services?error=missing_price');
     }
   }
@@ -399,10 +401,10 @@ router.post("/select", async (req, res, next) => {
   req.session.totalPrice = totalPrice;
   
   // Debug: log session after setting
-  console.log('DEBUG: /services/select session.selectedServices', req.session.selectedServices);
-  console.log('DEBUG: /services/select session.quantities', req.session.quantities);
-  console.log('DEBUG: /services/select session.totalDuration', req.session.totalDuration, typeof req.session.totalDuration);
-  console.log('DEBUG: /services/select session.totalPrice', req.session.totalPrice, typeof req.session.totalPrice);
+  logger.debug('/services/select session.selectedServices', req.session.selectedServices);
+  logger.debug('/services/select session.quantities', req.session.quantities);
+  logger.debug('/services/select session.totalDuration', req.session.totalDuration, typeof req.session.totalDuration);
+  logger.debug('/services/select session.totalPrice', req.session.totalPrice, typeof req.session.totalPrice);
 
   const firstServiceId = expandedServiceIds[0];
   const version = req.body.version || '';
@@ -410,12 +412,12 @@ router.post("/select", async (req, res, next) => {
   // Save session before redirect to ensure persistence
   req.session.save((err) => {
     if (err) {
-      console.error('Session save error:', err);
+      logger.error('Session save error:', err);
       return res.redirect('/services?error=session_error');
     }
-    console.log('DEBUG: Session saved successfully, redirecting to staff page');
+    logger.debug('Session saved successfully, redirecting to staff page');
     res.redirect(`/staff/${firstServiceId}?version=${version}`);
   });
-});
+}));
 
 module.exports = router;
