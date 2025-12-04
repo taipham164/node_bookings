@@ -102,39 +102,69 @@ The admin system uses role-based access control (RBAC):
 
 ## Setup Instructions
 
-### 1. Enable Admin Access
+### 1. Firebase Configuration
 
-Currently, admin access is controlled through the `role` field in the user session. To set a user as admin:
+The admin system uses Firebase Authentication for secure user management. You need to:
 
-```javascript
-req.session.authenticatedCustomer.role = "super_admin"; // or "manager", "staff"
+1. Set up a Firebase project
+2. Enable Authentication with Email/Password
+3. Set up Firestore database
+4. Configure environment variables
+
+**Environment Variables Required:**
+```env
+# Firebase Admin SDK (choose one option)
+FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account",...} # JSON string
+# OR
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+
+# Optional: Default admin credentials
+DEFAULT_ADMIN_EMAIL=admin@yourdomain.com
+DEFAULT_ADMIN_PASSWORD=securepassword123
 ```
 
-### 2. Create an Admin User (Manual Setup)
+### 2. Initial Admin Setup
 
-For development/testing, you can manually set admin role:
+**Option A: Automatic Setup (Recommended)**
+The system automatically creates a default super admin on first startup:
+- Email: `admin@barbershop.com` (or `DEFAULT_ADMIN_EMAIL`)
+- Password: `admin123` (or `DEFAULT_ADMIN_PASSWORD`)
 
-1. Log in with your customer account
-2. In browser console, execute:
+**Option B: Manual Setup via UI**
+1. Visit `/admin/login`
+2. Click "Initial Setup (First Time)"
+3. Create your first super admin account
+
+**Option C: API Setup**
 ```javascript
-// In browser DevTools console:
-// This sets your session to admin (for testing only)
-fetch('/api/set-admin-role', { method: 'POST' })
-  .then(r => r.json())
-  .then(d => console.log(d));
+POST /auth/admin/setup
+{
+  "email": "admin@yourdomain.com",
+  "password": "securepassword",
+  "displayName": "Super Administrator"
+}
 ```
 
 ### 3. Access Admin Dashboard
 
-Once set as admin, visit:
-```
-https://yourdomain.com/admin
-```
+1. Go to `/admin/login`
+2. Sign in with your Firebase admin credentials
+3. Access the admin dashboard at `/admin`
 
 ### 4. Admin Routes
 
-Available admin routes:
+**Authentication Routes:**
+| Route | Description |
+|-------|-------------|
+| `/admin/login` | Admin login page |
+| `/auth/admin/firebase/verify` | Firebase token verification |
+| `/auth/admin/logout` | Admin logout |
+| `/auth/admin/me` | Current user info |
+| `/auth/admin/users` | List admin users (super admin) |
+| `/auth/admin/users` (POST) | Create admin user (super admin) |
+| `/auth/admin/setup` | Initial setup |
 
+**Dashboard Routes:**
 | Route | Description |
 |-------|-------------|
 | `/admin` | Dashboard home |
@@ -242,40 +272,133 @@ Edit `views/pages/admin/inventory.ejs` to add specific inventory categories for 
 
 Add new report types in `/admin/reports` by creating report generation functions.
 
-## Security Notes
+## Firebase Security Features
 
-- All admin routes require authentication
-- Permissions are checked on every request
-- Sessions expire after 24 hours
-- CSRF protection enabled
-- Rate limiting applied to all admin endpoints
-- Sensitive data is masked in logs
+- **Firebase Authentication**: Industry-standard OAuth2/JWT tokens
+- **Role-based Access Control**: Stored in Firestore with custom claims
+- **Session Management**: Server-side validation with Firebase ID tokens
+- **Permission Checking**: Granular permissions on every route
+- **Audit Trail**: All admin actions logged with user context
+- **Rate Limiting**: Applied to all admin endpoints
+- **CSRF Protection**: Enabled for all forms
+- **Secure Sessions**: 24-hour expiration with httpOnly cookies
+
+## Data Storage
+
+**Firebase Auth Users**: Core authentication data
+**Firestore Collection** (`admin_users`): Extended admin profiles
+```javascript
+{
+  uid: "firebase-user-id",
+  email: "admin@example.com",
+  displayName: "John Doe",
+  phoneNumber: "+1234567890",
+  role: "super_admin", // super_admin, manager, staff
+  status: "active", // active, inactive, suspended
+  permissions: { dashboard: true, appointments: [...] },
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+  lastLoginAt: Timestamp,
+  createdBy: "creator-uid",
+  notes: "Additional notes"
+}
+```
 
 ## Troubleshooting
 
+### Firebase Authentication Issues
+- Check Firebase project configuration
+- Verify service account credentials
+- Ensure Firestore database is created
+- Check Firebase console for user accounts
+
 ### Can't Access Admin Dashboard
-- Verify you're logged in as customer first
-- Check that your role is set to `super_admin` or `manager`
+- Verify Firebase user exists and is enabled
+- Check that admin profile exists in Firestore
+- Ensure user has appropriate role/status
 - Clear browser cache and cookies
-- Check console for error messages
+- Check browser console for authentication errors
 
-### Missing Appointment Data
-- Ensure your Square API credentials are correct
-- Check that appointments exist in your Square account
-- Verify location ID is correct
+### Initial Setup Issues
+- Verify no existing super admin users
+- Check Firebase project permissions
+- Ensure Firestore write permissions
+- Check server logs for initialization errors
 
-### Performance Issues
-- Admin stats are cached for better performance
-- Clear browser cache if data seems stale
-- Check network tab for slow API calls
+### Permission Denied Errors
+- Verify user role in Firestore
+- Check permission configuration
+- Ensure user status is "active"
+- Review server logs for permission checks
+
+## Firebase Setup Instructions
+
+### 1. Create Firebase Project
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Create a new project or select existing
+3. Enable Authentication > Sign-in method > Email/Password
+4. Create Firestore Database in production mode
+
+### 2. Generate Service Account
+1. Go to Project Settings > Service Accounts
+2. Generate new private key
+3. Save JSON file securely
+4. Set environment variable or use Google Application Credentials
+
+### 3. Configure Client-Side Firebase
+Update the Firebase config in `/views/pages/admin/login.ejs`:
+```javascript
+const firebaseConfig = {
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com", 
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
+```
+
+### 4. Firestore Security Rules
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Admin users collection - only readable by authenticated admin users
+    match /admin_users/{userId} {
+      allow read, write: if request.auth != null 
+        && request.auth.token.admin == true;
+    }
+    
+    // Other collections...
+  }
+}
+```
 
 ## Best Practices
 
-1. **Delegate Management**: Create manager accounts for assistant managers
-2. **Regular Reviews**: Check reports weekly to track trends
-3. **Inventory**: Keep inventory updated regularly
-4. **Backups**: Regularly export reports for record-keeping
-5. **Security**: Change SESSION_SECRET regularly in production
+1. **Firebase Security**: 
+   - Use service account with minimal permissions
+   - Enable MFA for Firebase console access
+   - Regularly rotate service account keys
+   - Monitor Firebase usage and costs
+
+2. **Admin Management**: 
+   - Create manager accounts for assistant managers
+   - Regular review of admin user access
+   - Document role assignments and changes
+   - Use meaningful display names
+
+3. **System Maintenance**:
+   - Check reports weekly to track trends
+   - Monitor Firebase Auth usage
+   - Regular backups of Firestore data
+   - Keep inventory updated regularly
+
+4. **Security**: 
+   - Change SESSION_SECRET regularly in production
+   - Monitor admin login attempts
+   - Review permission changes in logs
+   - Enable Firebase audit logging
 
 ## Support
 

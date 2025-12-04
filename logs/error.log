@@ -1,0 +1,463 @@
+2025-12-03 18:27:52 [[31merror[39m]: Cannot read properties of undefined (reading 'role') {
+  "service": "bookings-api",
+  "stack": "TypeError: Cannot read properties of undefined (reading 'role')\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:30:15\n    at requireAuth (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:14:12)\n    at requireAdmin (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:26:3)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at attachAdminUtils (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:126:3)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)",
+  "context": {
+    "path": "/admin",
+    "method": "GET",
+    "body": {},
+    "params": {}
+  }
+}
+2025-12-03 18:27:52 [[31merror[39m]: Cannot read properties of undefined (reading 'role') {
+  "service": "bookings-api",
+  "stack": "TypeError: Cannot read properties of undefined (reading 'role')\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:30:15\n    at requireAuth (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:14:12)\n    at requireAdmin (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:26:3)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at attachAdminUtils (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\adminMiddleware.js:126:3)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)",
+  "context": {
+    "path": "/admin",
+    "method": "GET",
+    "body": {},
+    "params": {}
+  }
+}
+2025-12-03 18:27:55 [[31merror[39m]: Cannot GET /.well-known/appspecific/com.chrome.devtools.json {
+  "service": "bookings-api",
+  "stack": "Error: Cannot GET /.well-known/appspecific/com.chrome.devtools.json\n    at notFoundHandler (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\middleware\\errorHandler.js:176:17)\n    at Layer.handle [as handle_request] (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (C:\\Users\\taiph\\Downloads\\connect-api-examples-master\\connect-api-examples-master\\connect-examples\\v2\\node_bookings\\node_modules\\express\\lib\\router\\index.js:47:12)",
+  "statusCode": 404,
+  "context": {
+    "path": "/.well-known/appspecific/com.chrome.devtools.json",
+    "method": "GET",
+    "body": {},
+    "params": {}
+  }
+}
+2025-12-03 18:37:10 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:17 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:27 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:35 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:44 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:37:51 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:38:00 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:38:06 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:38:12 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:38:18 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:38:35 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:39:06 [[31merror[39m]: Unable to connect to database: {
+  "service": "bookings-api",
+  "error": "Validation error"
+}
+2025-12-03 18:43:53 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:43:53 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:56:52 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:56:52 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:10 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:10 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:37 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:37 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:59 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:57:59 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:09 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:09 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:24 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:58:24 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:19 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:19 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:31 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:31 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:44 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:44 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:55 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 18:59:55 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:06 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:06 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:28 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:28 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:38 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:38 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:51 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:00:51 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:05 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:05 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:27 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:27 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:50 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:50 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:56 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:01:56 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:02 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:02 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:12 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:12 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:18 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:18 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:25 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:25 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:31 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:02:31 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:06 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:06 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:30 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:30 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:41 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:03:41 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:20 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:20 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:43 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:43 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:54 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:07:54 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:14 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:14 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:42 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:42 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:53 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:08:53 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:04 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:04 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:39 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 19:09:39 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:11:43 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:11:43 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:00 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:00 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:16 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:16 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:31 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:31 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:52 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:12:52 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:25 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:25 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:47 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:13:47 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:33 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:33 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:44 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:14:44 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:04 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:04 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:21 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:21 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:35 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:35 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:49 [[31merror[39m]: Error listing admin users: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}
+2025-12-03 23:15:49 [[31merror[39m]: Failed to initialize default admin: {
+  "service": "bookings-api",
+  "error": "Unable to detect a Project Id in the current environment. \nTo learn more about authentication and Google APIs, visit: \nhttps://cloud.google.com/docs/authentication/getting-started"
+}

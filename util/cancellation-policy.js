@@ -12,6 +12,7 @@ limitations under the License.
 */
 
 const { bookingsApi } = require('./square-client');
+const { logger } = require('./logger');
 
 /**
  * Retrieve the business booking profile and extract cancellation policy information
@@ -19,13 +20,13 @@ const { bookingsApi } = require('./square-client');
  */
 async function getCancellationPolicy() {
   try {
-    console.log('Fetching business booking profile from Square API...');
+    logger.debug('Fetching business booking profile from Square API...');
     
     // Retrieve the business booking profile
     const { result } = await bookingsApi.retrieveBusinessBookingProfile();
     const businessBookingProfile = result.businessBookingProfile;
     
-    console.log('Business booking profile received:', {
+    logger.debug('Business booking profile received:', {
       hasProfile: !!businessBookingProfile,
       hasAppointmentSettings: !!(businessBookingProfile?.business_appointment_settings),
       allowUserCancel: businessBookingProfile?.allow_user_cancel,
@@ -33,13 +34,13 @@ async function getCancellationPolicy() {
     });
     
     if (!businessBookingProfile || !businessBookingProfile.business_appointment_settings) {
-      console.warn('No business appointment settings found, using default policy');
+      logger.warn('No business appointment settings found, using default policy');
       return getDefaultCancellationPolicy();
     }
     
     const settings = businessBookingProfile.business_appointment_settings;
     
-    console.log('Appointment settings:', {
+    logger.debug('Appointment settings:', {
       cancellation_window_seconds: settings.cancellation_window_seconds,
       cancellation_fee_money: settings.cancellation_fee_money,
       cancellation_policy: settings.cancellation_policy,
@@ -78,8 +79,8 @@ async function getCancellationPolicy() {
     return policy;
     
   } catch (error) {
-    console.error('Error retrieving cancellation policy from Square API:', error);
-    console.warn('Falling back to default cancellation policy');
+    logger.error('Error retrieving cancellation policy from Square API:', error);
+    logger.warn('Falling back to default cancellation policy');
     return getDefaultCancellationPolicy();
   }
 }

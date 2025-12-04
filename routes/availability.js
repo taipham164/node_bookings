@@ -13,6 +13,9 @@ limitations under the License.
 
 const dateHelpers = require("../util/date-helpers");
 const { safeNumberConversion } = require("../util/bigint-helpers");
+const { asyncHandler, ValidationError } = require("../middleware/errorHandler");
+const { logger } = require("../util/logger");
+const { validateDateString, validateTimeString } = require("../util/validators");
 const express = require("express");
 const router = express.Router();
 require("dotenv").config();
@@ -75,7 +78,10 @@ function filterAvailabilitiesByTotalDuration(availabilities, totalDurationMinute
     return availabilities;
   }
   
-  console.log(`DEBUG: Filtering availabilities for total duration: ${totalDurationMinutes} minutes`);
+  logger.debug('Filtering availabilities by total duration', { 
+    totalDurationMinutes, 
+    segmentCount: segmentFilters.length 
+  });
   
   return availabilities.filter(availability => {
     if (!availability.appointmentSegments || availability.appointmentSegments.length === 0) {
@@ -91,7 +97,7 @@ function filterAvailabilitiesByTotalDuration(availabilities, totalDurationMinute
     const hasEnoughTime = availableSlotDuration >= totalDurationMinutes;
     
     if (!hasEnoughTime) {
-      console.log(`DEBUG: Rejecting slot ${availability.startAt}: available=${availableSlotDuration}min, needed=${totalDurationMinutes}min`);
+      logger.debug(`Rejecting slot ${availability.startAt}: available=${availableSlotDuration}min, needed=${totalDurationMinutes}min`);
     }
     
     return hasEnoughTime;
@@ -145,7 +151,7 @@ async function searchActiveTeamMembers(serviceId) {
  * This endpoint is in charge of retrieving the availability for the service + team member
  * If the team member is set as anyStaffMember then we retrieve the availability for all team members
  */
-router.get("/:staffId/:serviceId", async (req, res, next) => {
+router.get("/:staffId/:serviceId", asyncHandler(async (req, res, next) => {
   const serviceId = req.params.serviceId;
   const serviceVersion = req.query.version || "";
   const staffId = req.params.staffId;
@@ -155,7 +161,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
   
   // Validate required parameters
   if (!serviceId || !staffId) {
-    console.warn('Missing required route parameters:', { serviceId: !!serviceId, staffId: !!staffId });
+    logger.warn('Missing required route parameters:', { serviceId: !!serviceId, staffId: !!staffId });
     return res.redirect('/services?error=invalid_params');
   }
   
@@ -169,7 +175,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       selectedDateTime: req.session.selectedDateTime,
       selectedSlot: req.session.selectedSlot
     };
-    console.log('DEBUG: availability - Back navigation detected, preserving session:', preservedSession);
+    logger.debug('availability - Back navigation detected, preserving session:', preservedSession);
   }
   
   const startAt = dateHelpers.getStartAtDate();
@@ -187,9 +193,9 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
   }
   
   // Debug session data
-  console.log('DEBUG: availability - Full session data:', JSON.stringify(req.session, null, 2));
-  console.log('DEBUG: availability - Session selectedServices:', req.session.selectedServices);
-  console.log('DEBUG: availability - Session quantities:', req.session.quantities);
+  logger.debug('availability - Full session data:', JSON.stringify(req.session, null, 2));
+  logger.debug('availability - Session selectedServices:', req.session.selectedServices);
+  logger.debug('availability - Session quantities:', req.session.quantities);
   
   // Retrieve multi-service selection from session if available
   const selectedServices = req.session.selectedServices || [serviceId];
@@ -218,7 +224,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
       
       if (!item) {
-        console.warn(`No item found for service variation ${sid}`);
+        logger.warn(`No item found for service variation ${sid}`);
         continue;
       }
       
@@ -227,7 +233,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       // Get quantity: if expanded, use count from array; otherwise use quantities object
       const quantity = isExpanded ? serviceCountMap[sid] : (quantities[sid] ? parseInt(quantities[sid], 10) : 1);
       
-      console.log(`DEBUG: availability - service ${sid} duration: ${duration}, quantity: ${quantity} (type: ${typeof duration})`);
+      logger.debug(`availability - service ${sid} duration: ${duration}, quantity: ${quantity} (type: ${typeof duration})`);
       
       serviceDetails.push({
         id: sid,
@@ -243,7 +249,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       
       // For each quantity, push a segment with safe duration conversion
       for (let i = 0; i < quantity; i++) {
-        console.log(`DEBUG: availability - segment ${i+1} for service ${sid}: durationMinutes=${durationMinutes}`);
+        logger.debug(`availability - segment ${i+1} for service ${sid}: durationMinutes=${durationMinutes}`);
         
         const segment = {
           serviceVariationId: sid,
@@ -258,7 +264,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
         segmentFilters.push(segment);
       }
     } catch (serviceError) {
-      console.error(`Error fetching service details for ${sid}:`, serviceError);
+      logger.error(`Error fetching service details for ${sid}:`, serviceError);
       // Continue with other services, but log the error
       serviceDetails.push({
         id: sid,
@@ -269,15 +275,15 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     }
   }
   
-  console.log(`DEBUG: availability - Total duration needed: ${totalDurationMinutes} minutes for ${segmentFilters.length} segments`);
+  logger.debug(`availability - Total duration needed: ${totalDurationMinutes} minutes for ${segmentFilters.length} segments`);
 
   // If no valid services found, redirect back
   if (segmentFilters.length === 0) {
-    console.error('No valid services found for availability search');
+    logger.error('No valid services found for availability search');
     return res.redirect('/services?error=no_valid_services');
   }
 
-  console.log('DEBUG: availability - segmentFilters:', JSON.stringify(segmentFilters, null, 2));
+  logger.debug('availability - segmentFilters:', JSON.stringify(segmentFilters, null, 2));
 
   // Create multiple search requests to get comprehensive availability
   const baseSearchRequest = {
@@ -328,7 +334,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     }
   };
   
-  console.log('DEBUG: availability - searchRequest:', JSON.stringify(baseSearchRequest, null, 2));
+  logger.debug('availability - searchRequest:', JSON.stringify(baseSearchRequest, null, 2));
   
   try {
     // get service item - needed to display service details in left pane
@@ -344,7 +350,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       let hasMore = true;
       let pageCount = 0;
       
-      console.log('DEBUG: Starting availability search with request:', JSON.stringify(searchReq, null, 2));
+      logger.debug('Starting availability search with request:', JSON.stringify(searchReq, null, 2));
       
       while (hasMore && pageCount < 20) { // Increase page limit for more comprehensive search
         pageCount++;
@@ -353,12 +359,12 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
           requestWithCursor.cursor = cursor;
         }
         
-        console.log(`DEBUG: Fetching availability page ${pageCount}${cursor ? ' with cursor' : ''}`);
+        logger.debug(`Fetching availability page ${pageCount}${cursor ? ' with cursor' : ''}`);
         
         try {
           const { result } = await bookingsApi.searchAvailability(requestWithCursor);
           
-          console.log(`DEBUG: Page ${pageCount} returned:`, {
+          logger.debug(`Page ${pageCount} returned:`, {
             availabilitiesCount: result.availabilities?.length || 0,
             hasCursor: !!result.cursor,
             sampleTimes: result.availabilities?.slice(0, 3).map(a => a.startAt) || []
@@ -366,7 +372,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
           
           if (result.availabilities && result.availabilities.length > 0) {
             availabilities = availabilities.concat(result.availabilities);
-            console.log(`DEBUG: Retrieved ${result.availabilities.length} slots, total: ${availabilities.length}`);
+            logger.debug(`Retrieved ${result.availabilities.length} slots, total: ${availabilities.length}`);
           }
           
           cursor = result.cursor;
@@ -377,12 +383,12 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
             hasMore = false;
           }
         } catch (error) {
-          console.error(`DEBUG: Error on page ${pageCount}:`, error.message);
+          logger.error(`Error on page ${pageCount}:`, error.message);
           hasMore = false;
         }
       }
       
-      console.log(`DEBUG: Final availability count: ${availabilities.length} across ${pageCount} pages`);
+      logger.debug(`Final availability count: ${availabilities.length} across ${pageCount} pages`);
       return availabilities;
     };
     
@@ -404,29 +410,29 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       // Try multiple search approaches and combine results
       let availabilities1, availabilities2, availabilities3;
       try {
-        console.log('DEBUG: Trying detailed search...');
+        logger.debug('Trying detailed search...');
         availabilities1 = await getAllAvailabilities(baseSearchRequest);
-        console.log(`DEBUG: Detailed search returned ${availabilities1.length} slots`);
+        logger.debug(`Detailed search returned ${availabilities1.length} slots`);
       } catch (error) {
-        console.warn('Detailed search failed:', error.message);
+        logger.warn('Detailed search failed:', error.message);
         availabilities1 = [];
       }
       
       try {
-        console.log('DEBUG: Trying simplified search...');
+        logger.debug('Trying simplified search...');
         availabilities2 = await getAllAvailabilities(simplifiedSearchRequest);
-        console.log(`DEBUG: Simplified search returned ${availabilities2.length} slots`);
+        logger.debug(`Simplified search returned ${availabilities2.length} slots`);
       } catch (error) {
-        console.warn('Simplified search failed:', error.message);
+        logger.warn('Simplified search failed:', error.message);
         availabilities2 = [];
       }
       
       try {
-        console.log('DEBUG: Trying minimal search...');
+        logger.debug('Trying minimal search...');
         availabilities3 = await getAllAvailabilities(minimalSearchRequest);
-        console.log(`DEBUG: Minimal search returned ${availabilities3.length} slots`);
+        logger.debug(`Minimal search returned ${availabilities3.length} slots`);
       } catch (error) {
-        console.warn('Minimal search failed:', error.message);
+        logger.warn('Minimal search failed:', error.message);
         availabilities3 = [];
       }
       
@@ -443,9 +449,9 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
         new Date(a.startAt) - new Date(b.startAt)
       );
       
-      console.log(`DEBUG: availability - found ${allAvailabilities?.length || 0} total unique availability slots`);
+      logger.debug(`availability - found ${allAvailabilities?.length || 0} total unique availability slots`);
       if (allAvailabilities && allAvailabilities.length > 0) {
-        console.log('DEBUG: availability - first few slots:', allAvailabilities.slice(0, 3).map(a => ({
+        logger.debug('availability - first few slots:', allAvailabilities.slice(0, 3).map(a => ({
           startAt: a.startAt,
           segments: a.appointmentSegments?.length || 0
         })));
@@ -474,41 +480,41 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       const [ { result: services }, { result: { teamMemberBookingProfile } } ] = 
         await Promise.all([ retrieveServicePromise, bookingProfilePromise ]);
       
-      console.log(`DEBUG: services object structure:`, {
+      logger.debug(`services object structure:`, {
         hasRelatedObjects: !!services?.relatedObjects,
         relatedObjectsCount: services?.relatedObjects?.length || 0,
         hasObject: !!services?.object,
         objectType: services?.object?.type
       });
-      console.log(`DEBUG: services type:`, typeof services);
-      console.log(`DEBUG: services.relatedObjects:`, services?.relatedObjects?.length || 'undefined');
+      logger.debug(`services type:`, typeof services);
+      logger.debug(`services.relatedObjects:`, services?.relatedObjects?.length || 'undefined');
       
       // Try multiple search approaches and combine results
       let availabilities1, availabilities2, availabilities3;
       try {
-        console.log(`DEBUG: Trying detailed search for staff ${staffId}...`);
+        logger.debug(`Trying detailed search for staff ${staffId}...`);
         availabilities1 = await getAllAvailabilities(baseSearchRequest);
-        console.log(`DEBUG: Detailed search returned ${availabilities1.length} slots for staff ${staffId}`);
+        logger.debug(`Detailed search returned ${availabilities1.length} slots for staff ${staffId}`);
       } catch (error) {
-        console.warn('Detailed search failed:', error.message);
+        logger.warn('Detailed search failed:', error.message);
         availabilities1 = [];
       }
       
       try {
-        console.log(`DEBUG: Trying simplified search for staff ${staffId}...`);
+        logger.debug(`Trying simplified search for staff ${staffId}...`);
         availabilities2 = await getAllAvailabilities(simplifiedSearchRequest);
-        console.log(`DEBUG: Simplified search returned ${availabilities2.length} slots for staff ${staffId}`);
+        logger.debug(`Simplified search returned ${availabilities2.length} slots for staff ${staffId}`);
       } catch (error) {
-        console.warn('Simplified search failed:', error.message);
+        logger.warn('Simplified search failed:', error.message);
         availabilities2 = [];
       }
       
       try {
-        console.log(`DEBUG: Trying minimal search for staff ${staffId}...`);
+        logger.debug(`Trying minimal search for staff ${staffId}...`);
         availabilities3 = await getAllAvailabilities(minimalSearchRequest);
-        console.log(`DEBUG: Minimal search returned ${availabilities3.length} slots for staff ${staffId}`);
+        logger.debug(`Minimal search returned ${availabilities3.length} slots for staff ${staffId}`);
       } catch (error) {
-        console.warn('Minimal search failed:', error.message);
+        logger.warn('Minimal search failed:', error.message);
         availabilities3 = [];
       }
       
@@ -525,14 +531,14 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
         new Date(a.startAt) - new Date(b.startAt)
       );
       
-      console.log(`DEBUG: availability - found ${allAvailabilities?.length || 0} total unique availability slots for staff ${staffId}`);
+      logger.debug(`availability - found ${allAvailabilities?.length || 0} total unique availability slots for staff ${staffId}`);
       
       // Add detailed debugging for times
       if (allAvailabilities && allAvailabilities.length > 0) {
-        console.log(`DEBUG: Sample availability times (first 10):`);
+        logger.debug(`Sample availability times (first 10):`);
         allAvailabilities.slice(0, 10).forEach((slot, index) => {
           const startTime = new Date(slot.startAt);
-          console.log(`  ${index + 1}. ${slot.startAt} -> Local: ${startTime.toLocaleString()}`);
+          logger.debug(`  ${index + 1}. ${slot.startAt} -> Local: ${startTime.toLocaleString()}`);
         });
         
         // Check for evening slots specifically
@@ -540,9 +546,9 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
           const hour = new Date(slot.startAt).getHours();
           return hour >= 17; // 5 PM and after
         });
-        console.log(`DEBUG: Found ${eveningSlots.length} evening slots (5pm+) out of ${allAvailabilities.length} total`);
+        logger.debug(`Found ${eveningSlots.length} evening slots (5pm+) out of ${allAvailabilities.length} total`);
         if (eveningSlots.length > 0) {
-          console.log('DEBUG: Evening slot examples:', eveningSlots.slice(0, 5).map(slot => ({
+          logger.debug('Evening slot examples:', eveningSlots.slice(0, 5).map(slot => ({
             startAt: slot.startAt,
             localTime: new Date(slot.startAt).toLocaleString()
           })));
@@ -550,7 +556,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       }
       
       if (!services || !services.relatedObjects) {
-        console.error('ERROR: services object or relatedObjects is missing:', services);
+        logger.error('services object or relatedObjects is missing:', services);
         throw new Error('Failed to retrieve service information from Square API');
       }
       
@@ -566,16 +572,16 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     
     // Validate that we have the required service item
     if (!additionalInfo.serviceItem) {
-      console.error('No service item found in availability search');
+      logger.error('No service item found in availability search');
       return res.redirect('/services?error=service_not_found');
     }
     
     // Filter availability slots to ensure they have enough total duration for all services
     const filteredAvailabilities = filterAvailabilitiesByTotalDuration(allAvailabilities, totalDurationMinutes, segmentFilters);
-    console.log(`DEBUG: Filtered ${allAvailabilities.length} slots down to ${filteredAvailabilities.length} slots that have ${totalDurationMinutes} minutes available`);
+    logger.debug(`Filtered ${allAvailabilities.length} slots down to ${filteredAvailabilities.length} slots that have ${totalDurationMinutes} minutes available`);
     
     // Debug the data being passed to template
-    console.log('DEBUG: Template data being passed:', {
+    logger.debug('Template data being passed:', {
       availabilities: filteredAvailabilities.length + ' slots',
       serviceId,
       serviceVersion,
@@ -586,7 +592,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       bookingProfile: additionalInfo.bookingProfile ? 'present' : 'null'
     });
     
-    console.log('DEBUG: Detailed serviceDetails being passed to template:', 
+    logger.debug('Detailed serviceDetails being passed to template:', 
       JSON.stringify(serviceDetails, (key, value) => typeof value === 'bigint' ? value.toString() : value, 2));
     
     // Convert BigInt values to regular numbers to prevent EJS template errors
@@ -594,7 +600,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     const safeServiceDetails = convertBigIntToNumber(serviceDetails);
     const safeAvailabilities = convertBigIntToNumber(filteredAvailabilities);
     
-    console.log('DEBUG: Safe serviceDetails after BigInt conversion:', 
+    logger.debug('Safe serviceDetails after BigInt conversion:', 
       JSON.stringify(safeServiceDetails, null, 2));
     
     // send the serviceId & serviceVersion since it's needed to book an appointment in the next step
@@ -610,7 +616,7 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
       isBackNavigation
     });
   } catch (error) {
-    console.error('Error in availability search:', error);
+    logger.error('Error in availability search:', error);
     
     // Handle specific API errors gracefully
     if (error.errors) {
@@ -624,6 +630,6 @@ router.get("/:staffId/:serviceId", async (req, res, next) => {
     
     next(error);
   }
-});
+}));
 
 module.exports = router;

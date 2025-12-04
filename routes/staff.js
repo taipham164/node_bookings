@@ -24,15 +24,17 @@ const {
 } = require("../util/square-client");
 
 const { safeJSONStringify } = require("../util/bigint-helpers");
+const { asyncHandler, ValidationError } = require("../middleware/errorHandler");
+const { logger } = require("../util/logger");
 
 /**
  * GET /staff/:serviceId?version
  *
  * This endpoint is responsible for displaying staff members that can perform the selected service.
  */
-router.get("/:serviceId", async (req, res, next) => {
-  console.log('DEBUG: /staff/:serviceId route called with serviceId:', req.params.serviceId);
-  console.log('DEBUG: /staff/:serviceId req.session:', req.session);
+router.get("/:serviceId", asyncHandler(async (req, res, next) => {
+  logger.debug('/staff/:serviceId route called with serviceId:', req.params.serviceId);
+  logger.debug('/staff/:serviceId req.session:', req.session);
   
   const isBackNavigation = req.query.back === 'true';
   
@@ -49,7 +51,7 @@ router.get("/:serviceId", async (req, res, next) => {
       teamMemberBookingProfile: req.session.teamMemberBookingProfile,
       staffProfile: req.session.staffProfile
     };
-    console.log('Back navigation to staff - preserving session:', preservedSession);
+    logger.debug('Back navigation to staff - preserving session:', preservedSession);
   }
   
   try {
@@ -72,9 +74,9 @@ router.get("/:serviceId", async (req, res, next) => {
     const totalPrice = req.session?.totalPrice || 0;
     const totalDuration = req.session?.totalDuration || 0;
 
-    console.log('DEBUG: /staff/:serviceId selectedServices:', selectedServices);
-    console.log('DEBUG: /staff/:serviceId serviceSessionDetails:', serviceSessionDetails);
-    console.log('DEBUG: Starting service processing...');
+    logger.debug('/staff/:serviceId selectedServices:', selectedServices);
+    logger.debug('/staff/:serviceId serviceSessionDetails:', serviceSessionDetails);
+    logger.debug('Starting service processing...');
 
     // Handle error messages from redirects
     const errorMessage = req.query.error;
@@ -91,11 +93,11 @@ router.get("/:serviceId", async (req, res, next) => {
 
     // If no services in session, redirect to services page  
     if (selectedServices.length === 0) {
-      console.log('DEBUG: No services selected, redirecting to services page');
+      logger.debug('No services selected, redirecting to services page');
       return res.redirect('/services?error=no_service_selected');
     }
 
-    console.log('DEBUG: Processing service groups and fetching catalog data...');
+    logger.debug('Processing service groups and fetching catalog data...');
     
     // Group services by ID and count quantities
     const serviceGroups = {};
@@ -107,18 +109,18 @@ router.get("/:serviceId", async (req, res, next) => {
       }
     });
     
-    console.log('DEBUG: Service groups:', serviceGroups);
+    logger.debug('Service groups:', serviceGroups);
 
     // Fetch all unique service variations for display
     const serviceDetails = [];
     let mainServiceVariation = null;
     let mainServiceItem = null;
     
-    console.log('DEBUG: Starting catalog fetch loop...');
+    logger.debug('Starting catalog fetch loop...');
     
     try {
       for (const sid of Object.keys(serviceGroups)) {
-        console.log(`DEBUG: Fetching catalog data for service ${sid}...`);
+        logger.debug(`Fetching catalog data for service ${sid}...`);
         try {
           const { result: { object: variation, relatedObjects } } = await catalogApi.retrieveCatalogObject(sid, true);
           const item = relatedObjects.filter(obj => obj.type === "ITEM")[0];
@@ -153,7 +155,7 @@ router.get("/:serviceId", async (req, res, next) => {
             price: price
           });
         } catch (catalogError) {
-          console.error(`Error fetching service ${sid}:`, catalogError.message);
+          logger.error(`Error fetching service ${sid}:`, catalogError.message);
           // Use session data as fallback
           if (serviceSessionDetails[sid]) {
             serviceDetails.push({
@@ -174,7 +176,7 @@ router.get("/:serviceId", async (req, res, next) => {
           mainServiceVariation = variation;
           mainServiceItem = relatedObjects.filter(obj => obj.type === "ITEM")[0];
         } catch (catalogError) {
-          console.error(`Error fetching main service ${req.params.serviceId}:`, catalogError.message);
+          logger.error(`Error fetching main service ${req.params.serviceId}:`, catalogError.message);
           // Create fallback service data
           mainServiceVariation = {
             itemVariationData: {
@@ -193,24 +195,24 @@ router.get("/:serviceId", async (req, res, next) => {
         }
       }
     } catch (generalError) {
-      console.error('General error in service processing:', generalError);
+      logger.error('General error in service processing:', generalError);
       throw generalError;
     }
 
     // Validate that we have the required service data
     if (!mainServiceVariation || !mainServiceItem) {
-      console.error(`Service not found: ${req.params.serviceId}`);
+      logger.error(`Service not found: ${req.params.serviceId}`);
       return res.redirect('/services?error=invalid_service');
     }
 
     // Validate that the service has team members assigned
     const serviceTeamMembers = mainServiceVariation.itemVariationData.teamMemberIds || [];
     if (serviceTeamMembers.length === 0) {
-      console.warn(`No team members assigned to service: ${req.params.serviceId}`);
+      logger.warn(`No team members assigned to service: ${req.params.serviceId}`);
       return res.redirect(`/services?error=no_staff_available&service=${req.params.serviceId}`);
     }
 
-    console.log('DEBUG: About to call team API endpoints...');
+    logger.debug('About to call team API endpoints...');
 
     // Send request to list staff booking profiles for the current location.
     const listBookingProfilesPromise = bookingsApi.listTeamMemberBookingProfiles(true, undefined, undefined, locationId);
@@ -224,15 +226,15 @@ router.get("/:serviceId", async (req, res, next) => {
       }
     });
 
-    console.log('DEBUG: Team API promises created, awaiting results...');
+    logger.debug('Team API promises created, awaiting results...');
 
     // Wait until all API calls have completed.
     const [ { result: { teamMemberBookingProfiles } }, { result: { teamMembers } } ] =
       await Promise.all([ listBookingProfilesPromise, listActiveTeamMembersPromise ]);
 
-    console.log('DEBUG: Team API calls completed successfully');
-    console.log('DEBUG: teamMemberBookingProfiles count:', teamMemberBookingProfiles?.length || 0);
-    console.log('DEBUG: teamMembers count:', teamMembers?.length || 0);
+    logger.debug('Team API calls completed successfully');
+    logger.debug('teamMemberBookingProfiles count:', teamMemberBookingProfiles?.length || 0);
+    logger.debug('teamMembers count:', teamMembers?.length || 0);
 
     // We want to filter teamMemberBookingProfiles by checking that the teamMemberId associated with the profile is in our serviceTeamMembers.
     // We also want to verify that each team member is ACTIVE.
@@ -241,21 +243,21 @@ router.get("/:serviceId", async (req, res, next) => {
 
     const activeTeamMembers = teamMembers.map(teamMember => teamMember.id);
 
-    console.log('DEBUG: serviceTeamMembers:', serviceTeamMembers);
-    console.log('DEBUG: activeTeamMembers:', activeTeamMembers);
+    logger.debug('serviceTeamMembers:', serviceTeamMembers);
+    logger.debug('activeTeamMembers:', activeTeamMembers);
 
     const bookableStaff = teamMemberBookingProfiles
       .filter(profile => serviceTeamMembers.includes(profile.teamMemberId) && activeTeamMembers.includes(profile.teamMemberId));
 
-    console.log('DEBUG: bookableStaff count:', bookableStaff?.length || 0);
+    logger.debug('bookableStaff count:', bookableStaff?.length || 0);
 
     // Validate that we have bookable staff available
     if (bookableStaff.length === 0) {
-      console.warn(`No bookable staff found for service: ${req.params.serviceId}`);
+      logger.warn(`No bookable staff found for service: ${req.params.serviceId}`);
       return res.redirect(`/services?error=no_staff_available&service=${req.params.serviceId}`);
     }
 
-    console.log('DEBUG: About to render select-staff page...');
+    logger.debug('About to render select-staff page...');
 
     // Convert any BigInt values to safe JSON before passing to template
     const safeBookableStaff = JSON.parse(safeJSONStringify(bookableStaff));
@@ -267,7 +269,7 @@ router.get("/:serviceId", async (req, res, next) => {
     const safeTotalPrice = JSON.parse(safeJSONStringify(totalPrice));
     const safeTotalDuration = JSON.parse(safeJSONStringify(totalDuration));
 
-    console.log('DEBUG: All data converted to safe JSON, about to render...');
+    logger.debug('All data converted to safe JSON, about to render...');
 
     // Pass all selectedServices, quantities, serviceDetails, and total price/duration to the view
     res.render("pages/select-staff", { 
@@ -285,12 +287,12 @@ router.get("/:serviceId", async (req, res, next) => {
       error // Pass any error messages to the template
     });
   } catch (error) {
-    console.error('ERROR in staff route:', error);
-    console.error('ERROR stack:', error.stack);
-    console.error('ERROR message:', error.message);
+    logger.error('ERROR in staff route:', error);
+    logger.error('ERROR stack:', error.stack);
+    logger.error('ERROR message:', error.message);
     next(error);
   }
-});
+}));
 
 /**
  * POST /staff/select
@@ -298,10 +300,10 @@ router.get("/:serviceId", async (req, res, next) => {
  * Handles staff member selection before proceeding to the next step.
  * This mimics how service selection works - select first, then submit form.
  */
-router.post("/select", async (req, res, next) => {
-  console.log('DEBUG: /staff/select route called');
-  console.log('DEBUG: /staff/select req.body:', req.body);
-  console.log('DEBUG: /staff/select req.session at start:', req.session);
+router.post("/select", asyncHandler(async (req, res, next) => {
+  logger.debug('/staff/select route called');
+  logger.debug('/staff/select req.body:', req.body);
+  logger.debug('/staff/select req.session at start:', req.session);
   
   try {
     // Validate required environment configuration
@@ -342,8 +344,8 @@ router.post("/select", async (req, res, next) => {
       };
       
       // Debug: Log the any staff selection
-      console.log('DEBUG: /staff/select - Any Staff Member selected');
-      console.log('DEBUG: /staff/select session.staffProfile', req.session.staffProfile);
+      logger.debug('/staff/select - Any Staff Member selected');
+      logger.debug('/staff/select session.staffProfile', req.session.staffProfile);
     } else {
       // Store the selected staff in the session
       req.session.selectedStaffId = selectedStaffId;
@@ -354,7 +356,7 @@ router.post("/select", async (req, res, next) => {
         
         // Validate that we received the profile data
         if (!teamMemberBookingProfile) {
-          console.error(`Failed to retrieve booking profile for staff: ${selectedStaffId}`);
+          logger.error(`Failed to retrieve booking profile for staff: ${selectedStaffId}`);
           throw new Error('Staff member not found or not available for booking');
         }
         
@@ -368,10 +370,10 @@ router.post("/select", async (req, res, next) => {
         };
         
         // Debug: Log the selected staff info
-        console.log('DEBUG: /staff/select session.selectedStaffId', req.session.selectedStaffId);
-        console.log('DEBUG: /staff/select session.staffProfile', req.session.staffProfile);
+        logger.debug('/staff/select session.selectedStaffId', req.session.selectedStaffId);
+        logger.debug('/staff/select session.staffProfile', req.session.staffProfile);
       } catch (apiError) {
-        console.error('Error retrieving staff booking profile:', apiError);
+        logger.error('Error retrieving staff booking profile:', apiError);
         
         // Redirect back to staff selection with error
         const selectedServices = req.session?.selectedServices || [];
@@ -392,13 +394,13 @@ router.post("/select", async (req, res, next) => {
     const serviceVersion = req.body.serviceVersion || req.query.version || '';
     
     // Debug: Log session data to diagnose the issue
-    console.log('DEBUG: /staff/select session.selectedServices', req.session.selectedServices);
-    console.log('DEBUG: /staff/select selectedServices', selectedServices);
-    console.log('DEBUG: /staff/select firstServiceId', firstServiceId);
-    console.log('DEBUG: /staff/select full session:', safeJSONStringify(req.session, 2));
+    logger.debug('/staff/select session.selectedServices', req.session.selectedServices);
+    logger.debug('/staff/select selectedServices', selectedServices);
+    logger.debug('/staff/select firstServiceId', firstServiceId);
+    logger.debug('/staff/select full session:', safeJSONStringify(req.session, 2));
     
     if (!firstServiceId) {
-      console.log('DEBUG: /staff/select - No firstServiceId, redirecting to services with error');
+      logger.debug('/staff/select - No firstServiceId, redirecting to services with error');
       return res.redirect('/services?error=no_service_selected');
     }
     
@@ -408,15 +410,15 @@ router.post("/select", async (req, res, next) => {
     // Ensure session is saved before redirect
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
+        logger.error('Session save error:', err);
       }
-      console.log('DEBUG: Session saved before redirect to availability');
+      logger.debug('Session saved before redirect to availability');
       res.redirect(`/availability/${selectedStaffId}/${firstServiceId}?version=${serviceVersion}`);
     });
   } catch (error) {
-    console.error("Error in staff selection:", error);
+    logger.error("Error in staff selection:", error);
     next(error);
   }
-});
+}));
 
 module.exports = router;

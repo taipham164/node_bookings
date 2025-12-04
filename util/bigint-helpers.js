@@ -11,6 +11,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+const { logger } = require('./logger');
+
 /**
  * Utility functions for handling BigInt values in Square API responses
  */
@@ -24,7 +26,7 @@ function safeNumberConversion(value) {
   if (typeof value === 'bigint') {
     const num = Number(value);
     if (num === Infinity || num === -Infinity) {
-      console.warn('BigInt value too large for Number conversion:', value);
+      logger.warn('BigInt value too large for Number conversion:', value);
       return 0;
     }
     return num;

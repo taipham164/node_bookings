@@ -30,7 +30,16 @@ const {
 require("dotenv").config();
 const locationId = process.env.SQ_LOCATION_ID;
 
-// Apply admin middleware to all routes
+// Login page (no auth required)
+router.get("/login", (req, res) => {
+  // Redirect to dashboard if already logged in
+  if (req.session?.firebaseUser) {
+    return res.redirect("/admin");
+  }
+  res.render("pages/admin/login");
+});
+
+// Apply admin middleware to all other routes
 router.use(attachUserToLocals);
 router.use(attachAdminUtils);
 router.use(requireAdmin);
@@ -43,7 +52,7 @@ router.get(
   "/",
   requirePermission("dashboard", "view"),
   asyncHandler(async (req, res) => {
-    logger.info("Admin dashboard accessed", { userId: req.session.authenticatedCustomer.id });
+    logger.info("Admin dashboard accessed", { uid: req.adminUser.uid, email: req.adminUser.email });
 
     const [appointmentStats, revenueStats, customerStats, upcomingAppointments] = await Promise.all([
       getAppointmentStats(locationId),

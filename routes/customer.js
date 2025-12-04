@@ -14,6 +14,8 @@ limitations under the License.
 const express = require("express");
 const router = express.Router();
 const { customersApi } = require("../util/square-client");
+const { asyncHandler, ValidationError } = require("../middleware/errorHandler");
+const { logger } = require("../util/logger");
 
 /**
  * Normalize phone number to E.164 format for consistency
@@ -69,8 +71,8 @@ function validatePhoneNumber(phone) {
  * 
  * Check if a phone number belongs to an existing customer
  */
-router.post("/check-phone", async (req, res) => {
-  console.log('Checking phone number for existing customer...');
+router.post("/check-phone", asyncHandler(async (req, res) => {
+  logger.debug('Checking phone number for existing customer...');
   
   try {
     const { phoneNumber } = req.body;
@@ -84,7 +86,7 @@ router.post("/check-phone", async (req, res) => {
     }
     
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    console.log('Normalized phone:', normalizedPhone);
+    logger.debug('Normalized phone:', normalizedPhone);
     
     // Search for customers with this phone number
     const searchQuery = {
@@ -97,14 +99,14 @@ router.post("/check-phone", async (req, res) => {
       }
     };
     
-    console.log('Searching for customer with phone:', searchQuery);
+    logger.debug('Searching for customer with phone:', searchQuery);
     
     const { result } = await customersApi.searchCustomers(searchQuery);
     
     if (result.customers && result.customers.length > 0) {
       // Customer exists
       const customer = result.customers[0];
-      console.log('Found existing customer:', customer.id);
+      logger.debug('Found existing customer:', customer.id);
       
       return res.json({
         exists: true,
@@ -118,12 +120,12 @@ router.post("/check-phone", async (req, res) => {
       });
     } else {
       // Customer doesn't exist
-      console.log('No customer found with this phone number');
+      logger.debug('No customer found with this phone number');
       return res.json({ exists: false });
     }
     
   } catch (error) {
-    console.error('Error checking phone number:', error);
+    logger.error('Error checking phone number:', error);
     
     // For demo purposes, return that customer doesn't exist on API errors
     return res.json({ 
@@ -131,6 +133,6 @@ router.post("/check-phone", async (req, res) => {
       error: 'Unable to verify phone number. Proceeding as new customer.'
     });
   }
-});
+}));
 
 module.exports = router;

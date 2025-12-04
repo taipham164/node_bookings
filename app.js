@@ -37,6 +37,7 @@ const app = express();
 
 const routes = require("./routes/index");
 const adminRoutes = require("./routes/admin");
+const firebaseAdminAuthRoutes = require("./routes/firebase-admin-auth");
 const { locationsApi } = require("./util/square-client");
 const {
   errorHandler,
@@ -136,8 +137,16 @@ app.use(generateCsrfToken);
 app.use(attachUserToLocals);
 app.use(attachAdminUtils);
 
+// Initialize Firebase Admin (for admin authentication)
+const { firebaseAdminManager } = require("./util/firebase-admin");
+firebaseAdminManager.initializeDefaultAdmin().catch((error) => {
+  logger.warn("Failed to initialize default admin:", { error: error.message });
+  // Don't exit - let the app start anyway
+});
+
 // Routes
 app.use("/", routes);
+app.use("/auth/admin", firebaseAdminAuthRoutes);
 app.use("/admin", adminRoutes);
 
 // 404 handler
