@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const prisma_module_1 = require("./prisma/prisma.module");
@@ -16,12 +17,24 @@ const service_module_1 = require("./service/service.module");
 const barber_module_1 = require("./barber/barber.module");
 const customer_module_1 = require("./customer/customer.module");
 const appointment_module_1 = require("./appointment/appointment.module");
+const square_module_1 = require("./square/square.module");
+const availability_module_1 = require("./availability/availability.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, shop_module_1.ShopModule, service_module_1.ServiceModule, barber_module_1.BarberModule, customer_module_1.CustomerModule, appointment_module_1.AppointmentModule],
+        imports: [
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
+            prisma_module_1.PrismaModule,
+            shop_module_1.ShopModule,
+            service_module_1.ServiceModule,
+            barber_module_1.BarberModule,
+            customer_module_1.CustomerModule,
+            appointment_module_1.AppointmentModule,
+            square_module_1.SquareModule,
+            availability_module_1.AvailabilityModule,
+        ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })

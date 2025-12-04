@@ -50,6 +50,7 @@ model Barber {
   shop               Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
   appointments       Appointment[]
 
+  @@unique([squareTeamMemberId, shopId])
   @@map("barbers")
 }
 
