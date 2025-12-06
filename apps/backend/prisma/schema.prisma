@@ -1,0 +1,143 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// To generate Prisma Client, run: pnpm --filter backend prisma:generate
+// Note: You'll need a database connection to generate the full client
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Shop {
+  id               String    @id @default(uuid())
+  name             String
+  squareLocationId String    @unique
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  barbers          Barber[]
+  services         Service[]
+  customers        Customer[]
+  appointments     Appointment[]
+  noShowPolicies   NoShowPolicy[]
+
+  @@map("shops")
+}
+
+model Barber {
+  id                 String    @id @default(uuid())
+  shopId             String
+  displayName        String
+  squareTeamMemberId String?
+  active             Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Relations
+  shop               Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  appointments       Appointment[]
+
+  @@unique([squareTeamMemberId, shopId])
+  @@map("barbers")
+}
+
+model Service {
+  id                     String    @id @default(uuid())
+  shopId                 String
+  name                   String
+  durationMinutes        Int
+  priceCents             Int
+  squareCatalogObjectId  String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  // Relations
+  shop                   Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  appointments           Appointment[]
+
+  @@map("services")
+}
+
+model Customer {
+  id               String    @id @default(uuid())
+  shopId           String
+  squareCustomerId String?   @unique
+  firstName        String
+  lastName         String
+  phone            String
+  email            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  shop             Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  appointments     Appointment[]
+
+  @@map("customers")
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  shopId          String
+  barberId        String
+  serviceId       String
+  customerId      String
+  squareBookingId String?
+  startAt         DateTime
+  endAt           DateTime
+  status          AppointmentStatus @default(SCHEDULED)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  shop            Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  barber          Barber          @relation(fields: [barberId], references: [id], onDelete: Restrict)
+  service         Service         @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  customer        Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  noShowCharges   NoShowCharge[]
+
+  @@map("appointments")
+}
+
+model NoShowPolicy {
+  id           String    @id @default(uuid())
+  shopId       String
+  feeCents     Int
+  graceMinutes Int       @default(15)
+  enabled      Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  shop         Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@map("no_show_policies")
+}
+
+model NoShowCharge {
+  id              String    @id @default(uuid())
+  appointmentId   String
+  amountCents     Int
+  squarePaymentId String?   @unique
+  chargedAt       DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  appointment     Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@map("no_show_charges")
+}
