@@ -8,13 +8,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var AppointmentService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppointmentService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
-let AppointmentService = class AppointmentService {
-    constructor(prisma) {
+const square_service_1 = require("../square/square.service");
+let AppointmentService = AppointmentService_1 = class AppointmentService {
+    constructor(prisma, squareService) {
         this.prisma = prisma;
+        this.squareService = squareService;
+        this.logger = new common_1.Logger(AppointmentService_1.name);
     }
     async findAll() {
         return this.prisma.appointment.findMany({
@@ -286,10 +290,156 @@ let AppointmentService = class AppointmentService {
             where: { id },
         });
     }
+    /**
+     * Create a booking with Square integration
+     * This method orchestrates the full booking flow:
+     * 1. Validates entities exist
+     * 2. Creates/finds Square customer
+     * 3. Creates Square booking
+     * 4. Creates local appointment with squareBookingId
+     */
+    async createBooking(createBookingDto) {
+        try {
+            this.logger.log(`Creating booking for customer ${createBookingDto.customerId}`);
+            // 1. Load and validate all required entities
+            const [shop, service, barber, customer] = await Promise.all([
+                this.prisma.shop.findUnique({ where: { id: createBookingDto.shopId } }),
+                this.prisma.service.findUnique({ where: { id: createBookingDto.serviceId } }),
+                createBookingDto.barberId
+                    ? this.prisma.barber.findUnique({ where: { id: createBookingDto.barberId } })
+                    : null,
+                this.prisma.customer.findUnique({ where: { id: createBookingDto.customerId } }),
+            ]);
+            // Validate entities exist
+            if (!shop) {
+                throw new common_1.NotFoundException(`Shop with ID ${createBookingDto.shopId} not found`);
+            }
+            if (!service) {
+                throw new common_1.NotFoundException(`Service with ID ${createBookingDto.serviceId} not found`);
+            }
+            if (createBookingDto.barberId && !barber) {
+                throw new common_1.NotFoundException(`Barber with ID ${createBookingDto.barberId} not found`);
+            }
+            if (!customer) {
+                throw new common_1.NotFoundException(`Customer with ID ${createBookingDto.customerId} not found`);
+            }
+            // Validate entities belong to the same shop
+            if (service.shopId !== createBookingDto.shopId) {
+                throw new common_1.BadRequestException('Service does not belong to the specified shop');
+            }
+            if (barber && barber.shopId !== createBookingDto.shopId) {
+                throw new common_1.BadRequestException('Barber does not belong to the specified shop');
+            }
+            if (customer.shopId !== createBookingDto.shopId) {
+                throw new common_1.BadRequestException('Customer does not belong to the specified shop');
+            }
+            // Validate required Square IDs
+            if (!shop.squareLocationId) {
+                throw new common_1.BadRequestException('Shop is not linked to Square location');
+            }
+            if (!service.squareCatalogObjectId) {
+                throw new common_1.BadRequestException('Service is not linked to Square catalog');
+            }
+            if (createBookingDto.barberId && barber && !barber.squareTeamMemberId) {
+                throw new common_1.BadRequestException('Barber is not linked to Square team member');
+            }
+            // Validate start time
+            const startAt = new Date(createBookingDto.startAt);
+            if (startAt < new Date()) {
+                throw new common_1.BadRequestException('Booking cannot be scheduled in the past');
+            }
+            // 2. Find or create Square customer
+            this.logger.log(`Finding or creating Square customer for ${customer.firstName} ${customer.lastName}`);
+            const squareCustomerId = await this.squareService.findOrCreateSquareCustomer({
+                firstName: createBookingDto.customerFirstName || customer.firstName,
+                lastName: createBookingDto.customerLastName || customer.lastName,
+                phone: createBookingDto.customerPhone || customer.phone,
+                email: createBookingDto.customerEmail || customer.email,
+                existingSquareCustomerId: customer.squareCustomerId || undefined,
+            });
+            // Update local customer with Square customer ID if not already set
+            if (!customer.squareCustomerId || customer.squareCustomerId !== squareCustomerId) {
+                this.logger.log(`Updating customer ${customer.id} with Square customer ID: ${squareCustomerId}`);
+                await this.prisma.customer.update({
+                    where: { id: customer.id },
+                    data: { squareCustomerId },
+                });
+            }
+            // 3. Create Square booking
+            this.logger.log(`Creating Square booking at ${createBookingDto.startAt}`);
+            const { bookingId, booking } = await this.squareService.createSquareBooking({
+                locationId: shop.squareLocationId,
+                customerId: squareCustomerId,
+                serviceVariationId: service.squareCatalogObjectId,
+                teamMemberId: barber?.squareTeamMemberId,
+                startAt: createBookingDto.startAt,
+            });
+            // Calculate end time
+            const endAt = new Date(startAt.getTime() + service.durationMinutes * 60 * 1000);
+            // 4. Create local appointment with squareBookingId
+            this.logger.log(`Creating local appointment with Square booking ID: ${bookingId}`);
+            const appointment = await this.prisma.appointment.create({
+                data: {
+                    shopId: createBookingDto.shopId,
+                    serviceId: createBookingDto.serviceId,
+                    barberId: createBookingDto.barberId || barber?.id,
+                    customerId: createBookingDto.customerId,
+                    startAt,
+                    endAt,
+                    squareBookingId: bookingId,
+                    status: 'SCHEDULED',
+                },
+                include: {
+                    shop: {
+                        select: {
+                            id: true,
+                            name: true,
+                            squareLocationId: true,
+                        },
+                    },
+                    barber: {
+                        select: {
+                            id: true,
+                            displayName: true,
+                            squareTeamMemberId: true,
+                        },
+                    },
+                    service: {
+                        select: {
+                            id: true,
+                            name: true,
+                            durationMinutes: true,
+                            priceCents: true,
+                        },
+                    },
+                    customer: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            phone: true,
+                            email: true,
+                            squareCustomerId: true,
+                        },
+                    },
+                },
+            });
+            this.logger.log(`Booking created successfully: appointment ${appointment.id}, Square booking ${bookingId}`);
+            return appointment;
+        }
+        catch (error) {
+            this.logger.error('Failed to create booking:', error);
+            if (error instanceof common_1.NotFoundException || error instanceof common_1.BadRequestException) {
+                throw error;
+            }
+            throw new common_1.BadRequestException(`Failed to create booking: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
 };
 exports.AppointmentService = AppointmentService;
-exports.AppointmentService = AppointmentService = __decorate([
+exports.AppointmentService = AppointmentService = AppointmentService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        square_service_1.SquareService])
 ], AppointmentService);
 //# sourceMappingURL=appointment.service.js.map

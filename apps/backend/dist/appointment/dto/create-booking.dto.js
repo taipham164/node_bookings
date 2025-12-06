@@ -8,52 +8,59 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateAppointmentDto = void 0;
+exports.CreateBookingDto = void 0;
 const class_validator_1 = require("class-validator");
-const client_1 = require("@prisma/client");
-class CreateAppointmentDto {
+/**
+ * DTO for creating a booking with Square integration
+ * Simpler than CreateAppointmentDto - endAt and squareBookingId are calculated/generated
+ */
+class CreateBookingDto {
 }
-exports.CreateAppointmentDto = CreateAppointmentDto;
+exports.CreateBookingDto = CreateBookingDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateAppointmentDto.prototype, "shopId", void 0);
+], CreateBookingDto.prototype, "shopId", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateAppointmentDto.prototype, "barberId", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreateAppointmentDto.prototype, "serviceId", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreateAppointmentDto.prototype, "customerId", void 0);
-__decorate([
-    (0, class_validator_1.IsDateString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreateAppointmentDto.prototype, "startAt", void 0);
-__decorate([
-    (0, class_validator_1.IsDateString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreateAppointmentDto.prototype, "endAt", void 0);
-__decorate([
-    (0, class_validator_1.IsEnum)(client_1.AppointmentStatus),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", typeof (_a = typeof client_1.AppointmentStatus !== "undefined" && client_1.AppointmentStatus) === "function" ? _a : Object)
-], CreateAppointmentDto.prototype, "status", void 0);
+], CreateBookingDto.prototype, "serviceId", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], CreateAppointmentDto.prototype, "squareBookingId", void 0);
-//# sourceMappingURL=create-appointment.dto.js.map
+], CreateBookingDto.prototype, "barberId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateBookingDto.prototype, "customerId", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateBookingDto.prototype, "startAt", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateBookingDto.prototype, "customerFirstName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateBookingDto.prototype, "customerLastName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateBookingDto.prototype, "customerPhone", void 0);
+__decorate([
+    (0, class_validator_1.IsEmail)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateBookingDto.prototype, "customerEmail", void 0);
+//# sourceMappingURL=create-booking.dto.js.map
