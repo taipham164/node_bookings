@@ -1,3 +1,32 @@
+# Tyler Platform - Monorepo
+
+This monorepo contains Tyler's Barbershop booking platform, built with pnpm workspaces.
+
+## Apps
+
+- **apps/tyler-site** - Marketing website with React Bricks CMS (Next.js + Tailwind)
+- **apps/backend** - Booking API (NestJS + Prisma + Square integration)
+- **apps/legacy-express** - Legacy Square booking app (reference only)
+
+## Quick Start
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run the marketing site
+pnpm dev:tyler-site
+
+# Run the booking backend
+pnpm dev:backend
+```
+
+For detailed setup instructions, see each app's README:
+- [Tyler Site README](apps/tyler-site/README.md)
+- [Backend README](apps/backend/README.md)
+
+---
+
 # Useful Links
 
 * [Node.js SDK Page](https://developer.squareup.com/docs/sdks/nodejs)

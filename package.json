@@ -6,13 +6,17 @@
   "scripts": {
     "dev:legacy": "pnpm --filter legacy-express start",
     "dev:backend": "pnpm --filter backend start:dev",
+    "dev:tyler-site": "pnpm --filter tyler-site dev",
     "build:backend": "pnpm --filter backend build",
+    "build:tyler-site": "pnpm --filter tyler-site build",
     "start:backend": "pnpm --filter backend start",
+    "start:tyler-site": "pnpm --filter tyler-site start",
     "install:backend": "pnpm install --filter backend",
     "test": "pnpm --filter legacy-express test",
     "test:backend": "pnpm --filter backend test",
     "lint": "pnpm --filter legacy-express lint",
-    "lint:backend": "pnpm --filter backend lint"
+    "lint:backend": "pnpm --filter backend lint",
+    "lint:tyler-site": "pnpm --filter tyler-site lint"
   },
   "engines": {
     "node": ">=10",
