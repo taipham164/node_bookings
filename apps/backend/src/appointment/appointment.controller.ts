@@ -47,4 +47,14 @@ export class AppointmentController {
   async remove(@Param('id') id: string): Promise<void> {
     await this.appointmentService.remove(id);
   }
+
+  /**
+   * POST /api/appointments/:id/no-show
+   * Mark an appointment as no-show and create a no-show charge
+   */
+  @Post(':id/no-show')
+  @HttpCode(HttpStatus.OK)
+  async markNoShow(@Param('id') id: string): Promise<Appointment> {
+    return this.appointmentService.markNoShow(id);
+  }
 }

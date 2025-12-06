@@ -10,18 +10,20 @@ import { CustomerModule } from './customer/customer.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { SquareModule } from './square/square.module';
 import { AvailabilityModule } from './availability/availability.module';
+import { NoShowPolicyModule } from './no-show-policy/no-show-policy.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule, 
-    ShopModule, 
-    ServiceModule, 
-    BarberModule, 
-    CustomerModule, 
+    PrismaModule,
+    ShopModule,
+    ServiceModule,
+    BarberModule,
+    CustomerModule,
     AppointmentModule,
     SquareModule,
     AvailabilityModule,
+    NoShowPolicyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

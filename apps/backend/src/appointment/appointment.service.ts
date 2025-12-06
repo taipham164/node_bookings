@@ -1,12 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-import { Appointment } from '@prisma/client';
+import { Appointment, AppointmentStatus } from '@prisma/client';
+import { SquareService } from '../square/square.service';
 
 @Injectable()
 export class AppointmentService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(AppointmentService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => SquareService))
+    private readonly squareService: SquareService,
+  ) {}
 
   async findAll(): Promise<Appointment[]> {
     return this.prisma.appointment.findMany({
@@ -300,5 +307,123 @@ export class AppointmentService {
     return this.prisma.appointment.delete({
       where: { id },
     });
+  }
+
+  /**
+   * Mark an appointment as no-show and create a no-show charge
+   * @param appointmentId - The appointment ID
+   * @returns The updated appointment with no-show charge
+   */
+  async markNoShow(appointmentId: string): Promise<Appointment> {
+    // Load the appointment with all necessary relations
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        shop: {
+          include: {
+            noShowPolicy: true,
+          },
+        },
+        customer: true,
+        service: true,
+        barber: true,
+        noShowCharges: true,
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException(`Appointment with ID ${appointmentId} not found`);
+    }
+
+    // Check if already marked as no-show
+    if (appointment.status === AppointmentStatus.NO_SHOW) {
+      throw new BadRequestException('Appointment is already marked as no-show');
+    }
+
+    // Load the shop's no-show policy
+    const policy = appointment.shop.noShowPolicy;
+
+    // Determine the charge amount
+    let amountCents = 0;
+    let shouldCharge = false;
+
+    if (policy && policy.enabled) {
+      // Check if the grace period has passed
+      const now = new Date();
+      const graceDeadline = new Date(appointment.startAt.getTime() + policy.graceMinutes * 60 * 1000);
+
+      if (now < graceDeadline) {
+        throw new BadRequestException(
+          `Too early to mark as no-show. Grace period ends at ${graceDeadline.toISOString()}`,
+        );
+      }
+
+      amountCents = policy.feeCents;
+      shouldCharge = policy.feeCents > 0;
+    }
+
+    // Update the appointment status to NO_SHOW
+    const updatedAppointment = await this.prisma.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        status: AppointmentStatus.NO_SHOW,
+      },
+    });
+
+    this.logger.log(`Appointment ${appointmentId} marked as NO_SHOW`);
+
+    // Create the no-show charge record
+    let noShowCharge = await this.prisma.noShowCharge.create({
+      data: {
+        appointmentId,
+        amountCents,
+        squarePaymentId: null,
+      },
+    });
+
+    this.logger.log(`Created no-show charge for appointment ${appointmentId} with amount ${amountCents} cents`);
+
+    // If we should charge and have Square integration info, attempt to charge
+    if (shouldCharge && appointment.customer.squareCustomerId && appointment.shop.squareLocationId) {
+      try {
+        this.logger.log(`Attempting to charge no-show fee via Square for appointment ${appointmentId}`);
+
+        const paymentResult = await this.squareService.chargeNoShowFee({
+          amountCents,
+          currency: 'USD',
+          customerSquareId: appointment.customer.squareCustomerId,
+          shopSquareLocationId: appointment.shop.squareLocationId,
+        });
+
+        if (paymentResult && paymentResult.squarePaymentId) {
+          // Update the no-show charge with the Square payment ID
+          noShowCharge = await this.prisma.noShowCharge.update({
+            where: { id: noShowCharge.id },
+            data: {
+              squarePaymentId: paymentResult.squarePaymentId,
+            },
+          });
+
+          this.logger.log(
+            `Successfully charged no-show fee. Square Payment ID: ${paymentResult.squarePaymentId}`,
+          );
+        } else {
+          this.logger.warn(`No-show fee charge returned null - card on file may not be available`);
+        }
+      } catch (error) {
+        // Log the error but don't throw - we don't want to block marking as no-show
+        this.logger.error(
+          `Failed to charge no-show fee for appointment ${appointmentId}:`,
+          error instanceof Error ? error.message : 'Unknown error',
+        );
+      }
+    } else if (shouldCharge) {
+      this.logger.warn(
+        `No-show fee configured but missing Square integration data (customerSquareId: ${!!appointment.customer.squareCustomerId}, locationId: ${!!appointment.shop.squareLocationId})`,
+      );
+    }
+
+    // Return the updated appointment with all relations
+    return this.findOne(appointmentId);
   }
 }
