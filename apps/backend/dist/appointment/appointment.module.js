@@ -10,14 +10,17 @@ exports.AppointmentModule = void 0;
 const common_1 = require("@nestjs/common");
 const appointment_service_1 = require("./appointment.service");
 const appointment_controller_1 = require("./appointment.controller");
+const booking_validation_service_1 = require("./booking-validation.service");
+const square_module_1 = require("../square/square.module");
 let AppointmentModule = class AppointmentModule {
 };
 exports.AppointmentModule = AppointmentModule;
 exports.AppointmentModule = AppointmentModule = __decorate([
     (0, common_1.Module)({
+        imports: [square_module_1.SquareModule],
         controllers: [appointment_controller_1.AppointmentController],
-        providers: [appointment_service_1.AppointmentService],
-        exports: [appointment_service_1.AppointmentService],
+        providers: [appointment_service_1.AppointmentService, booking_validation_service_1.BookingValidationService],
+        exports: [appointment_service_1.AppointmentService, booking_validation_service_1.BookingValidationService],
     })
 ], AppointmentModule);
 //# sourceMappingURL=appointment.module.js.map

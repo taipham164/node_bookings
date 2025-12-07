@@ -4,12 +4,14 @@ import { PaymentService } from '../payment/payment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { Appointment } from '@prisma/client';
+import { BookingValidationService } from './booking-validation.service';
 
 @Injectable()
 export class AppointmentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paymentService: PaymentService,
+    private readonly bookingValidationService: BookingValidationService,
   ) {}
 
   async findAll(): Promise<Appointment[]> {
@@ -110,50 +112,28 @@ export class AppointmentService {
   }
 
   async create(createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
-    // Validate that all related entities exist
-    const [shop, barber, service, customer] = await Promise.all([
-      this.prisma.shop.findUnique({ where: { id: createAppointmentDto.shopId } }),
-      this.prisma.barber.findUnique({ where: { id: createAppointmentDto.barberId } }),
-      this.prisma.service.findUnique({ where: { id: createAppointmentDto.serviceId } }),
-      this.prisma.customer.findUnique({ where: { id: createAppointmentDto.customerId } }),
-    ]);
-
-    if (!shop) {
-      throw new NotFoundException(`Shop with ID ${createAppointmentDto.shopId} not found`);
-    }
-    if (!barber) {
-      throw new NotFoundException(`Barber with ID ${createAppointmentDto.barberId} not found`);
-    }
-    if (!service) {
-      throw new NotFoundException(`Service with ID ${createAppointmentDto.serviceId} not found`);
-    }
-    if (!customer) {
-      throw new NotFoundException(`Customer with ID ${createAppointmentDto.customerId} not found`);
-    }
-
-    // Validate that barber and service belong to the same shop
-    if (barber.shopId !== createAppointmentDto.shopId) {
-      throw new BadRequestException('Barber does not belong to the specified shop');
-    }
-    if (service.shopId !== createAppointmentDto.shopId) {
-      throw new BadRequestException('Service does not belong to the specified shop');
-    }
-    if (customer.shopId !== createAppointmentDto.shopId) {
-      throw new BadRequestException('Customer does not belong to the specified shop');
-    }
+    // Run comprehensive booking validation before creating the appointment
+    await this.bookingValidationService.validateBookingRequest({
+      shopId: createAppointmentDto.shopId,
+      serviceId: createAppointmentDto.serviceId,
+      customerId: createAppointmentDto.customerId,
+      barberId: createAppointmentDto.barberId,
+      startAt: createAppointmentDto.startAt,
+    });
 
     // Validate appointment times
     const startAt = new Date(createAppointmentDto.startAt);
     const endAt = new Date(createAppointmentDto.endAt);
-    
+
     if (startAt >= endAt) {
       throw new BadRequestException('End time must be after start time');
     }
-    
+
     if (startAt < new Date()) {
       throw new BadRequestException('Appointment cannot be scheduled in the past');
     }
 
+    // All validations passed, create the appointment
     return this.prisma.appointment.create({
       data: {
         ...createAppointmentDto,
