@@ -5,7 +5,7 @@ import {
   Query,
   BadRequestException,
 } from '@nestjs/common';
-import { PageService } from '../webbuilder/page.service';
+import { PageService } from './page.service';
 
 @Controller('api/public/pages')
 export class PublicPageController {

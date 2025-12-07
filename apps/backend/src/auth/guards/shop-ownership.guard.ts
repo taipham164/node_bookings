@@ -33,13 +33,13 @@ export class ShopOwnershipGuard implements CanActivate {
         throw new ForbiddenException('You do not have permission to access this shop');
       }
     } catch (error: any) {
-      // Handle case where ownerId column doesn't exist yet (during migration)
+      // Fail closed: do not allow access if ownership cannot be verified
       if (error.message?.includes('column') && error.message?.includes('ownerId')) {
-        // For now, allow access if the database schema hasn't been updated
-        console.warn('Shop ownership validation skipped: database schema not updated yet');
-        return true;
+        throw new ForbiddenException(
+          'Shop ownership verification unavailable. Please ensure database migrations are complete.'
+        );
       }
-      throw error;
+      throw new ForbiddenException('Unable to verify shop ownership');
     }
 
     return true;

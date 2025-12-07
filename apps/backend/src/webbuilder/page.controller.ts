@@ -133,12 +133,13 @@ export class PageController {
 
       return shop.id;
     } catch (error: any) {
-      // Temporary fallback during migration period
+      // Fail closed: do not allow access if ownership cannot be verified
       if (error.message?.includes('column') && error.message?.includes('ownerId')) {
-        console.warn('Shop ownership validation skipped: database schema not updated yet');
-        return requestedShopId;
+        throw new ForbiddenException(
+          'Shop ownership verification unavailable. Please ensure database migrations are complete.'
+        );
       }
-      throw error;
+      throw new ForbiddenException('Unable to verify shop ownership');
     }
   }
 
@@ -158,15 +159,16 @@ export class PageController {
         throw new ForbiddenException('You do not have permission to access this page');
       }
     } catch (error: any) {
-      // Temporary fallback during migration period
+      // Fail closed: do not allow access if ownership cannot be verified
       if (error.message?.includes('column') && error.message?.includes('ownerId')) {
-        console.warn('Page ownership validation skipped: database schema not updated yet');
-        return;
+        throw new ForbiddenException(
+          'Page ownership verification unavailable. Please ensure database migrations are complete.'
+        );
       }
       if (error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
-      throw error;
+      throw new ForbiddenException('Unable to verify page ownership');
     }
   }
 }
