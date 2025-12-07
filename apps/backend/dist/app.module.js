@@ -19,6 +19,7 @@ const customer_module_1 = require("./customer/customer.module");
 const appointment_module_1 = require("./appointment/appointment.module");
 const square_module_1 = require("./square/square.module");
 const availability_module_1 = require("./availability/availability.module");
+const payment_module_1 = require("./payment/payment.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,6 +35,7 @@ exports.AppModule = AppModule = __decorate([
             appointment_module_1.AppointmentModule,
             square_module_1.SquareModule,
             availability_module_1.AvailabilityModule,
+            payment_module_1.PaymentModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PaymentService } from '../payment/payment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { Appointment } from '@prisma/client';
@@ -9,6 +10,7 @@ import { BookingValidationService } from './booking-validation.service';
 export class AppointmentService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly paymentService: PaymentService,
     private readonly bookingValidationService: BookingValidationService,
   ) {}
 
@@ -53,7 +55,7 @@ export class AppointmentService {
     });
   }
 
-  async findOne(id: string): Promise<Appointment> {
+  async findOne(id: string) {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id },
       include: {
@@ -281,6 +283,113 @@ export class AppointmentService {
 
     return this.prisma.appointment.delete({
       where: { id },
+    });
+  }
+
+  /**
+   * Charge a deposit for an appointment
+   * This can be called when booking requires a deposit
+   */
+  async chargeDeposit(appointmentId: string, cardId: string, depositCents: number) {
+    const appointment = await this.findOne(appointmentId);
+
+    if (!appointment.customer.squareCustomerId) {
+      throw new BadRequestException('Customer has no Square customer ID');
+    }
+
+    // Charge the card
+    const chargeResult = await this.paymentService.chargeCustomerCard({
+      amountCents: depositCents,
+      currency: 'USD',
+      customerId: appointment.customerId,
+      squareCustomerId: appointment.customer.squareCustomerId,
+      cardId,
+      appointmentId,
+    });
+
+    return chargeResult;
+  }
+
+  /**
+   * Charge a no-show fee for an appointment
+   * This can be called when a customer doesn't show up
+   */
+  async chargeNoShowFee(appointmentId: string, cardId: string) {
+    const appointment = await this.findOne(appointmentId);
+
+    // Get the no-show policy for the shop
+    const noShowPolicy = await this.prisma.noShowPolicy.findFirst({
+      where: {
+        shopId: appointment.shopId,
+        enabled: true,
+      },
+    });
+
+    if (!noShowPolicy) {
+      throw new NotFoundException('No active no-show policy found for this shop');
+    }
+
+    if (!appointment.customer.squareCustomerId) {
+      throw new BadRequestException('Customer has no Square customer ID');
+    }
+
+    // Charge the no-show fee
+    const chargeResult = await this.paymentService.chargeCustomerCard({
+      amountCents: noShowPolicy.feeCents,
+      currency: 'USD',
+      customerId: appointment.customerId,
+      squareCustomerId: appointment.customer.squareCustomerId,
+      cardId,
+      appointmentId,
+    });
+
+    // Update appointment status to NO_SHOW
+    await this.update(appointmentId, { status: 'NO_SHOW' });
+
+    return chargeResult;
+  }
+
+  /**
+   * Charge the full service price for an appointment
+   * This can be called when the service is completed
+   */
+  async chargeFullAmount(appointmentId: string, cardId: string) {
+    const appointment = await this.findOne(appointmentId);
+
+    if (!appointment.customer.squareCustomerId) {
+      throw new BadRequestException('Customer has no Square customer ID');
+    }
+
+    // Charge the full service price
+    const chargeResult = await this.paymentService.chargeCustomerCard({
+      amountCents: appointment.service.priceCents,
+      currency: 'USD',
+      customerId: appointment.customerId,
+      squareCustomerId: appointment.customer.squareCustomerId,
+      cardId,
+      appointmentId,
+    });
+
+    return chargeResult;
+  }
+
+  /**
+   * Add a payment to an appointment
+   * Helper method to link an existing payment record to an appointment
+   */
+  async addPaymentToAppointment(appointmentId: string, paymentRecordId: string) {
+    return this.paymentService.addPaymentToAppointment(appointmentId, paymentRecordId);
+  }
+
+  /**
+   * Get all payments for an appointment
+   */
+  async getAppointmentPayments(appointmentId: string) {
+    const appointment = await this.findOne(appointmentId);
+
+    return this.prisma.paymentRecord.findMany({
+      where: { appointmentId },
+      orderBy: { createdAt: 'desc' },
     });
   }
 }
