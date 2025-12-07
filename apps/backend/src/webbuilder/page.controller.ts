@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { PageService } from './page.service';
 import { CreatePageDto } from './dto/create-page.dto';
@@ -21,23 +22,26 @@ export class PageController {
   @Get()
   async findAll(@Query('shopId') shopId: string) {
     if (!shopId) {
-      throw new Error('shopId query parameter is required');
+      throw new BadRequestException('shopId query parameter is required');
     }
     return this.pageService.findAll(shopId);
   }
 
-  @Get(':shopId/home')
-  async findHomePage(@Param('shopId') shopId: string) {
+  @Get('home')
+  async findHomePage(@Query('shopId') shopId: string) {
+    if (!shopId) {
+      throw new BadRequestException('shopId query parameter is required');
+    }
     return this.pageService.findHomePage(shopId);
   }
 
-  @Get(':slug')
+  @Get('by-slug/:slug')
   async findBySlug(
     @Param('slug') slug: string,
     @Query('shopId') shopId: string,
   ) {
     if (!shopId) {
-      throw new Error('shopId query parameter is required');
+      throw new BadRequestException('shopId query parameter is required');
     }
     return this.pageService.findBySlug(shopId, slug);
   }

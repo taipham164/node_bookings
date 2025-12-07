@@ -166,7 +166,7 @@ export default function BuilderPage() {
 
   const loadPage = async (editor: Editor) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/pages/home?shopId=${SHOP_ID}`)
+      const response = await fetch(`${API_BASE_URL}/api/pages/${SHOP_ID}/home`)
       if (response.ok) {
         const page = await response.json()
         setPageId(page.id)

@@ -39,15 +39,7 @@ export class PageService {
   }
 
   async createPage(dto: CreatePageDto) {
-    // If this page should be the home page, unset any existing home page
-    if (dto.isHome) {
-      await this.prisma.page.updateMany({
-        where: { shopId: dto.shopId, isHome: true },
-        data: { isHome: false },
-      });
-    }
-
-    // Check if slug already exists
+    // Check if slug already exists first, before making any changes
     const existing = await this.prisma.page.findUnique({
       where: { slug: dto.slug },
     });
@@ -56,6 +48,23 @@ export class PageService {
       throw new BadRequestException(`Page with slug "${dto.slug}" already exists`);
     }
 
+    // If this page should be the home page, use a transaction to ensure atomicity
+    if (dto.isHome) {
+      return this.prisma.$transaction(async (prisma) => {
+        // Unset any existing home page
+        await prisma.page.updateMany({
+          where: { shopId: dto.shopId, isHome: true },
+          data: { isHome: false },
+        });
+
+        // Create the new page
+        return prisma.page.create({
+          data: dto,
+        });
+      });
+    }
+
+    // If not a home page, create directly
     return this.prisma.page.create({
       data: dto,
     });
@@ -70,15 +79,7 @@ export class PageService {
       throw new NotFoundException(`Page with id "${id}" not found`);
     }
 
-    // If updating to be the home page, unset any existing home page
-    if (dto.isHome) {
-      await this.prisma.page.updateMany({
-        where: { shopId: page.shopId, isHome: true },
-        data: { isHome: false },
-      });
-    }
-
-    // If updating slug, check it doesn't conflict
+    // If updating slug, check it doesn't conflict first
     if (dto.slug && dto.slug !== page.slug) {
       const existing = await this.prisma.page.findUnique({
         where: { slug: dto.slug },
@@ -89,6 +90,24 @@ export class PageService {
       }
     }
 
+    // If updating to be the home page, use a transaction to ensure atomicity
+    if (dto.isHome) {
+      return this.prisma.$transaction(async (prisma) => {
+        // Unset any existing home page
+        await prisma.page.updateMany({
+          where: { shopId: page.shopId, isHome: true },
+          data: { isHome: false },
+        });
+
+        // Update the current page
+        return prisma.page.update({
+          where: { id },
+          data: dto,
+        });
+      });
+    }
+
+    // If not setting as home page, update directly
     return this.prisma.page.update({
       where: { id },
       data: dto,

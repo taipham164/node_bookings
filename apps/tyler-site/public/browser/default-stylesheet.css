@@ -1,0 +1,46 @@
+/* Default stylesheet for components */
+
+/* Basic reset and typography */
+* {
+  box-sizing: border-box;
+}
+
+.booking-widget {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.booking-widget button {
+  background: #0070f3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.booking-widget button:hover {
+  background: #0051a5;
+}
+
+.booking-widget input,
+.booking-widget select {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.booking-widget .form-group {
+  margin-bottom: 1rem;
+}
+
+.booking-widget .form-group label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}

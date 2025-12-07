@@ -33,6 +33,7 @@ model Shop {
   customers        Customer[]
   appointments     Appointment[]
   noShowPolicy     NoShowPolicy?
+  pages            Page[]
 
   @@map("shops")
 }
@@ -199,6 +200,9 @@ model Page {
   isHome    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@map("pages")
 }
