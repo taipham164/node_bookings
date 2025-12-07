@@ -17,7 +17,7 @@ const square_service_1 = require("../square/square.service");
 const payment_service_1 = require("../payment/payment.service");
 const booking_validation_service_1 = require("./booking-validation.service");
 let AppointmentService = AppointmentService_1 = class AppointmentService {
-    constructor(prisma, squareService, bookingValidationService) {
+    constructor(prisma, squareService, paymentService, bookingValidationService) {
         this.prisma = prisma;
         this.squareService = squareService;
         this.paymentService = paymentService;
@@ -418,8 +418,11 @@ let AppointmentService = AppointmentService_1 = class AppointmentService {
             }
             throw new common_1.BadRequestException(`Failed to create booking: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
-};
-
+    }
+    /**
+    * Charge a deposit for an appointment
+   * This can be called when booking requires a deposit
+   */
     async chargeDeposit(appointmentId, cardId, depositCents) {
         const appointment = await this.findOne(appointmentId);
         if (!appointment.customer.squareCustomerId) {
