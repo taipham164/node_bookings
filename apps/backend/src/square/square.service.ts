@@ -625,4 +625,53 @@ export class SquareService {
       throw new BadRequestException(errorMessage);
     }
   }
+
+  /**
+   * Verifies if a specific time slot is available in Square
+   * @returns true if the slot is available, false otherwise
+   */
+  async verifySlotIsAvailable(options: {
+    locationId: string;
+    serviceVariationId: string;
+    teamMemberId?: string;
+    startAt: string; // ISO 8601 format
+  }): Promise<boolean> {
+    try {
+      this.logger.log(`Verifying slot availability for ${options.startAt}`);
+
+      // Extract the date from the ISO string (YYYY-MM-DD)
+      const startAtDate = new Date(options.startAt);
+      const dateStr = startAtDate.toISOString().split('T')[0];
+
+      // Search for availability on the specific date
+      const availabilities = await this.searchAvailability({
+        locationId: options.locationId,
+        serviceVariationId: options.serviceVariationId,
+        teamMemberId: options.teamMemberId,
+        date: dateStr,
+      });
+
+      // Check if any of the returned slots match our requested start time
+      const requestedStartTime = new Date(options.startAt).toISOString();
+
+      const matchingSlot = availabilities.find((availability: any) => {
+        const slotStartTime = availability.startAt;
+        return slotStartTime === requestedStartTime;
+      });
+
+      if (matchingSlot) {
+        this.logger.log(`Slot verified as available at ${requestedStartTime}`);
+        return true;
+      }
+
+      this.logger.warn(`Slot not available at ${requestedStartTime}`);
+      return false;
+    } catch (error) {
+      this.logger.error('Failed to verify slot availability:', error);
+      // If we can't verify with Square, we'll allow it to proceed
+      // This prevents Square API issues from blocking bookings
+      this.logger.warn('Allowing booking to proceed despite Square verification failure');
+      return true;
+    }
+  }
 }

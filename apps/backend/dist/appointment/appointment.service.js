@@ -14,10 +14,12 @@ exports.AppointmentService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const square_service_1 = require("../square/square.service");
+const booking_validation_service_1 = require("./booking-validation.service");
 let AppointmentService = AppointmentService_1 = class AppointmentService {
-    constructor(prisma, squareService) {
+    constructor(prisma, squareService, bookingValidationService) {
         this.prisma = prisma;
         this.squareService = squareService;
+        this.bookingValidationService = bookingValidationService;
         this.logger = new common_1.Logger(AppointmentService_1.name);
     }
     async findAll() {
@@ -114,35 +116,14 @@ let AppointmentService = AppointmentService_1 = class AppointmentService {
         return appointment;
     }
     async create(createAppointmentDto) {
-        // Validate that all related entities exist
-        const [shop, barber, service, customer] = await Promise.all([
-            this.prisma.shop.findUnique({ where: { id: createAppointmentDto.shopId } }),
-            this.prisma.barber.findUnique({ where: { id: createAppointmentDto.barberId } }),
-            this.prisma.service.findUnique({ where: { id: createAppointmentDto.serviceId } }),
-            this.prisma.customer.findUnique({ where: { id: createAppointmentDto.customerId } }),
-        ]);
-        if (!shop) {
-            throw new common_1.NotFoundException(`Shop with ID ${createAppointmentDto.shopId} not found`);
-        }
-        if (!barber) {
-            throw new common_1.NotFoundException(`Barber with ID ${createAppointmentDto.barberId} not found`);
-        }
-        if (!service) {
-            throw new common_1.NotFoundException(`Service with ID ${createAppointmentDto.serviceId} not found`);
-        }
-        if (!customer) {
-            throw new common_1.NotFoundException(`Customer with ID ${createAppointmentDto.customerId} not found`);
-        }
-        // Validate that barber and service belong to the same shop
-        if (barber.shopId !== createAppointmentDto.shopId) {
-            throw new common_1.BadRequestException('Barber does not belong to the specified shop');
-        }
-        if (service.shopId !== createAppointmentDto.shopId) {
-            throw new common_1.BadRequestException('Service does not belong to the specified shop');
-        }
-        if (customer.shopId !== createAppointmentDto.shopId) {
-            throw new common_1.BadRequestException('Customer does not belong to the specified shop');
-        }
+        // Run comprehensive booking validation before creating the appointment
+        await this.bookingValidationService.validateBookingRequest({
+            shopId: createAppointmentDto.shopId,
+            serviceId: createAppointmentDto.serviceId,
+            customerId: createAppointmentDto.customerId,
+            barberId: createAppointmentDto.barberId,
+            startAt: createAppointmentDto.startAt,
+        });
         // Validate appointment times
         const startAt = new Date(createAppointmentDto.startAt);
         const endAt = new Date(createAppointmentDto.endAt);
@@ -152,6 +133,7 @@ let AppointmentService = AppointmentService_1 = class AppointmentService {
         if (startAt < new Date()) {
             throw new common_1.BadRequestException('Appointment cannot be scheduled in the past');
         }
+        // All validations passed, create the appointment
         return this.prisma.appointment.create({
             data: {
                 ...createAppointmentDto,
@@ -354,7 +336,7 @@ let AppointmentService = AppointmentService_1 = class AppointmentService {
                 firstName: createBookingDto.customerFirstName || customer.firstName,
                 lastName: createBookingDto.customerLastName || customer.lastName,
                 phone: createBookingDto.customerPhone || customer.phone,
-                email: createBookingDto.customerEmail || customer.email,
+                email: createBookingDto.customerEmail || customer.email || undefined,
                 existingSquareCustomerId: customer.squareCustomerId || undefined,
             });
             // Update local customer with Square customer ID if not already set
@@ -371,7 +353,7 @@ let AppointmentService = AppointmentService_1 = class AppointmentService {
                 locationId: shop.squareLocationId,
                 customerId: squareCustomerId,
                 serviceVariationId: service.squareCatalogObjectId,
-                teamMemberId: barber?.squareTeamMemberId,
+                teamMemberId: barber?.squareTeamMemberId || undefined,
                 startAt: createBookingDto.startAt,
             });
             // Calculate end time
@@ -440,6 +422,7 @@ exports.AppointmentService = AppointmentService;
 exports.AppointmentService = AppointmentService = AppointmentService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        square_service_1.SquareService])
+        square_service_1.SquareService,
+        booking_validation_service_1.BookingValidationService])
 ], AppointmentService);
 //# sourceMappingURL=appointment.service.js.map
