@@ -475,7 +475,6 @@ export class SquareService {
   }
 
   /**
-<<<<<<< HEAD
    * Charge a no-show fee to a customer
    * @param params - Payment parameters
    * @returns Payment result with Square payment ID, or null if unable to charge
@@ -537,7 +536,9 @@ export class SquareService {
       'No-show fee charging not implemented yet - card-on-file integration required',
     );
     return null;
-=======
+  }
+
+  /**
    * Find or create a customer in Square
    */
   async findOrCreateSquareCustomer(options: {
@@ -736,6 +737,5 @@ export class SquareService {
       this.logger.warn('Allowing booking to proceed despite Square verification failure');
       return true;
     }
->>>>>>> main
   }
 }

@@ -1,14 +1,17 @@
-import { IsInt, IsBoolean, Min } from 'class-validator';
+import { IsInt, IsBoolean, Min, IsOptional } from 'class-validator';
 
 export class UpdateNoShowPolicyDto {
+  @IsOptional()
   @IsInt()
   @Min(0)
-  feeCents: number;
+  feeCents?: number;
 
+  @IsOptional()
   @IsInt()
   @Min(0)
-  graceMinutes: number;
+  graceMinutes?: number;
 
+  @IsOptional()
   @IsBoolean()
-  enabled: boolean;
+  enabled?: boolean;
 }

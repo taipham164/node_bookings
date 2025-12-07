@@ -53,7 +53,6 @@ export class AppointmentController {
   }
 
   /**
-<<<<<<< HEAD
    * POST /api/appointments/:id/no-show
    * Mark an appointment as no-show and create a no-show charge
    */
@@ -61,7 +60,9 @@ export class AppointmentController {
   @HttpCode(HttpStatus.OK)
   async markNoShow(@Param('id') id: string): Promise<Appointment> {
     return this.appointmentService.markNoShow(id);
-=======
+  }
+
+  /**
    * Create a booking with Square integration
    * This endpoint creates both a Square booking and a local appointment record
    */
@@ -84,6 +85,5 @@ export class AppointmentController {
       this.logger.error('Booking creation failed:', error);
       throw error; // Let NestJS handle the HTTP status based on the exception type
     }
->>>>>>> main
   }
 }
