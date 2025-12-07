@@ -8,14 +8,18 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { AppointmentService } from './appointment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { CreateBookingDto } from './dto/create-booking.dto';
 import { Appointment } from '@prisma/client';
 
 @Controller('appointments')
 export class AppointmentController {
+  private readonly logger = new Logger(AppointmentController.name);
+
   constructor(private readonly appointmentService: AppointmentService) {}
 
   @Post()
@@ -46,5 +50,30 @@ export class AppointmentController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string): Promise<void> {
     await this.appointmentService.remove(id);
+  }
+
+  /**
+   * Create a booking with Square integration
+   * This endpoint creates both a Square booking and a local appointment record
+   */
+  @Post('bookings')
+  @HttpCode(HttpStatus.CREATED)
+  async createBooking(@Body() createBookingDto: CreateBookingDto): Promise<{
+    success: boolean;
+    data: Appointment;
+  }> {
+    this.logger.log(`Creating booking for shop ${createBookingDto.shopId}, service ${createBookingDto.serviceId}`);
+
+    try {
+      const appointment = await this.appointmentService.createBooking(createBookingDto);
+
+      return {
+        success: true,
+        data: appointment,
+      };
+    } catch (error) {
+      this.logger.error('Booking creation failed:', error);
+      throw error; // Let NestJS handle the HTTP status based on the exception type
+    }
   }
 }
