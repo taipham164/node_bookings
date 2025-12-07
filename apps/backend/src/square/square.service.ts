@@ -475,6 +475,69 @@ export class SquareService {
   }
 
   /**
+<<<<<<< HEAD
+   * Charge a no-show fee to a customer
+   * @param params - Payment parameters
+   * @returns Payment result with Square payment ID, or null if unable to charge
+   *
+   * TODO: This is a placeholder implementation. Real card-on-file charging requires:
+   * 1. Customer to have a saved card on file with Square
+   * 2. Card vaulting/tokenization flow
+   * 3. Payment source ID (card ID) associated with the customer
+   *
+   * For now, this method logs the attempt and returns null.
+   * When implementing, use Square Payments API with the customer's card on file:
+   * - squareClient.paymentsApi.createPayment({
+   *     sourceId: <card_id_from_customer_profile>,
+   *     customerId: params.customerSquareId,
+   *     locationId: params.shopSquareLocationId,
+   *     amountMoney: { amount: params.amountCents, currency: params.currency }
+   *   })
+   */
+  async chargeNoShowFee(params: {
+    amountCents: number;
+    currency: string;
+    customerSquareId: string;
+    shopSquareLocationId: string;
+  }): Promise<{ squarePaymentId: string } | null> {
+    this.logger.log(
+      `TODO: Charge no-show fee of ${params.amountCents} ${params.currency} to customer ${params.customerSquareId}`,
+    );
+
+    // TODO: Implement card-on-file charging flow
+    // 1. Retrieve customer's default payment method from Square
+    // 2. Create payment using Square Payments API
+    // 3. Return the payment ID on success
+
+    // Example implementation (commented out until card-on-file is set up):
+    /*
+    try {
+      const { result } = await this.squareClient.paymentsApi.createPayment({
+        sourceId: '<CARD_ID>', // TODO: Get from customer's saved cards
+        customerId: params.customerSquareId,
+        locationId: params.shopSquareLocationId,
+        amountMoney: {
+          amount: BigInt(params.amountCents),
+          currency: params.currency,
+        },
+        idempotencyKey: uuidv4(), // Ensure unique payment
+      });
+
+      if (result.payment?.id) {
+        this.logger.log(`Successfully charged no-show fee. Payment ID: ${result.payment.id}`);
+        return { squarePaymentId: result.payment.id };
+      }
+    } catch (error) {
+      this.logger.error('Failed to charge no-show fee via Square:', error);
+      throw error;
+    }
+    */
+
+    this.logger.warn(
+      'No-show fee charging not implemented yet - card-on-file integration required',
+    );
+    return null;
+=======
    * Find or create a customer in Square
    */
   async findOrCreateSquareCustomer(options: {
@@ -673,5 +736,6 @@ export class SquareService {
       this.logger.warn('Allowing booking to proceed despite Square verification failure');
       return true;
     }
+>>>>>>> main
   }
 }

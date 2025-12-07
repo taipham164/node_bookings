@@ -32,7 +32,7 @@ model Shop {
   services         Service[]
   customers        Customer[]
   appointments     Appointment[]
-  noShowPolicies   NoShowPolicy[]
+  noShowPolicy     NoShowPolicy?
 
   @@map("shops")
 }
@@ -117,7 +117,7 @@ model Appointment {
 
 model NoShowPolicy {
   id           String    @id @default(uuid())
-  shopId       String
+  shopId       String    @unique
   feeCents     Int
   graceMinutes Int       @default(15)
   enabled      Boolean   @default(true)

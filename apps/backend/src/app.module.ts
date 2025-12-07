@@ -10,7 +10,11 @@ import { CustomerModule } from './customer/customer.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { SquareModule } from './square/square.module';
 import { AvailabilityModule } from './availability/availability.module';
+<<<<<<< HEAD
+import { NoShowPolicyModule } from './no-show-policy/no-show-policy.module';
+=======
 import { PaymentModule } from './payment/payment.module';
+>>>>>>> main
 
 @Module({
   imports: [
@@ -23,7 +27,11 @@ import { PaymentModule } from './payment/payment.module';
     AppointmentModule,
     SquareModule,
     AvailabilityModule,
+<<<<<<< HEAD
+    NoShowPolicyModule,
+=======
     PaymentModule,
+>>>>>>> main
   ],
   controllers: [AppController],
   providers: [AppService],
