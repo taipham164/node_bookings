@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
@@ -6,6 +6,8 @@ import { Customer } from '@prisma/client';
 
 @Injectable()
 export class CustomerService {
+  private readonly logger = new Logger(CustomerService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<Customer[]> {
@@ -133,5 +135,61 @@ export class CustomerService {
     return this.prisma.customer.delete({
       where: { id },
     });
+  }
+
+  /**
+   * Find or create a customer by phone number
+   * This is useful for booking flows where we need to ensure a customer exists
+   */
+  async findOrCreateByPhone(params: {
+    shopId: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+    squareCustomerId?: string;
+  }): Promise<Customer> {
+    const { shopId, firstName, lastName, phone, email, squareCustomerId } = params;
+
+    this.logger.log(`Finding or creating customer with phone ${phone} for shop ${shopId}`);
+
+    // Try to find existing customer by phone and shop
+    let customer = await this.prisma.customer.findFirst({
+      where: {
+        shopId,
+        phone,
+      },
+    });
+
+    if (customer) {
+      this.logger.log(`Found existing customer: ${customer.id}`);
+
+      // Update Square customer ID if provided and not already set
+      if (squareCustomerId && !customer.squareCustomerId) {
+        customer = await this.prisma.customer.update({
+          where: { id: customer.id },
+          data: { squareCustomerId },
+        });
+        this.logger.log(`Updated customer ${customer.id} with Square ID ${squareCustomerId}`);
+      }
+
+      return customer;
+    }
+
+    // Create new customer
+    this.logger.log(`Creating new customer: ${firstName} ${lastName}`);
+    customer = await this.prisma.customer.create({
+      data: {
+        shopId,
+        firstName,
+        lastName,
+        phone,
+        email,
+        squareCustomerId,
+      },
+    });
+
+    this.logger.log(`Created customer: ${customer.id}`);
+    return customer;
   }
 }
