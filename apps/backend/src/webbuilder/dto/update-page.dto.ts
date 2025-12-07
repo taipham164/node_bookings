@@ -10,7 +10,10 @@ export class UpdatePageDto {
   @IsOptional()
   @IsString()
   @Transform(({ value }) => {
-    if (typeof value !== 'string' || value === undefined) return value;
+    if (value === undefined || value === null) return value;
+    if (typeof value !== 'string') {
+      throw new TypeError(`HTML field must be a string, received ${typeof value}`);
+    }
     return sanitizeHtml(value);
   })
   html?: string;

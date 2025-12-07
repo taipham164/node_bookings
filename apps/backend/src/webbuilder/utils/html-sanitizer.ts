@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const DOMPurify: any = require('isomorphic-dompurify');
+import DOMPurify from 'isomorphic-dompurify';
 
 export interface SanitizerConfig {
   ALLOWED_TAGS: string[];
@@ -17,7 +16,7 @@ export const DEFAULT_SANITIZER_CONFIG: SanitizerConfig = {
 
 export function sanitizeHtml(html: string, config: SanitizerConfig = DEFAULT_SANITIZER_CONFIG): string {
   if (typeof html !== 'string') {
-    return html;
+    throw new TypeError(`Expected string input for HTML sanitization, received ${typeof html}`);
   }
   
   return DOMPurify.sanitize(html, config);

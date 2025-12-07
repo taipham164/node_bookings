@@ -16,10 +16,15 @@ export class PageService {
 
   async findBySlug(shopId: string, slug: string) {
     const page = await this.prisma.page.findUnique({
-      where: { slug },
+      where: { 
+        shopId_slug: {
+          shopId,
+          slug
+        }
+      },
     });
 
-    if (!page || page.shopId !== shopId) {
+    if (!page) {
       throw new NotFoundException(`Page with slug "${slug}" not found`);
     }
 
@@ -39,13 +44,18 @@ export class PageService {
   }
 
   async createPage(dto: CreatePageDto) {
-    // Check if slug already exists first, before making any changes
+    // Check if slug already exists in this shop first, before making any changes
     const existing = await this.prisma.page.findUnique({
-      where: { slug: dto.slug },
+      where: { 
+        shopId_slug: {
+          shopId: dto.shopId,
+          slug: dto.slug
+        }
+      },
     });
 
     if (existing) {
-      throw new BadRequestException(`Page with slug "${dto.slug}" already exists`);
+      throw new BadRequestException(`Page with slug "${dto.slug}" already exists in this shop`);
     }
 
     // If this page should be the home page, use a transaction to ensure atomicity
@@ -79,14 +89,19 @@ export class PageService {
       throw new NotFoundException(`Page with id "${id}" not found`);
     }
 
-    // If updating slug, check it doesn't conflict first
+    // If updating slug, check it doesn't conflict within the shop first
     if (dto.slug && dto.slug !== page.slug) {
       const existing = await this.prisma.page.findUnique({
-        where: { slug: dto.slug },
+        where: { 
+          shopId_slug: {
+            shopId: page.shopId,
+            slug: dto.slug
+          }
+        },
       });
 
       if (existing && existing.id !== id) {
-        throw new BadRequestException(`Page with slug "${dto.slug}" already exists`);
+        throw new BadRequestException(`Page with slug "${dto.slug}" already exists in this shop`);
       }
     }
 
@@ -131,24 +146,27 @@ export class PageService {
   }
 
   async setHomePage(shopId: string, pageId: string) {
-    const page = await this.prisma.page.findUnique({
-      where: { id: pageId },
-    });
+    return this.prisma.$transaction(async (prisma) => {
+      // Re-check/load the target page within the transaction to validate shopId and existence
+      const page = await prisma.page.findUnique({
+        where: { id: pageId },
+      });
 
-    if (!page || page.shopId !== shopId) {
-      throw new NotFoundException(`Page with id "${pageId}" not found`);
-    }
+      if (!page || page.shopId !== shopId) {
+        throw new NotFoundException(`Page with id "${pageId}" not found`);
+      }
 
-    // Unset existing home page
-    await this.prisma.page.updateMany({
-      where: { shopId, isHome: true },
-      data: { isHome: false },
-    });
+      // Unset any existing home page for this shop
+      await prisma.page.updateMany({
+        where: { shopId, isHome: true },
+        data: { isHome: false },
+      });
 
-    // Set new home page
-    return this.prisma.page.update({
-      where: { id: pageId },
-      data: { isHome: true },
+      // Set the target page as the new home page
+      return prisma.page.update({
+        where: { id: pageId },
+        data: { isHome: true },
+      });
     });
   }
 }

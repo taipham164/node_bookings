@@ -13,7 +13,12 @@ export class CreatePageDto {
   title!: string;
 
   @IsString()
-  @Transform(({ value }) => sanitizeHtml(value))
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') {
+      throw new TypeError(`HTML field must be a string, received ${typeof value}`);
+    }
+    return sanitizeHtml(value);
+  })
   html!: string;
 
   @IsOptional()

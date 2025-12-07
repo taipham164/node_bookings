@@ -13,6 +13,7 @@ import { AvailabilityModule } from './availability/availability.module';
 import { NoShowPolicyModule } from './no-show-policy/no-show-policy.module';
 import { PaymentModule } from './payment/payment.module';
 import { WebbuilderModule } from './webbuilder/webbuilder.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { WebbuilderModule } from './webbuilder/webbuilder.module';
     NoShowPolicyModule,
     PaymentModule,
     WebbuilderModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

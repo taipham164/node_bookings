@@ -67,7 +67,7 @@ CREATE UNIQUE INDEX "customer_cards_squareCardId_key" ON "customer_cards"("squar
 CREATE UNIQUE INDEX "payment_records_squarePaymentId_key" ON "payment_records"("squarePaymentId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "pages_slug_key" ON "pages"("slug");
+CREATE UNIQUE INDEX "pages_shopId_slug_key" ON "pages"("shopId", "slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "barbers_squareTeamMemberId_shopId_key" ON "barbers"("squareTeamMemberId", "shopId");

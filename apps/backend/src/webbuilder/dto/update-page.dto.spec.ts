@@ -5,7 +5,9 @@ import { UpdatePageDto } from './update-page.dto';
 // Mock the HTML sanitizer to avoid isomorphic-dompurify ES module issues
 jest.mock('../utils/html-sanitizer', () => ({
   sanitizeHtml: jest.fn((html) => {
-    if (typeof html !== 'string') return html;
+    if (typeof html !== 'string') {
+      throw new TypeError(`Expected string input for HTML sanitization, received ${typeof html}`);
+    }
     // Simple mock implementation
     return html
       .replace(/<script[^>]*>.*?<\/script>/gi, '')
@@ -78,6 +80,30 @@ describe('UpdatePageDto', () => {
       expect(dto.html).toBe('<p>Updated content</p>');
       expect(dto.title).toBe('Updated Title');
       expect(dto.isHome).toBe(true);
+    });
+
+    it('should throw TypeError for non-string html input during transformation', () => {
+      const input = {
+        html: ['invalid', 'array'], // Invalid non-string input
+        title: 'Updated Title'
+      };
+
+      expect(() => plainToClass(UpdatePageDto, input)).toThrow(TypeError);
+      expect(() => plainToClass(UpdatePageDto, input)).toThrow('HTML field must be a string, received object');
+    });
+
+    it('should handle undefined html values without error', async () => {
+      const input = {
+        title: 'Updated Title',
+        // html is undefined
+      };
+
+      const dto = plainToClass(UpdatePageDto, input);
+      const errors = await validate(dto);
+      
+      expect(errors).toHaveLength(0);
+      expect(dto.html).toBeUndefined();
+      expect(dto.title).toBe('Updated Title');
     });
   });
 });

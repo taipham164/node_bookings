@@ -61,10 +61,15 @@ describe('HTML Sanitizer', () => {
       expect(result).not.toContain('object');
     });
 
-    it('should handle non-string inputs gracefully', () => {
-      expect(sanitizeHtml(null as any)).toBeNull();
-      expect(sanitizeHtml(undefined as any)).toBeUndefined();
-      expect(sanitizeHtml(123 as any)).toBe(123);
+    it('should throw TypeError for non-string inputs', () => {
+      expect(() => sanitizeHtml(null as any)).toThrow(TypeError);
+      expect(() => sanitizeHtml(null as any)).toThrow('Expected string input for HTML sanitization, received object');
+      
+      expect(() => sanitizeHtml(undefined as any)).toThrow(TypeError);
+      expect(() => sanitizeHtml(undefined as any)).toThrow('Expected string input for HTML sanitization, received undefined');
+      
+      expect(() => sanitizeHtml(123 as any)).toThrow(TypeError);
+      expect(() => sanitizeHtml(123 as any)).toThrow('Expected string input for HTML sanitization, received number');
     });
 
     it('should handle empty strings', () => {

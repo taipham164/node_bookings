@@ -5,7 +5,9 @@ import { CreatePageDto } from './create-page.dto';
 // Mock the HTML sanitizer to avoid isomorphic-dompurify ES module issues
 jest.mock('../utils/html-sanitizer', () => ({
   sanitizeHtml: jest.fn((html) => {
-    if (typeof html !== 'string') return html;
+    if (typeof html !== 'string') {
+      throw new TypeError(`Expected string input for HTML sanitization, received ${typeof html}`);
+    }
     // Simple mock implementation
     let result = html;
     result = result.replace(/<script[^>]*>.*?<\/script>/gi, '');
@@ -115,7 +117,7 @@ describe('CreatePageDto', () => {
       expect(dto.html).not.toContain('onclick');
     });
 
-    it('should handle empty or non-string HTML values', () => {
+    it('should handle empty string HTML values', () => {
       const inputEmpty = {
         shopId: 'test-shop',
         slug: 'test-page',
@@ -126,8 +128,9 @@ describe('CreatePageDto', () => {
 
       const dtoEmpty = plainToClass(CreatePageDto, inputEmpty);
       expect(dtoEmpty.html).toBe('');
+    });
 
-      // Test with null/undefined (should be handled gracefully)
+    it('should throw TypeError for null HTML values', () => {
       const inputNull = {
         shopId: 'test-shop',
         slug: 'test-page',
@@ -136,8 +139,8 @@ describe('CreatePageDto', () => {
         isHome: false
       };
 
-      const dtoNull = plainToClass(CreatePageDto, inputNull);
-      expect(dtoNull.html).toBeNull();
+      expect(() => plainToClass(CreatePageDto, inputNull)).toThrow(TypeError);
+      expect(() => plainToClass(CreatePageDto, inputNull)).toThrow('HTML field must be a string, received object');
     });
 
     it('should pass validation after sanitization', async () => {
@@ -154,6 +157,19 @@ describe('CreatePageDto', () => {
       
       expect(errors).toHaveLength(0);
       expect(dto.html).toBe('<p>Safe content</p>');
+    });
+
+    it('should throw TypeError for non-string html input during transformation', () => {
+      const input = {
+        shopId: 'test-shop',
+        slug: 'test-page',
+        title: 'Test Page',
+        html: 123, // Invalid non-string input
+        isHome: false
+      };
+
+      expect(() => plainToClass(CreatePageDto, input)).toThrow(TypeError);
+      expect(() => plainToClass(CreatePageDto, input)).toThrow('HTML field must be a string, received number');
     });
   });
 });
