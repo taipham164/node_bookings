@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { SaveCardDto } from './dto/save-card.dto';
@@ -28,20 +29,19 @@ export class PaymentController {
   async vaultCard(@Body() saveCardDto: SaveCardDto) {
     this.logger.log(`Vaulting card for customer ${saveCardDto.customerId}`);
 
-    const customer = await this.paymentService['prismaService'].customer.findUnique({
-      where: { id: saveCardDto.customerId },
-    });
-
-    if (!customer || !customer.squareCustomerId) {
+    // Validate customer and get squareCustomerId through service
+    const validation = await this.paymentService.validateCustomerForVault(saveCardDto);
+    
+    if (!validation.success) {
       return {
         success: false,
-        message: 'Customer not found or has no Square customer ID',
+        message: validation.message,
       };
     }
 
     const result = await this.paymentService.saveCardForCustomer({
       customerId: saveCardDto.customerId,
-      squareCustomerId: customer.squareCustomerId,
+      squareCustomerId: validation.squareCustomerId,
       paymentNonce: saveCardDto.paymentNonce,
     });
 
@@ -68,10 +68,7 @@ export class PaymentController {
     });
 
     if (!customer || !customer.squareCustomerId) {
-      return {
-        success: false,
-        message: 'Customer not found or has no Square customer ID',
-      };
+      throw new NotFoundException('Customer not found or has no Square customer ID');
     }
 
     const result = await this.paymentService.chargeCustomerCard({

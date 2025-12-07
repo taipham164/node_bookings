@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Logger,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PaymentService } from './payment.service';
@@ -30,11 +31,18 @@ export class WebhookController {
   async handleSquareWebhook(
     @Headers('x-square-signature') signature: string,
     @Body() payload: any,
+    @Req() req: any,
   ) {
     this.logger.log(`Received Square webhook: ${payload?.type}`);
 
-    // Verify webhook signature
-    if (!this.verifyWebhookSignature(signature, JSON.stringify(payload))) {
+    // Ensure raw body is available for signature verification
+    if (!req.rawBody) {
+      this.logger.error('Raw request body is missing - signature verification will fail');
+      throw new BadRequestException('Raw request body is missing');
+    }
+
+    // Verify webhook signature using raw body
+    if (!this.verifyWebhookSignature(signature, req.rawBody)) {
       this.logger.warn('Invalid webhook signature');
       throw new BadRequestException('Invalid signature');
     }
@@ -83,13 +91,18 @@ export class WebhookController {
   /**
    * Verify Square webhook signature
    */
-  private verifyWebhookSignature(signature: string, body: string): boolean {
+  private verifyWebhookSignature(signature: string, body: Buffer): boolean {
     // Get webhook signature key from environment
     const webhookSignatureKey = this.configService.get<string>('SQUARE_WEBHOOK_SIGNATURE_KEY');
 
     // If no signature key is configured, skip verification (for development)
     if (!webhookSignatureKey) {
-      this.logger.warn('SQUARE_WEBHOOK_SIGNATURE_KEY not configured - skipping signature verification');
+      const nodeEnv = this.configService.get<string>('NODE_ENV');
+      if (nodeEnv === 'production') {
+        this.logger.error('SQUARE_WEBHOOK_SIGNATURE_KEY required in production');
+        return false;
+      }
+      this.logger.warn('SQUARE_WEBHOOK_SIGNATURE_KEY not configured - skipping verification (dev only)');
       return true;
     }
 
@@ -98,7 +111,7 @@ export class WebhookController {
     }
 
     try {
-      // Square uses HMAC-SHA256
+      // Square uses HMAC-SHA256 with the raw request body bytes
       const hmac = crypto.createHmac('sha256', webhookSignatureKey);
       hmac.update(body);
       const expectedSignature = hmac.digest('base64');

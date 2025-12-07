@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString, IsNumber, IsOptional, Min } from 'class-validator
 export class RefundPaymentDto {
   @IsString()
   @IsNotEmpty()
-  paymentRecordId: string;
+  paymentRecordId!: string;
 
   @IsNumber()
   @Min(1)

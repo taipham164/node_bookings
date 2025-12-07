@@ -55,7 +55,7 @@ export class AppointmentService {
     });
   }
 
-  async findOne(id: string): Promise<Appointment> {
+  async findOne(id: string) {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id },
       include: {

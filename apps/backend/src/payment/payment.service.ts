@@ -1,6 +1,8 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SquareService } from '../square/square.service';
+import { SaveCardDto } from './dto/save-card.dto';
+import { PaymentStatus } from '@prisma/client';
 
 interface SaveCardParams {
   customerId: string;
@@ -42,6 +44,18 @@ interface RefundPaymentResult {
   status: string;
 }
 
+interface VaultCardValidationResult {
+  success: true;
+  squareCustomerId: string;
+}
+
+interface VaultCardValidationError {
+  success: false;
+  message: string;
+}
+
+type VaultCardResult = VaultCardValidationResult | VaultCardValidationError;
+
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
@@ -50,6 +64,29 @@ export class PaymentService {
     private readonly prismaService: PrismaService,
     private readonly squareService: SquareService,
   ) {}
+
+  /**
+   * Validate customer and prepare for card vaulting
+   * This method encapsulates the customer lookup and squareCustomerId validation
+   */
+  async validateCustomerForVault(saveCardDto: SaveCardDto): Promise<VaultCardResult> {
+    const { customerId } = saveCardDto;
+
+    this.logger.log(`Validating customer ${customerId} for card vaulting`);
+
+    const customer = await this.prismaService.customer.findUnique({
+      where: { id: customerId },
+    });
+
+    if (!customer || !customer.squareCustomerId) {
+      throw new NotFoundException('Customer not found or has no Square customer ID');
+    }
+
+    return {
+      success: true,
+      squareCustomerId: customer.squareCustomerId,
+    };
+  }
 
   /**
    * Save a card for a customer using Square Cards API
@@ -177,7 +214,7 @@ export class PaymentService {
           currency,
           customerId,
           appointmentId,
-          status: 'PENDING',
+          status: PaymentStatus.PENDING,
         },
       });
 
@@ -260,7 +297,7 @@ export class PaymentService {
       );
     }
 
-    if (paymentRecord.status !== 'COMPLETED') {
+    if (paymentRecord.status !== 'COMPLETED' && paymentRecord.status !== 'PARTIALLY_REFUNDED') {
       throw new BadRequestException(
         `Cannot refund payment with status ${paymentRecord.status}`,
       );

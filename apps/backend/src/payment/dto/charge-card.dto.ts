@@ -3,19 +3,19 @@ import { IsNotEmpty, IsString, IsNumber, IsOptional, Min } from 'class-validator
 export class ChargeCardDto {
   @IsNumber()
   @Min(1)
-  amountCents: number;
+  amountCents!: number;
 
   @IsString()
   @IsNotEmpty()
-  currency: string;
+  currency!: string;
 
   @IsString()
   @IsNotEmpty()
-  customerId: string;
+  customerId!: string;
 
   @IsString()
   @IsNotEmpty()
-  cardId: string;
+  cardId!: string;
 
   @IsString()
   @IsOptional()
