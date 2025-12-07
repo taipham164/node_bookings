@@ -475,6 +475,7 @@ export class SquareService {
   }
 
   /**
+<<<<<<< HEAD
    * Charge a no-show fee to a customer
    * @param params - Payment parameters
    * @returns Payment result with Square payment ID, or null if unable to charge
@@ -536,5 +537,205 @@ export class SquareService {
       'No-show fee charging not implemented yet - card-on-file integration required',
     );
     return null;
+=======
+   * Find or create a customer in Square
+   */
+  async findOrCreateSquareCustomer(options: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+    existingSquareCustomerId?: string;
+  }): Promise<string> {
+    try {
+      // If we already have a Square customer ID, verify it exists
+      if (options.existingSquareCustomerId) {
+        try {
+          const { result } = await this.squareClient.customersApi.retrieveCustomer(
+            options.existingSquareCustomerId
+          );
+          if (result.customer) {
+            this.logger.log(`Found existing Square customer: ${options.existingSquareCustomerId}`);
+            return options.existingSquareCustomerId;
+          }
+        } catch (error) {
+          this.logger.warn(`Square customer ${options.existingSquareCustomerId} not found, creating new one`);
+        }
+      }
+
+      // Search for existing customer by phone or email
+      const searchQuery: any = {};
+      if (options.phone) {
+        searchQuery.phoneNumber = { exact: options.phone };
+      } else if (options.email) {
+        searchQuery.emailAddress = { exact: options.email };
+      }
+
+      if (Object.keys(searchQuery).length > 0) {
+        try {
+          const { result } = await this.squareClient.customersApi.searchCustomers({
+            query: {
+              filter: searchQuery,
+            },
+            limit: BigInt(1),
+          });
+
+          if (result.customers && result.customers.length > 0) {
+            const existingCustomer = result.customers[0];
+            this.logger.log(`Found existing Square customer by search: ${existingCustomer.id}`);
+            return existingCustomer.id!;
+          }
+        } catch (error) {
+          this.logger.warn('Customer search failed, will create new customer:', error);
+        }
+      }
+
+      // Create new customer
+      this.logger.log(`Creating new Square customer: ${options.firstName} ${options.lastName}`);
+      const { result } = await this.squareClient.customersApi.createCustomer({
+        givenName: options.firstName,
+        familyName: options.lastName,
+        phoneNumber: options.phone,
+        emailAddress: options.email,
+      });
+
+      if (!result.customer?.id) {
+        throw new Error('Failed to create Square customer: no customer ID returned');
+      }
+
+      this.logger.log(`Created Square customer: ${result.customer.id}`);
+      return result.customer.id;
+    } catch (error) {
+      this.logger.error('Failed to find or create Square customer:', error);
+      throw new BadRequestException(
+        `Failed to find or create Square customer: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Create a booking in Square
+   */
+  async createSquareBooking(options: {
+    locationId: string;
+    customerId: string;
+    serviceVariationId: string;
+    teamMemberId?: string;
+    startAt: string; // ISO datetime string
+  }): Promise<{
+    bookingId: string;
+    booking: any;
+  }> {
+    try {
+      this.logger.log(`Creating Square booking for customer ${options.customerId} at ${options.startAt}`);
+
+      // Build appointment segments
+      const appointmentSegments: any[] = [
+        {
+          serviceVariationId: options.serviceVariationId,
+          serviceVariationVersion: BigInt(0), // Use latest version
+        },
+      ];
+
+      // Add team member if specified
+      if (options.teamMemberId) {
+        appointmentSegments[0].teamMemberId = options.teamMemberId;
+      }
+
+      // Create booking request
+      const createBookingRequest = {
+        booking: {
+          locationId: options.locationId,
+          customerId: options.customerId,
+          startAt: options.startAt,
+          appointmentSegments,
+        },
+      };
+
+      this.logger.debug('Square booking request:', JSON.stringify(createBookingRequest, (_, v) =>
+        typeof v === 'bigint' ? v.toString() : v
+      , 2));
+
+      // Call Square API
+      const { result } = await this.squareClient.bookingsApi.createBooking(createBookingRequest);
+
+      if (!result.booking?.id) {
+        throw new Error('Failed to create Square booking: no booking ID returned');
+      }
+
+      this.logger.log(`Created Square booking: ${result.booking.id}`);
+      return {
+        bookingId: result.booking.id,
+        booking: result.booking,
+      };
+    } catch (error) {
+      this.logger.error('Failed to create Square booking:', error);
+
+      // Extract more detailed error info if available
+      let errorMessage = 'Failed to create Square booking';
+      if (error instanceof Error) {
+        errorMessage += `: ${error.message}`;
+      }
+
+      // Check for Square API specific errors
+      if (typeof error === 'object' && error !== null && 'errors' in error) {
+        const squareErrors = (error as any).errors;
+        if (Array.isArray(squareErrors) && squareErrors.length > 0) {
+          errorMessage += ` - ${squareErrors.map((e: any) => e.detail || e.code).join(', ')}`;
+        }
+      }
+
+      throw new BadRequestException(errorMessage);
+    }
+  }
+
+  /**
+   * Verifies if a specific time slot is available in Square
+   * @returns true if the slot is available, false otherwise
+   */
+  async verifySlotIsAvailable(options: {
+    locationId: string;
+    serviceVariationId: string;
+    teamMemberId?: string;
+    startAt: string; // ISO 8601 format
+  }): Promise<boolean> {
+    try {
+      this.logger.log(`Verifying slot availability for ${options.startAt}`);
+
+      // Extract the date from the ISO string (YYYY-MM-DD)
+      const startAtDate = new Date(options.startAt);
+      const dateStr = startAtDate.toISOString().split('T')[0];
+
+      // Search for availability on the specific date
+      const availabilities = await this.searchAvailability({
+        locationId: options.locationId,
+        serviceVariationId: options.serviceVariationId,
+        teamMemberId: options.teamMemberId,
+        date: dateStr,
+      });
+
+      // Check if any of the returned slots match our requested start time
+      const requestedStartTime = new Date(options.startAt).toISOString();
+
+      const matchingSlot = availabilities.find((availability: any) => {
+        const slotStartTime = availability.startAt;
+        return slotStartTime === requestedStartTime;
+      });
+
+      if (matchingSlot) {
+        this.logger.log(`Slot verified as available at ${requestedStartTime}`);
+        return true;
+      }
+
+      this.logger.warn(`Slot not available at ${requestedStartTime}`);
+      return false;
+    } catch (error) {
+      this.logger.error('Failed to verify slot availability:', error);
+      // If we can't verify with Square, we'll allow it to proceed
+      // This prevents Square API issues from blocking bookings
+      this.logger.warn('Allowing booking to proceed despite Square verification failure');
+      return true;
+    }
+>>>>>>> main
   }
 }

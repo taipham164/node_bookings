@@ -1,5 +1,6 @@
 node_modules
 .env
+dist
 
 # Build output
 apps/backend/dist/
