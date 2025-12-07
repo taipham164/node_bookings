@@ -14,11 +14,13 @@ exports.AppointmentService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const square_service_1 = require("../square/square.service");
+const payment_service_1 = require("../payment/payment.service");
 const booking_validation_service_1 = require("./booking-validation.service");
 let AppointmentService = AppointmentService_1 = class AppointmentService {
     constructor(prisma, squareService, bookingValidationService) {
         this.prisma = prisma;
         this.squareService = squareService;
+        this.paymentService = paymentService;
         this.bookingValidationService = bookingValidationService;
         this.logger = new common_1.Logger(AppointmentService_1.name);
     }
@@ -416,6 +418,92 @@ let AppointmentService = AppointmentService_1 = class AppointmentService {
             }
             throw new common_1.BadRequestException(`Failed to create booking: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
+};
+
+    async chargeDeposit(appointmentId, cardId, depositCents) {
+        const appointment = await this.findOne(appointmentId);
+        if (!appointment.customer.squareCustomerId) {
+            throw new common_1.BadRequestException('Customer has no Square customer ID');
+        }
+        // Charge the card
+        const chargeResult = await this.paymentService.chargeCustomerCard({
+            amountCents: depositCents,
+            currency: 'USD',
+            customerId: appointment.customerId,
+            squareCustomerId: appointment.customer.squareCustomerId,
+            cardId,
+            appointmentId,
+        });
+        return chargeResult;
+    }
+    /**
+     * Charge a no-show fee for an appointment
+     * This can be called when a customer doesn't show up
+     */
+    async chargeNoShowFee(appointmentId, cardId) {
+        const appointment = await this.findOne(appointmentId);
+        // Get the no-show policy for the shop
+        const noShowPolicy = await this.prisma.noShowPolicy.findFirst({
+            where: {
+                shopId: appointment.shopId,
+                enabled: true,
+            },
+        });
+        if (!noShowPolicy) {
+            throw new common_1.NotFoundException('No active no-show policy found for this shop');
+        }
+        if (!appointment.customer.squareCustomerId) {
+            throw new common_1.BadRequestException('Customer has no Square customer ID');
+        }
+        // Charge the no-show fee
+        const chargeResult = await this.paymentService.chargeCustomerCard({
+            amountCents: noShowPolicy.feeCents,
+            currency: 'USD',
+            customerId: appointment.customerId,
+            squareCustomerId: appointment.customer.squareCustomerId,
+            cardId,
+            appointmentId,
+        });
+        // Update appointment status to NO_SHOW
+        await this.update(appointmentId, { status: 'NO_SHOW' });
+        return chargeResult;
+    }
+    /**
+     * Charge the full service price for an appointment
+     * This can be called when the service is completed
+     */
+    async chargeFullAmount(appointmentId, cardId) {
+        const appointment = await this.findOne(appointmentId);
+        if (!appointment.customer.squareCustomerId) {
+            throw new common_1.BadRequestException('Customer has no Square customer ID');
+        }
+        // Charge the full service price
+        const chargeResult = await this.paymentService.chargeCustomerCard({
+            amountCents: appointment.service.priceCents,
+            currency: 'USD',
+            customerId: appointment.customerId,
+            squareCustomerId: appointment.customer.squareCustomerId,
+            cardId,
+            appointmentId,
+        });
+        return chargeResult;
+    }
+    /**
+     * Add a payment to an appointment
+     * Helper method to link an existing payment record to an appointment
+     */
+    async addPaymentToAppointment(appointmentId, paymentRecordId) {
+        return this.paymentService.addPaymentToAppointment(appointmentId, paymentRecordId);
+    }
+    /**
+     * Get all payments for an appointment
+     */
+    async getAppointmentPayments(appointmentId) {
+        const appointment = await this.findOne(appointmentId);
+        return this.prisma.paymentRecord.findMany({
+            where: { appointmentId },
+            orderBy: { createdAt: 'desc' },
+        });
     }
 };
 exports.AppointmentService = AppointmentService;
@@ -423,6 +511,7 @@ exports.AppointmentService = AppointmentService = AppointmentService_1 = __decor
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         square_service_1.SquareService,
+        payment_service_1.PaymentService,
         booking_validation_service_1.BookingValidationService])
 ], AppointmentService);
 //# sourceMappingURL=appointment.service.js.map

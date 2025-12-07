@@ -1,9 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // Configure body parser to capture raw body for webhook signature verification
+  app.use('/api/webhooks', bodyParser.json({
+    verify: (req: any, res: any, buf: Buffer) => {
+      req.rawBody = buf;
+    }
+  }));
   
   // Enable global validation pipes for DTOs
   app.useGlobalPipes(
