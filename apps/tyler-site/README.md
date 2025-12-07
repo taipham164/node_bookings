@@ -1,14 +1,23 @@
 # Tyler's Barbershop Marketing Site
 
-This is the marketing website for Tyler's Barbershop, built with **Next.js 15**, **React Bricks** (visual CMS), and **Tailwind CSS**.
+This is the marketing website for Tyler's Barbershop, built with **Next.js 15**, **GrapesJS** (visual page builder), and **Tailwind CSS**.
 
 ## Features
 
-- 🎨 **Visual Page Builder** - Edit pages visually with React Bricks
-- 🧱 **Custom Bricks** - Pre-built components for barbershop content
-- 📱 **Responsive** - Mobile-first design with Tailwind CSS
+- 🎨 **Visual Page Builder** - Edit pages visually with GrapesJS
+- 🔌 **Backend Integration** - Pages stored in PostgreSQL via Prisma
+- 📅 **Booking Widget** - Integrated appointment booking system
+- 📱 **Responsive** - Mobile-first design
 - ⚡ **Fast** - Built on Next.js 15 with App Router
-- 🎯 **Booking Integration Ready** - Placeholder for backend booking system
+- 🎯 **Custom Blocks** - Including a special Booking Widget block
+
+## Architecture
+
+This app is part of a monorepo with:
+- **apps/backend** - NestJS + Prisma + Postgres for API & booking system
+- **apps/tyler-site** - Next.js frontend with GrapesJS page builder
+
+Pages are created in the GrapesJS editor, saved to the backend database, and rendered on the public site.
 
 ## Getting Started
 
@@ -16,7 +25,8 @@ This is the marketing website for Tyler's Barbershop, built with **Next.js 15**,
 
 - Node.js >= 18
 - pnpm >= 8.0.0
-- React Bricks account ([sign up here](https://dashboard.reactbricks.com))
+- PostgreSQL database (for apps/backend)
+- Backend server running at http://localhost:3001
 
 ### Environment Setup
 
@@ -25,15 +35,12 @@ This is the marketing website for Tyler's Barbershop, built with **Next.js 15**,
    cp .env.example .env
    ```
 
-2. **Configure React Bricks:**
-   - Go to [React Bricks Dashboard](https://dashboard.reactbricks.com)
-   - Create a new app or use an existing one
-   - Copy your App ID and API Key
-   - Update `.env`:
-     ```
-     NEXT_PUBLIC_REACT_BRICKS_APP_ID=your_app_id_here
-     REACT_BRICKS_API_KEY=your_api_key_here
-     ```
+2. **Configure environment variables:**
+   Update `.env`:
+   ```
+   NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+   NEXT_PUBLIC_SHOP_ID=your-shop-id
+   ```
 
 ### Installation
 
@@ -47,19 +54,21 @@ pnpm install
 pnpm install --filter tyler-site
 ```
 
-### Development
+### Running the Application
+
+**You need to run both backend and tyler-site:**
 
 ```bash
-# From monorepo root
-pnpm dev:tyler-site
+# Terminal 1: Start the backend
+pnpm dev:backend
 
-# Or from apps/tyler-site
-pnpm dev
+# Terminal 2: Start tyler-site
+pnpm dev:tyler-site
 ```
 
 The site will be available at:
 - **Public Site:** http://localhost:3000
-- **Admin Editor:** http://localhost:3000/admin
+- **Page Builder:** http://localhost:3000/admin/builder
 
 ### Building for Production
 
@@ -76,23 +85,16 @@ pnpm start:tyler-site
 ```
 tyler-site/
 ├── app/                          # Next.js App Router
-│   ├── page.tsx                  # Home page (renders React Bricks content)
+│   ├── page.tsx                  # Home page (fetches from backend)
 │   ├── [slug]/page.tsx           # Dynamic pages
-│   ├── admin/[[...catchAll]]/    # React Bricks editor
-│   │   ├── page.tsx
-│   │   └── layout.tsx
+│   ├── admin/builder/            # GrapesJS page builder
+│   │   └── page.tsx
 │   ├── layout.tsx                # Root layout
 │   └── globals.css               # Global styles with Tailwind
-├── react-bricks/                 # React Bricks configuration
-│   ├── config.ts                 # Main React Bricks config
-│   ├── bricks.ts                 # Brick registry
-│   └── bricks/                   # Custom brick components
-│       ├── index.ts
-│       ├── Hero.tsx              # Hero section brick
-│       ├── TextImage.tsx         # Text + Image brick
-│       ├── Testimonials.tsx      # Testimonials brick
-│       ├── Gallery.tsx           # Image gallery brick
-│       └── BookingSection.tsx    # Booking widget placeholder
+├── components/
+│   └── booking/                  # Booking components
+│       ├── BookingWidget.tsx     # Booking form component
+│       └── BookingHydrator.tsx   # Hydrates booking widgets on pages
 ├── public/                       # Static assets
 ├── .env.example                  # Environment template
 ├── package.json
@@ -101,70 +103,81 @@ tyler-site/
 └── tsconfig.json
 ```
 
-## Custom Bricks
+## Using the Page Builder
 
-### Available Bricks
+### Creating/Editing the Home Page
 
-1. **Hero** - Large header section with background image, title, and subtitle
-2. **Text + Image** - Content section with text and image (configurable position)
-3. **Testimonials** - Customer reviews/testimonials grid
-4. **Gallery** - Image gallery grid for showcasing work
-5. **BookingSection** - Placeholder for booking widget (coming soon)
+1. Navigate to http://localhost:3000/admin/builder
+2. Use the GrapesJS visual editor to design your page
+3. Drag blocks from the left sidebar
+4. Click elements to edit them
+5. Use the right sidebar to adjust styles
+6. Click "Save Page" to persist changes
 
-### Creating Pages
+### Available Blocks
 
-1. Navigate to http://localhost:3000/admin
-2. Click "Create Page" or edit an existing page
-3. Add bricks by clicking the "+" button
-4. Edit content directly in the visual editor
-5. Click "Save" to publish changes
+The page builder includes several standard blocks:
+- **Section** - Container section
+- **Text** - Text content
+- **Image** - Images
+- **Booking Widget** ⭐ - Interactive appointment booking form
 
-### Editing Bricks
+### How the Booking Widget Works
 
-Bricks are located in `react-bricks/bricks/`. Each brick:
-- Is a React component implementing `types.Brick`
-- Exports a `schema` object with metadata
-- Uses React Bricks components (`Text`, `RichText`, `Image`, `Repeater`)
-- Provides `getDefaultProps` with sensible defaults
+1. In the GrapesJS editor, drag the "Booking Widget" block onto your page
+2. The block will show a placeholder in the editor
+3. When you save and view the live site, the `BookingHydrator` component finds all `[data-booking-widget="true"]` elements
+4. It replaces them with the live React `BookingWidget` component
+5. The widget connects to your backend API to show services, barbers, and handle bookings
 
-Example brick structure:
-```tsx
-import { types, Text } from 'react-bricks/rsc'
+This architecture allows:
+- Visual page design with GrapesJS
+- Dynamic React components (booking) mounted in the right places
+- All page content stored in your own database
 
-const MyBrick: types.Brick = () => {
-  return (
-    <section>
-      <Text propName="title" />
-    </section>
-  )
-}
+## Backend API Endpoints
 
-MyBrick.schema = {
-  name: 'mybrick',
-  label: 'My Brick',
-  getDefaultProps: () => ({ title: 'Default Title' })
-}
+The tyler-site communicates with these backend endpoints:
 
-export default MyBrick
-```
+### Page Management
+- `GET /api/pages?shopId={shopId}` - List all pages
+- `GET /api/pages/{shopId}/home` - Get home page
+- `GET /api/pages/{slug}?shopId={shopId}` - Get page by slug
+- `POST /api/pages` - Create new page
+- `PUT /api/pages/{id}` - Update page
+- `DELETE /api/pages/{id}` - Delete page
 
-## Booking Integration (Future)
+### Booking System
+- `GET /api/services?shopId={shopId}` - List services
+- `GET /api/barbers?shopId={shopId}` - List barbers
+- `GET /api/availability` - Check availability
+- `POST /api/appointments/bookings` - Create booking
 
-The `BookingSection` brick is currently a placeholder. Future implementation will:
+## Booking Widget Integration
 
-1. **Import BookingWidget component** that connects to the backend API
-2. **Backend Endpoints** (from `apps/backend`):
-   - `GET /api/services` - List available services
-   - `GET /api/barbers` - List barbers
-   - `GET /api/availability` - Check time slot availability
-   - `POST /api/appointments/bookings` - Create booking
-3. **Features:**
-   - Service selection
-   - Barber selection
-   - Real-time availability checking
-   - Appointment booking
-   - Payment integration (Square)
-   - No-show prevention
+The BookingWidget component (`components/booking/BookingWidget.tsx`) provides:
+- Service selection dropdown
+- Barber selection dropdown
+- Future: Time slot selection
+- Future: Payment integration
+- Future: Confirmation flow
+
+It's a fully client-side React component that gets mounted into the server-rendered HTML wherever `[data-booking-widget="true"]` appears.
+
+## How It Works
+
+1. **Editor Flow:**
+   - Admin visits `/admin/builder`
+   - GrapesJS loads existing page HTML from backend
+   - Admin edits visually
+   - Click "Save" → HTML + CSS sent to backend → stored in Postgres
+
+2. **Public Site Flow:**
+   - User visits `/` or `/[slug]`
+   - Next.js fetches page HTML from backend
+   - Server renders HTML with `dangerouslySetInnerHTML`
+   - Client-side `BookingHydrator` finds booking widget placeholders
+   - Hydrates them with interactive React components
 
 ## Scripts
 
@@ -193,8 +206,8 @@ pnpm lint                  # Run ESLint
 Ensure these are set in your deployment environment:
 
 ```
-NEXT_PUBLIC_REACT_BRICKS_APP_ID=your_app_id
-REACT_BRICKS_API_KEY=your_api_key
+NEXT_PUBLIC_API_BASE_URL=https://your-backend-api.com
+NEXT_PUBLIC_SHOP_ID=your-shop-id
 ```
 
 ### Deploy to Vercel
@@ -204,14 +217,21 @@ REACT_BRICKS_API_KEY=your_api_key
 3. Add environment variables
 4. Deploy!
 
+Make sure your backend is also deployed and accessible at the `NEXT_PUBLIC_API_BASE_URL`.
+
+## Development Notes
+
+- The GrapesJS editor only works client-side (uses `'use client'`)
+- Page content is cached for 60 seconds (`revalidate: 60`)
+- The booking widget is hydrated on the client after initial page load
+- All pages are stored in the backend Postgres database
+
 ## Learn More
 
-- [React Bricks Documentation](https://docs.reactbricks.com)
+- [GrapesJS Documentation](https://grapesjs.com/docs/)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
 ## Support
 
-For issues or questions:
-- React Bricks: [support@reactbricks.com](mailto:support@reactbricks.com)
-- Project-specific: Create an issue in the repository
+For issues or questions, create an issue in the repository.

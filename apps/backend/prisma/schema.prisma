@@ -189,3 +189,16 @@ model PaymentRecord {
 
   @@map("payment_records")
 }
+
+model Page {
+  id        String   @id @default(uuid())
+  shopId    String
+  slug      String   @unique
+  title     String
+  html      String   @db.Text
+  isHome    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("pages")
+}
