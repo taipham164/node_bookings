@@ -1,6 +1,7 @@
 import React from 'react'
 import { notFound } from 'next/navigation'
 import BookingHydrator from '@/components/booking/BookingHydrator'
+import PuckRenderer from '@/webbuilder/PuckRenderer'
 
 type Params = Promise<{ slug: string }>
 
@@ -34,6 +35,17 @@ export default async function Page({ params }: { params: Params }) {
     notFound()
   }
 
+  // If the page has Puck JSON data, render using PuckRenderer
+  if (page.puckJson) {
+    return (
+      <>
+        <PuckRenderer data={page.puckJson} />
+        <BookingHydrator />
+      </>
+    )
+  }
+
+  // Fallback to HTML rendering for pages created with old builder
   return (
     <>
       <div dangerouslySetInnerHTML={{ __html: page.html }} />

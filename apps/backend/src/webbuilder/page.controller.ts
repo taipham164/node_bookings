@@ -117,6 +117,37 @@ export class PageController {
     return this.pageService.setHomePage(shopId, pageId);
   }
 
+  @Get(':id/builder-data')
+  @UseGuards(JwtAuthGuard, ShopOwnershipGuard)
+  async getBuilderData(
+    @Param('id') id: string,
+    @Query('shopId') shopId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    if (!shopId) {
+      throw new BadRequestException('shopId query parameter is required');
+    }
+    // Verify the page belongs to a shop owned by the user
+    await this.verifyPageOwnership(id, user.id);
+    return this.pageService.getBuilderData(id);
+  }
+
+  @Put(':id/builder-data')
+  @UseGuards(JwtAuthGuard, ShopOwnershipGuard)
+  async updateBuilderData(
+    @Param('id') id: string,
+    @Query('shopId') shopId: string,
+    @Body() body: { data: any },
+    @CurrentUser() user: AuthUser,
+  ) {
+    if (!shopId) {
+      throw new BadRequestException('shopId query parameter is required');
+    }
+    // Verify the page belongs to a shop owned by the user
+    await this.verifyPageOwnership(id, user.id);
+    return this.pageService.updateBuilderData(id, body.data);
+  }
+
   // Helper method to get authorized shop ID
   private async getAuthorizedShopId(userId: string, requestedShopId: string): Promise<string> {
     try {
