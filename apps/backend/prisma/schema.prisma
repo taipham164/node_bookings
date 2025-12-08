@@ -72,18 +72,20 @@ model Barber {
 }
 
 model Service {
-  id                     String    @id @default(uuid())
-  shopId                 String
-  name                   String
-  durationMinutes        Int
-  priceCents             Int
-  squareCatalogObjectId  String?
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id           String   @id @default(uuid())
+  shopId       String
+  name         String
+  description  String?
+  durationMins Int
+  priceCents   Int
+  squareItemId String   @unique
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  shop                   Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  appointments           Appointment[]
+  shop         Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
 
   @@map("services")
 }

@@ -14,6 +14,7 @@ import { NoShowPolicyModule } from './no-show-policy/no-show-policy.module';
 import { PaymentModule } from './payment/payment.module';
 import { WebbuilderModule } from './webbuilder/webbuilder.module';
 import { AuthModule } from './auth/auth.module';
+import { CatalogModule } from './catalog/catalog.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuthModule } from './auth/auth.module';
     PaymentModule,
     WebbuilderModule,
     AuthModule,
+    CatalogModule,
   ],
   controllers: [AppController],
   providers: [AppService],
