@@ -226,6 +226,44 @@ model Page {
   @@map("pages")
 }
 
+// CustomerNote: long-form notes added by staff
+model CustomerNote {
+  id         String   @id @default(uuid())
+  shopId     String
+  customerId String
+  authorId   String   // staff who wrote the note
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([customerId])
+  @@map("customer_notes")
+}
+
+// CustomerFlag: short keyword or label displayed in admin UI
+model CustomerFlag {
+  id         String   @id @default(uuid())
+  shopId     String
+  customerId String
+  flag       String   // e.g. "VIP", "NO_SHOW_RISK", "SENSITIVE_SKIN"
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, flag])
+  @@map("customer_flags")
+}
+
+// CustomerTag: multiple tags, editable by admin
+model CustomerTag {
+  id         String   @id @default(uuid())
+  shopId     String
+  customerId String
+  tag        String
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, tag])
+  @@map("customer_tags")
+}
+
 model BarberWorkingHours {
   id         String   @id @default(uuid())
   shopId     String
