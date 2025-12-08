@@ -16,6 +16,7 @@ import { WebbuilderModule } from './webbuilder/webbuilder.module';
 import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { ScheduleModule } from './schedule/schedule.module';
+import { CustomerCRMModule } from './customer-crm/customer-crm.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ScheduleModule } from './schedule/schedule.module';
     AuthModule,
     CatalogModule,
     ScheduleModule,
+    CustomerCRMModule,
   ],
   controllers: [AppController],
   providers: [AppService],
