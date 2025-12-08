@@ -15,6 +15,7 @@ import { PaymentModule } from './payment/payment.module';
 import { WebbuilderModule } from './webbuilder/webbuilder.module';
 import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { ScheduleModule } from './schedule/schedule.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CatalogModule } from './catalog/catalog.module';
     WebbuilderModule,
     AuthModule,
     CatalogModule,
+    ScheduleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

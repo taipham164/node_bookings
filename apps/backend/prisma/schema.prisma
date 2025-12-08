@@ -225,3 +225,31 @@ model Page {
   @@unique([shopId, slug])
   @@map("pages")
 }
+
+model BarberWorkingHours {
+  id         String   @id @default(uuid())
+  shopId     String
+  barberId   String   // reference to your existing Barber/TeamMember id (keep as string for now)
+  dayOfWeek  Int      // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+  startTime  String   // "09:00" 24h format
+  endTime    String   // "17:00"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([shopId, barberId, dayOfWeek])
+  @@map("barber_working_hours")
+}
+
+model BarberTimeOff {
+  id         String   @id @default(uuid())
+  shopId     String
+  barberId   String
+  startAt    DateTime   // inclusive
+  endAt      DateTime   // exclusive or inclusive — document your choice
+  reason     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([shopId, barberId, startAt, endAt])
+  @@map("barber_time_off")
+}
