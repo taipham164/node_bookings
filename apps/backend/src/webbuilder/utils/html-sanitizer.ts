@@ -51,7 +51,7 @@ export const DANGEROUS_CSS_PATTERNS = [
   /javascript:/i,
   /expression\s*\(/i,
   /url\s*\(\s*["']?javascript:/i,
-  /url\s*\(\s*["']?data:/i,
+  /url\s*\(\s*["']?data:(?!image\/)/i, // Block data: URLs except data:image/*
   /url\s*\(\s*["']?vbscript:/i,
   /behavior\s*:/i,
   /-moz-binding\s*:/i,
