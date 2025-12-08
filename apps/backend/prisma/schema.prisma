@@ -20,19 +20,36 @@ enum AppointmentStatus {
   NO_SHOW
 }
 
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String   // Store hashed password
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ownedShops Shop[]  @relation("ShopOwner")
+
+  @@map("users")
+}
+
 model Shop {
   id               String    @id @default(uuid())
   name             String
   squareLocationId String    @unique
+  ownerId          String    // Reference to the shop owner
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   // Relations
+  owner            User             @relation("ShopOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   barbers          Barber[]
   services         Service[]
   customers        Customer[]
   appointments     Appointment[]
   noShowPolicy     NoShowPolicy?
+  pages            Page[]
 
   @@map("shops")
 }
@@ -188,4 +205,21 @@ model PaymentRecord {
   appointment     Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
 
   @@map("payment_records")
+}
+
+model Page {
+  id        String   @id @default(uuid())
+  shopId    String
+  slug      String
+  title     String
+  html      String   @db.Text
+  isHome    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, slug])
+  @@map("pages")
 }

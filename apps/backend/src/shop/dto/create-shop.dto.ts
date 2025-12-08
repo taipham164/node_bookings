@@ -8,4 +8,8 @@ export class CreateShopDto {
   @IsString()
   @IsNotEmpty()
   squareLocationId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  ownerId!: string;
 }

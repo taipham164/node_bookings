@@ -24,7 +24,7 @@ export class ShopService {
         services: true,
         customers: true,
         appointments: true,
-        noShowPolicies: true,
+        noShowPolicy: true,
       },
     });
 
