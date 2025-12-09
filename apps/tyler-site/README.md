@@ -1,23 +1,23 @@
 # Tyler's Barbershop Marketing Site
 
-This is the marketing website for Tyler's Barbershop, built with **Next.js 15**, **GrapesJS** (visual page builder), and **Tailwind CSS**.
+This is the marketing website for Tyler's Barbershop, built with **Next.js 15**, **Puck** (visual page builder), and **Tailwind CSS**.
 
 ## Features
 
-- 🎨 **Visual Page Builder** - Edit pages visually with GrapesJS
+- 🎨 **Visual Page Builder** - Edit pages visually with Puck (@measured/puck)
 - 🔌 **Backend Integration** - Pages stored in PostgreSQL via Prisma
 - 📅 **Booking Widget** - Integrated appointment booking system
 - 📱 **Responsive** - Mobile-first design
 - ⚡ **Fast** - Built on Next.js 15 with App Router
-- 🎯 **Custom Blocks** - Including a special Booking Widget block
+- 🎯 **Custom Blocks** - Heading, Text, Image, and Booking Widget components
 
 ## Architecture
 
 This app is part of a monorepo with:
 - **apps/backend** - NestJS + Prisma + Postgres for API & booking system
-- **apps/tyler-site** - Next.js frontend with GrapesJS page builder
+- **apps/tyler-site** - Next.js frontend with Puck visual page builder
 
-Pages are created in the GrapesJS editor, saved to the backend database, and rendered on the public site.
+Pages are created in the Puck editor, saved to the backend database as JSON, and rendered on the public site.
 
 ## Getting Started
 
@@ -108,32 +108,41 @@ tyler-site/
 ### Creating/Editing the Home Page
 
 1. Navigate to http://localhost:3000/admin/builder
-2. Use the GrapesJS visual editor to design your page
-3. Drag blocks from the left sidebar
-4. Click elements to edit them
-5. Use the right sidebar to adjust styles
-6. Click "Save Page" to persist changes
+2. Use the Puck visual editor to design your page
+3. Drag components from the left sidebar
+4. Click "Publish" to save changes to the backend
 
-### Available Blocks
+### Available Components
 
-The page builder includes several standard blocks:
-- **Section** - Container section
-- **Text** - Text content
-- **Image** - Images
-- **Booking Widget** ⭐ - Interactive appointment booking form
+The page builder includes these custom components:
 
-### How the Booking Widget Works
+- **HeadingBlock** - Headings (H1, H2, H3)
+  - Configurable title text
+  - Selectable heading level
+  
+- **TextBlock** - Paragraph text
+  - Textarea for content
+  - Supports line breaks
+  
+- **ImageBlock** - Images
+  - Image source URL
+  - Alt text for accessibility
+  
+- **BookingWidget** ⭐ - Interactive appointment booking
+  - Configurable title
+  - Connects to backend API for real bookings
 
-1. In the GrapesJS editor, drag the "Booking Widget" block onto your page
-2. The block will show a placeholder in the editor
-3. When you save and view the live site, the `BookingHydrator` component finds all `[data-booking-widget="true"]` elements
-4. It replaces them with the live React `BookingWidget` component
-5. The widget connects to your backend API to show services, barbers, and handle bookings
+### How It Works
 
-This architecture allows:
-- Visual page design with GrapesJS
-- Dynamic React components (booking) mounted in the right places
-- All page content stored in your own database
+1. **Editor saves to backend:**
+   - Puck component data is serialized to JSON
+   - Sent to backend via `POST /api/pages` or `PUT /api/pages/:id`
+   - Stored in PostgreSQL `Page.html` field
+
+2. **Public site renders pages:**
+   - Next.js fetches page JSON from backend
+   - Puck components are rendered on the server
+   - Client hydration makes them interactive
 
 ## Backend API Endpoints
 
@@ -141,10 +150,10 @@ The tyler-site communicates with these backend endpoints:
 
 ### Page Management
 - `GET /api/pages?shopId={shopId}` - List all pages
-- `GET /api/pages/{shopId}/home` - Get home page
-- `GET /api/pages/{slug}?shopId={shopId}` - Get page by slug
-- `POST /api/pages` - Create new page
-- `PUT /api/pages/{id}` - Update page
+- `GET /api/pages/home?shopId={shopId}` - Get home page
+- `GET /api/pages/by-slug/{slug}?shopId={shopId}` - Get page by slug
+- `POST /api/pages` - Create new page (JSON body with shopId, slug, title, html, isHome)
+- `PUT /api/pages/{id}` - Update page (JSON body with html, title)
 - `DELETE /api/pages/{id}` - Delete page
 
 ### Booking System
@@ -168,16 +177,15 @@ It's a fully client-side React component that gets mounted into the server-rende
 
 1. **Editor Flow:**
    - Admin visits `/admin/builder`
-   - GrapesJS loads existing page HTML from backend
-   - Admin edits visually
-   - Click "Save" → HTML + CSS sent to backend → stored in Postgres
+   - Puck loads existing page JSON from backend (GET `/api/pages/home?shopId=...`)
+   - Admin edits visually using Puck components
+   - Click "Publish" → Puck data serialized to JSON → sent to backend → stored in Postgres
 
 2. **Public Site Flow:**
    - User visits `/` or `/[slug]`
-   - Next.js fetches page HTML from backend
-   - Server renders HTML with `dangerouslySetInnerHTML`
-   - Client-side `BookingHydrator` finds booking widget placeholders
-   - Hydrates them with interactive React components
+   - Next.js fetches page JSON from backend
+   - Puck components render the page content
+   - Booking widgets are fully interactive React components
 
 ## Scripts
 
@@ -221,14 +229,14 @@ Make sure your backend is also deployed and accessible at the `NEXT_PUBLIC_API_B
 
 ## Development Notes
 
-- The GrapesJS editor only works client-side (uses `'use client'`)
-- Page content is cached for 60 seconds (`revalidate: 60`)
-- The booking widget is hydrated on the client after initial page load
-- All pages are stored in the backend Postgres database
+- The Puck editor only works client-side (uses `'use client'`)
+- Page content is stored as JSON in the backend Postgres database
+- The booking widget is a fully interactive React component
+- Authentication is temporarily disabled on page endpoints (TODO: re-enable with proper JWT handling)
 
 ## Learn More
 
-- [GrapesJS Documentation](https://grapesjs.com/docs/)
+- [Puck Documentation](https://puckeditor.com/docs)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 

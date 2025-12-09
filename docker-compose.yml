@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: tyler
-      POSTGRES_PASSWORD: 0909191473
+      POSTGRES_PASSWORD: "0909191473"
       POSTGRES_DB: tyler_platform
     ports:
       - "5432:5432"

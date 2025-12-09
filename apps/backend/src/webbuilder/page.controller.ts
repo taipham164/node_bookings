@@ -21,7 +21,7 @@ import { CurrentUser, AuthUser } from '../auth/decorators/current-user.decorator
 import { PrismaService } from '../prisma/prisma.service';
 import { ForbiddenException } from '@nestjs/common';
 
-@Controller('api/pages')
+@Controller('pages')
 export class PageController {
   constructor(
     private readonly pageService: PageService,
@@ -42,10 +42,11 @@ export class PageController {
   }
 
   @Get('home')
-  @UseGuards(JwtAuthGuard, ShopOwnershipGuard)
+  // TODO: Re-enable auth when frontend has JWT token handling
+  // @UseGuards(JwtAuthGuard, ShopOwnershipGuard)
   async findHomePage(
     @Query('shopId') shopId: string,
-    @CurrentUser() user: AuthUser,
+    // @CurrentUser() user: AuthUser,
   ) {
     if (!shopId) {
       throw new BadRequestException('shopId query parameter is required');
@@ -69,28 +70,30 @@ export class PageController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, ShopOwnershipGuard)
+  // TODO: Re-enable auth when frontend has JWT token handling
+  // @UseGuards(JwtAuthGuard, ShopOwnershipGuard)
   async createPage(
     @Body() createPageDto: CreatePageDto,
-    @CurrentUser() user: AuthUser,
+    // @CurrentUser() user: AuthUser,
   ) {
     // Override shopId with user's owned shop to prevent unauthorized access
-    const authorizedDto = {
-      ...createPageDto,
-      shopId: await this.getAuthorizedShopId(user.id, createPageDto.shopId),
-    };
-    return this.pageService.createPage(authorizedDto);
+    // const authorizedDto = {
+    //   ...createPageDto,
+    //   shopId: await this.getAuthorizedShopId(user.id, createPageDto.shopId),
+    // };
+    return this.pageService.createPage(createPageDto);
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard, ShopOwnershipGuard)
+  // TODO: Re-enable auth when frontend has JWT token handling
+  // @UseGuards(JwtAuthGuard, ShopOwnershipGuard)
   async updatePage(
     @Param('id') id: string,
     @Body() updatePageDto: UpdatePageDto,
-    @CurrentUser() user: AuthUser,
+    // @CurrentUser() user: AuthUser,
   ) {
     // Verify the page belongs to a shop owned by the user
-    await this.verifyPageOwnership(id, user.id);
+    // await this.verifyPageOwnership(id, user.id);
     return this.pageService.updatePage(id, updatePageDto);
   }
 

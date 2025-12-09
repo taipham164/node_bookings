@@ -779,7 +779,7 @@ export class AppointmentService {
           locationId: shop.squareLocationId,
           customerId: squareCustomerId,
           serviceVariationId: service.squareCatalogObjectId,
-          teamMemberId: barber?.squareTeamMemberId,
+          teamMemberId: barber?.squareTeamMemberId ?? undefined,
           startAt: dto.startAt,
         });
         squareBookingId = bookingResult.bookingId;

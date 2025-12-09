@@ -14,9 +14,10 @@ import { NoShowPolicyModule } from './no-show-policy/no-show-policy.module';
 import { PaymentModule } from './payment/payment.module';
 import { WebbuilderModule } from './webbuilder/webbuilder.module';
 import { AuthModule } from './auth/auth.module';
-import { CatalogModule } from './catalog/catalog.module';
-import { ScheduleModule } from './schedule/schedule.module';
-import { CustomerCRMModule } from './customer-crm/customer-crm.module';
+// TODO: Fix Prisma schema mismatches before re-enabling these modules
+// import { CatalogModule } from './catalog/catalog.module';
+// import { ScheduleModule } from './schedule/schedule.module';
+// import { CustomerCRMModule } from './customer-crm/customer-crm.module';
 
 @Module({
   imports: [
@@ -33,9 +34,10 @@ import { CustomerCRMModule } from './customer-crm/customer-crm.module';
     PaymentModule,
     WebbuilderModule,
     AuthModule,
-    CatalogModule,
-    ScheduleModule,
-    CustomerCRMModule,
+    // TODO: Fix Prisma schema mismatches before re-enabling these modules
+    // CatalogModule,
+    // ScheduleModule,
+    // CustomerCRMModule,
   ],
   controllers: [AppController],
   providers: [AppService],

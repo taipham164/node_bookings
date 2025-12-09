@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PageService } from './page.service';
 
-@Controller('api/public/pages')
+@Controller('public/pages')
 export class PublicPageController {
   constructor(private readonly pageService: PageService) {}
 

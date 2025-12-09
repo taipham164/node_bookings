@@ -173,7 +173,7 @@ export class PageService {
   async getBuilderData(pageId: string) {
     const page = await this.prisma.page.findUnique({
       where: { id: pageId },
-      select: { id: true, puckJson: true },
+      select: { id: true, html: true },
     });
 
     if (!page) {
@@ -181,7 +181,7 @@ export class PageService {
     }
 
     return {
-      data: page.puckJson || null,
+      data: page.html || null,
     };
   }
 
@@ -196,8 +196,8 @@ export class PageService {
 
     return this.prisma.page.update({
       where: { id: pageId },
-      data: { puckJson: puckData },
-      select: { id: true, puckJson: true },
+      data: { html: JSON.stringify(puckData) },
+      select: { id: true, html: true },
     });
   }
 }
