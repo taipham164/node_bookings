@@ -14,6 +14,7 @@ import { AppointmentService } from './appointment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { CreateBookingWithPaymentDto } from './dto/create-booking-with-payment.dto';
 import { Appointment } from '@prisma/client';
 
 @Controller('appointments')
@@ -83,6 +84,44 @@ export class AppointmentController {
       };
     } catch (error) {
       this.logger.error('Booking creation failed:', error);
+      throw error; // Let NestJS handle the HTTP status based on the exception type
+    }
+  }
+
+  /**
+   * Create a booking with payment in a single operation
+   * This endpoint handles customer creation, payment processing, and booking creation
+   *
+   * POST /api/appointments/bookings-with-payment
+   *
+   * Request body:
+   * {
+   *   shopId: string;
+   *   serviceId: string;
+   *   barberId?: string;
+   *   startAt: string; // ISO datetime
+   *   customer: {
+   *     firstName: string;
+   *     lastName: string;
+   *     phone: string;
+   *     email?: string;
+   *   };
+   *   paymentNonce: string; // Square Web Payments nonce from client-side tokenization
+   *   paymentMode: 'FULL' | 'DEPOSIT';
+   * }
+   */
+  @Post('bookings-with-payment')
+  @HttpCode(HttpStatus.CREATED)
+  async createBookingWithPayment(@Body() dto: CreateBookingWithPaymentDto) {
+    this.logger.log(
+      `Creating booking with payment for shop ${dto.shopId}, service ${dto.serviceId}, customer ${dto.customer.firstName} ${dto.customer.lastName}`
+    );
+
+    try {
+      const result = await this.appointmentService.createBookingWithPayment(dto);
+      return result;
+    } catch (error) {
+      this.logger.error('Booking with payment creation failed:', error);
       throw error; // Let NestJS handle the HTTP status based on the exception type
     }
   }

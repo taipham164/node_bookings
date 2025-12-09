@@ -517,4 +517,118 @@ export class PaymentService {
 
     return payment;
   }
+
+  /**
+   * Charge a payment using a payment nonce (one-shot payment without saving card)
+   * This is used for booking flows where the customer provides card details at checkout
+   */
+  async chargeWithNonce(params: {
+    amountCents: number;
+    currency: string;
+    customerId: string;
+    squareCustomerId: string;
+    paymentNonce: string;
+    appointmentId?: string;
+    metadata?: Record<string, any>;
+  }): Promise<ChargeCardResult> {
+    const { amountCents, currency, customerId, squareCustomerId, paymentNonce, appointmentId, metadata } = params;
+
+    this.logger.log(
+      `Charging ${amountCents} cents using payment nonce for customer ${customerId}`,
+    );
+
+    // 1. Validate customer exists
+    const customer = await this.prismaService.customer.findUnique({
+      where: { id: customerId },
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found`);
+    }
+
+    // 2. Validate appointment if provided
+    if (appointmentId) {
+      const appointment = await this.prismaService.appointment.findUnique({
+        where: { id: appointmentId },
+      });
+
+      if (!appointment) {
+        throw new NotFoundException(`Appointment with ID ${appointmentId} not found`);
+      }
+
+      if (appointment.customerId !== customerId) {
+        throw new BadRequestException(
+          `Appointment ${appointmentId} does not belong to customer ${customerId}`,
+        );
+      }
+    }
+
+    try {
+      // 3. Create payment record in pending state
+      const paymentRecord = await this.prismaService.paymentRecord.create({
+        data: {
+          amountCents,
+          currency,
+          customerId,
+          appointmentId,
+          status: PaymentStatus.PENDING,
+        },
+      });
+
+      try {
+        // 4. Charge using the payment nonce via Square
+        const squareClient = this.squareService.getSquareClient();
+        const { result } = await squareClient.paymentsApi.createPayment({
+          idempotencyKey: `${paymentRecord.id}-${Date.now()}`,
+          sourceId: paymentNonce, // Use nonce as source
+          amountMoney: {
+            amount: BigInt(amountCents),
+            currency,
+          },
+          customerId: squareCustomerId,
+          note: metadata?.note || `Booking payment for appointment`,
+        });
+
+        const squarePayment = result.payment;
+        if (!squarePayment) {
+          throw new BadRequestException('Payment failed - no payment object returned');
+        }
+
+        // 5. Update payment record with Square payment ID and success status
+        const updatedPayment = await this.prismaService.paymentRecord.update({
+          where: { id: paymentRecord.id },
+          data: {
+            squarePaymentId: squarePayment.id,
+            status: 'COMPLETED',
+          },
+        });
+
+        this.logger.log(
+          `Payment ${updatedPayment.id} completed with Square payment ${squarePayment.id}`,
+        );
+
+        return {
+          paymentId: squarePayment.id!,
+          paymentRecordId: updatedPayment.id,
+          status: 'COMPLETED',
+        };
+      } catch (error: any) {
+        // Update payment record as failed
+        await this.prismaService.paymentRecord.update({
+          where: { id: paymentRecord.id },
+          data: {
+            status: 'FAILED',
+            failureReason: error.message || 'Unknown error',
+          },
+        });
+
+        throw error;
+      }
+    } catch (error: any) {
+      this.logger.error(`Failed to charge with nonce: ${error.message}`, error.stack);
+      throw new BadRequestException(
+        `Failed to process payment: ${error.message || 'Unknown error'}`,
+      );
+    }
+  }
 }

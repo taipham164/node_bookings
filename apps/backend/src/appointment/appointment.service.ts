@@ -2,9 +2,11 @@ import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef,
 import { PrismaService } from '../prisma/prisma.service';
 import { SquareService } from '../square/square.service';
 import { PaymentService } from '../payment/payment.service';
+import { CustomerService } from '../customer/customer.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { CreateBookingWithPaymentDto } from './dto/create-booking-with-payment.dto';
 import { Appointment, AppointmentStatus } from '@prisma/client';
 import { BookingValidationService } from './booking-validation.service';
 
@@ -17,6 +19,7 @@ export class AppointmentService {
     @Inject(forwardRef(() => SquareService))
     private readonly squareService: SquareService,
     private readonly paymentService: PaymentService,
+    private readonly customerService: CustomerService,
     private readonly bookingValidationService: BookingValidationService,
   ) {}
 
@@ -659,5 +662,219 @@ export class AppointmentService {
     // });
     this.logger.warn('Payment records query not implemented - Prisma client needs regeneration');
     return [];
+  }
+
+  /**
+   * Create a booking with payment in a single orchestrated operation
+   * This handles the full flow: customer creation, payment processing, and booking creation
+   */
+  async createBookingWithPayment(dto: CreateBookingWithPaymentDto) {
+    this.logger.log(`Creating booking with payment for ${dto.customer.firstName} ${dto.customer.lastName}`);
+
+    try {
+      // 1. Validate shop, service, and barber
+      const [shop, service, barber] = await Promise.all([
+        this.prisma.shop.findUnique({ where: { id: dto.shopId } }),
+        this.prisma.service.findUnique({ where: { id: dto.serviceId } }),
+        dto.barberId
+          ? this.prisma.barber.findUnique({ where: { id: dto.barberId } })
+          : null,
+      ]);
+
+      if (!shop) {
+        throw new NotFoundException(`Shop with ID ${dto.shopId} not found`);
+      }
+      if (!service) {
+        throw new NotFoundException(`Service with ID ${dto.serviceId} not found`);
+      }
+      if (dto.barberId && !barber) {
+        throw new NotFoundException(`Barber with ID ${dto.barberId} not found`);
+      }
+
+      // Validate entities belong to the same shop
+      if (service.shopId !== dto.shopId) {
+        throw new BadRequestException('Service does not belong to the specified shop');
+      }
+      if (barber && barber.shopId !== dto.shopId) {
+        throw new BadRequestException('Barber does not belong to the specified shop');
+      }
+
+      // Validate required Square IDs
+      if (!shop.squareLocationId) {
+        throw new BadRequestException('Shop is not linked to Square location');
+      }
+      if (!service.squareCatalogObjectId) {
+        throw new BadRequestException('Service is not linked to Square catalog');
+      }
+      if (dto.barberId && barber && !barber.squareTeamMemberId) {
+        throw new BadRequestException('Barber is not linked to Square team member');
+      }
+
+      // Validate start time
+      const startAt = new Date(dto.startAt);
+      if (startAt < new Date()) {
+        throw new BadRequestException('Booking cannot be scheduled in the past');
+      }
+
+      // 2. Find or create Square customer
+      this.logger.log(`Finding or creating Square customer for ${dto.customer.firstName} ${dto.customer.lastName}`);
+      const squareCustomerId = await this.squareService.findOrCreateSquareCustomer({
+        firstName: dto.customer.firstName,
+        lastName: dto.customer.lastName,
+        phone: dto.customer.phone,
+        email: dto.customer.email,
+      });
+
+      // 3. Find or create local customer
+      this.logger.log(`Finding or creating local customer`);
+      const customer = await this.customerService.findOrCreateByPhone({
+        shopId: dto.shopId,
+        firstName: dto.customer.firstName,
+        lastName: dto.customer.lastName,
+        phone: dto.customer.phone,
+        email: dto.customer.email,
+        squareCustomerId,
+      });
+
+      // 4. Calculate payment amount based on mode
+      let amountCents: number;
+      if (dto.paymentMode === 'FULL') {
+        amountCents = service.priceCents;
+        this.logger.log(`Charging full amount: ${amountCents} cents`);
+      } else {
+        // DEPOSIT mode
+        // TODO: Get deposit amount from NoShowPolicy or Service
+        // For now, use a placeholder - could be 20% of service price or fixed amount
+        const depositPercentage = 0.20; // 20%
+        amountCents = Math.round(service.priceCents * depositPercentage);
+        this.logger.log(`Charging deposit amount: ${amountCents} cents (${depositPercentage * 100}% of ${service.priceCents})`);
+      }
+
+      // 5. Process payment using the nonce
+      this.logger.log(`Processing payment with nonce`);
+      let paymentResult;
+      try {
+        paymentResult = await this.paymentService.chargeWithNonce({
+          amountCents,
+          currency: 'USD',
+          customerId: customer.id,
+          squareCustomerId,
+          paymentNonce: dto.paymentNonce,
+          metadata: {
+            note: `${dto.paymentMode} payment for ${service.name}`,
+          },
+        });
+      } catch (error) {
+        this.logger.error('Payment failed:', error);
+        throw new BadRequestException(
+          `Payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+
+      // 6. Create Square booking
+      this.logger.log(`Creating Square booking at ${dto.startAt}`);
+      let squareBookingId: string;
+      try {
+        const bookingResult = await this.squareService.createSquareBooking({
+          locationId: shop.squareLocationId,
+          customerId: squareCustomerId,
+          serviceVariationId: service.squareCatalogObjectId,
+          teamMemberId: barber?.squareTeamMemberId,
+          startAt: dto.startAt,
+        });
+        squareBookingId = bookingResult.bookingId;
+      } catch (error) {
+        this.logger.error('Square booking creation failed after payment succeeded:', error);
+        // TODO: Consider triggering a refund here
+        this.logger.warn('Payment was successful but booking creation failed - manual intervention required');
+        throw new BadRequestException(
+          `Booking creation failed: ${error instanceof Error ? error.message : 'Unknown error'}. Payment ID: ${paymentResult.paymentId}`
+        );
+      }
+
+      // 7. Create local appointment
+      const endAt = new Date(startAt.getTime() + service.durationMinutes * 60 * 1000);
+      this.logger.log(`Creating local appointment with Square booking ID: ${squareBookingId}`);
+
+      const appointment = await this.prisma.appointment.create({
+        data: {
+          shopId: dto.shopId,
+          serviceId: dto.serviceId,
+          barberId: dto.barberId || barber?.id!,
+          customerId: customer.id,
+          startAt,
+          endAt,
+          squareBookingId,
+          status: 'SCHEDULED',
+        },
+        include: {
+          shop: {
+            select: {
+              id: true,
+              name: true,
+              squareLocationId: true,
+            },
+          },
+          barber: {
+            select: {
+              id: true,
+              displayName: true,
+              squareTeamMemberId: true,
+            },
+          },
+          service: {
+            select: {
+              id: true,
+              name: true,
+              durationMinutes: true,
+              priceCents: true,
+            },
+          },
+          customer: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              email: true,
+              squareCustomerId: true,
+            },
+          },
+        },
+      });
+
+      // 8. Link payment to appointment
+      await this.paymentService.addPaymentToAppointment(appointment.id, paymentResult.paymentRecordId);
+
+      this.logger.log(
+        `Booking with payment created successfully: appointment ${appointment.id}, payment ${paymentResult.paymentId}`
+      );
+
+      // 9. Return success response
+      return {
+        success: true,
+        appointment,
+        payment: {
+          id: paymentResult.paymentRecordId,
+          squarePaymentId: paymentResult.paymentId,
+          amountCents,
+          currency: 'USD',
+          status: paymentResult.status,
+        },
+        squareBookingId,
+      };
+    } catch (error) {
+      this.logger.error('Failed to create booking with payment:', error);
+
+      // Re-throw known errors
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+
+      // Wrap unknown errors
+      throw new BadRequestException(
+        `Failed to create booking with payment: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }

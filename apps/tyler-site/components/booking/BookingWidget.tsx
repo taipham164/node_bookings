@@ -1,247 +1,184 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useBookingFlow } from '../../hooks/useBookingFlow';
+import { ServiceStep } from './steps/ServiceStep';
+import { BarberStep } from './steps/BarberStep';
+import { DateTimeStep } from './steps/DateTimeStep';
+import { DetailsStep } from './steps/DetailsStep';
+import { ReviewStep } from './steps/ReviewStep';
+import { ResultStep } from './steps/ResultStep';
 
-interface BookingWidgetProps {
-  shopId: string
+export interface BookingWidgetProps {
+  shopId: string;
 }
 
-interface Service {
-  id: string
-  name: string
-  durationMinutes: number
-  priceCents: number
-}
+export function BookingWidget({ shopId }: BookingWidgetProps) {
+  const {
+    step,
+    goToNextStep,
+    goToPreviousStep,
+    selectedService,
+    setSelectedService,
+    selectedBarber,
+    setSelectedBarber,
+    selectedSlot,
+    setSelectedSlot,
+    customerInfo,
+    setCustomerInfo,
+    paymentMode,
+    bookingResponse,
+    loading,
+    error,
+    setError,
+    submitBookingWithPayment,
+    reset,
+  } = useBookingFlow(shopId);
 
-interface Barber {
-  id: string
-  displayName: string
-}
+  // Render the appropriate step based on current state
+  const renderStep = () => {
+    switch (step) {
+      case 'SERVICE':
+        return (
+          <ServiceStep
+            shopId={shopId}
+            selectedService={selectedService}
+            onSelectService={setSelectedService}
+            onNext={goToNextStep}
+          />
+        );
 
-export default function BookingWidget({ shopId }: BookingWidgetProps) {
-  const [services, setServices] = useState<Service[]>([])
-  const [barbers, setBarbers] = useState<Barber[]>([])
-  const [selectedService, setSelectedService] = useState<string>('')
-  const [selectedBarber, setSelectedBarber] = useState<string>('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string>('')
+      case 'BARBER':
+        return (
+          <BarberStep
+            shopId={shopId}
+            selectedBarber={selectedBarber}
+            onSelectBarber={setSelectedBarber}
+            onNext={goToNextStep}
+            onBack={goToPreviousStep}
+          />
+        );
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
+      case 'DATETIME':
+        if (!selectedService || !selectedBarber) {
+          // Safety check - shouldn't happen in normal flow
+          reset();
+          return null;
+        }
+        return (
+          <DateTimeStep
+            shopId={shopId}
+            service={selectedService}
+            barber={selectedBarber}
+            selectedSlot={selectedSlot}
+            onSelectSlot={setSelectedSlot}
+            onNext={goToNextStep}
+            onBack={goToPreviousStep}
+          />
+        );
 
-  useEffect(() => {
-    loadData()
-  }, [shopId])
+      case 'DETAILS':
+        return (
+          <DetailsStep
+            customerInfo={customerInfo}
+            onSetCustomerInfo={setCustomerInfo}
+            onNext={goToNextStep}
+            onBack={goToPreviousStep}
+          />
+        );
 
-  const loadData = async () => {
-    try {
-      setLoading(true)
+      case 'REVIEW':
+        if (!selectedService || !selectedBarber || !selectedSlot || !customerInfo) {
+          // Safety check - shouldn't happen in normal flow
+          reset();
+          return null;
+        }
+        return (
+          <ReviewStep
+            service={selectedService}
+            barber={selectedBarber}
+            selectedSlot={selectedSlot}
+            customerInfo={customerInfo}
+            paymentMode={paymentMode}
+            loading={loading}
+            error={error}
+            onSubmitPayment={submitBookingWithPayment}
+            onBack={goToPreviousStep}
+          />
+        );
 
-      // Fetch services
-      const servicesRes = await fetch(`${API_BASE_URL}/api/services?shopId=${shopId}`)
-      if (servicesRes.ok) {
-        const servicesData = await servicesRes.json()
-        setServices(servicesData)
-      }
+      case 'RESULT':
+        if (!bookingResponse) {
+          // Safety check - shouldn't happen in normal flow
+          reset();
+          return null;
+        }
+        return <ResultStep bookingResponse={bookingResponse} onReset={reset} />;
 
-      // Fetch barbers
-      const barbersRes = await fetch(`${API_BASE_URL}/api/barbers?shopId=${shopId}`)
-      if (barbersRes.ok) {
-        const barbersData = await barbersRes.json()
-        setBarbers(barbersData.filter((b: Barber & { active: boolean }) => b.active))
-      }
-
-      setLoading(false)
-    } catch (err) {
-      setError('Failed to load booking data')
-      setLoading(false)
+      default:
+        return null;
     }
-  }
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`
-  }
-
-  if (loading) {
-    return (
-      <div style={{
-        padding: '60px 20px',
-        textAlign: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        borderRadius: '12px',
-        minHeight: '400px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div>
-          <div style={{
-            width: '50px',
-            height: '50px',
-            border: '5px solid rgba(255,255,255,0.3)',
-            borderTop: '5px solid white',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto'
-          }}></div>
-          <p style={{ marginTop: '20px', fontSize: '1.2em' }}>Loading booking options...</p>
-        </div>
-        <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div style={{
-        padding: '60px 20px',
-        textAlign: 'center',
-        background: '#e74c3c',
-        color: 'white',
-        borderRadius: '12px',
-        minHeight: '400px'
-      }}>
-        <h3 style={{ fontSize: '1.8em', marginBottom: '20px' }}>⚠️ Error</h3>
-        <p style={{ fontSize: '1.2em' }}>{error}</p>
-      </div>
-    )
-  }
+  };
 
   return (
-    <div style={{
-      padding: '60px 20px',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      color: 'white',
-      borderRadius: '12px',
-      maxWidth: '800px',
-      margin: '0 auto'
-    }}>
-      <h2 style={{
-        fontSize: '2.5em',
-        marginBottom: '40px',
-        textAlign: 'center',
-        fontWeight: 'bold'
-      }}>
-        Book Your Appointment
-      </h2>
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      {/* Progress Indicator */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center">
+          {['Service', 'Barber', 'Date/Time', 'Details', 'Review', 'Result'].map(
+            (stepName, index) => {
+              const stepKeys = ['SERVICE', 'BARBER', 'DATETIME', 'DETAILS', 'REVIEW', 'RESULT'];
+              const currentIndex = stepKeys.indexOf(step);
+              const isActive = index === currentIndex;
+              const isCompleted = index < currentIndex;
 
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: '12px',
-        padding: '40px',
-        border: '1px solid rgba(255, 255, 255, 0.2)'
-      }}>
-        {/* Service Selection */}
-        <div style={{ marginBottom: '30px' }}>
-          <label style={{
-            display: 'block',
-            fontSize: '1.2em',
-            marginBottom: '10px',
-            fontWeight: '500'
-          }}>
-            Select Service
-          </label>
-          <select
-            value={selectedService}
-            onChange={(e) => setSelectedService(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '15px',
-              fontSize: '1.1em',
-              borderRadius: '8px',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
-              background: 'rgba(255, 255, 255, 0.9)',
-              color: '#333',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="">Choose a service...</option>
-            {services.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.name} - {formatPrice(service.priceCents)} ({service.durationMinutes} min)
-              </option>
-            ))}
-          </select>
+              return (
+                <div key={stepName} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center flex-1">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                        isActive
+                          ? 'bg-blue-600 text-white'
+                          : isCompleted
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        index + 1
+                      )}
+                    </div>
+                    <div
+                      className={`text-xs mt-1 hidden sm:block ${
+                        isActive ? 'font-semibold text-blue-600' : 'text-gray-500'
+                      }`}
+                    >
+                      {stepName}
+                    </div>
+                  </div>
+                  {index < 5 && (
+                    <div
+                      className={`h-1 flex-1 mx-2 ${
+                        isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            }
+          )}
         </div>
-
-        {/* Barber Selection */}
-        <div style={{ marginBottom: '30px' }}>
-          <label style={{
-            display: 'block',
-            fontSize: '1.2em',
-            marginBottom: '10px',
-            fontWeight: '500'
-          }}>
-            Select Barber
-          </label>
-          <select
-            value={selectedBarber}
-            onChange={(e) => setSelectedBarber(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '15px',
-              fontSize: '1.1em',
-              borderRadius: '8px',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
-              background: 'rgba(255, 255, 255, 0.9)',
-              color: '#333',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="">Choose a barber...</option>
-            {barbers.map((barber) => (
-              <option key={barber.id} value={barber.id}>
-                {barber.displayName}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Continue Button */}
-        <button
-          disabled={!selectedService || !selectedBarber}
-          onClick={() => {
-            // TODO: Navigate to availability/booking flow
-            alert('Full booking flow will be implemented next! Service: ' + selectedService + ', Barber: ' + selectedBarber)
-          }}
-          style={{
-            width: '100%',
-            padding: '18px',
-            fontSize: '1.3em',
-            fontWeight: 'bold',
-            borderRadius: '8px',
-            border: 'none',
-            background: (!selectedService || !selectedBarber) ? 'rgba(255, 255, 255, 0.3)' : 'white',
-            color: (!selectedService || !selectedBarber) ? 'rgba(255, 255, 255, 0.6)' : '#667eea',
-            cursor: (!selectedService || !selectedBarber) ? 'not-allowed' : 'pointer',
-            transition: 'all 0.3s ease',
-            textTransform: 'uppercase',
-            letterSpacing: '1px'
-          }}
-        >
-          Continue to Booking
-        </button>
-
-        {services.length === 0 && barbers.length === 0 && (
-          <div style={{
-            marginTop: '30px',
-            padding: '20px',
-            background: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            <p style={{ fontSize: '1.1em' }}>
-              No services or barbers available yet. Please contact the shop.
-            </p>
-          </div>
-        )}
       </div>
+
+      {/* Step Content */}
+      <div>{renderStep()}</div>
     </div>
-  )
+  );
 }
