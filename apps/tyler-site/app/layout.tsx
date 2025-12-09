@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ShopThemeProvider } from "@/components/theme/ShopThemeProvider";
+import { ShopThemeProvider } from "@/src/components/theme/ShopThemeProvider";
 
 export const metadata: Metadata = {
   title: "Tyler's Barbershop",

@@ -39,14 +39,42 @@ export function useShopTheme(): UseShopThemeResult {
       const response = await fetch(`${apiBaseUrl}/api/shop-theme/${shopId}`);
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch theme: ${response.statusText}`);
+        // Use default theme if backend unavailable
+        console.warn('Theme API unavailable, using defaults');
+        setTheme({
+          id: 'default',
+          shopId: shopId,
+          brandName: 'My Shop',
+          tagline: 'Quality service you can trust',
+          primaryColor: '#111827',
+          accentColor: '#f59e0b',
+          background: 'light',
+          logoUrl: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        setIsLoading(false);
+        return;
       }
 
       const data = await response.json();
       setTheme(data);
     } catch (err) {
+      // On error, use default theme instead of blocking app
+      console.warn('Error fetching theme, using defaults:', err);
+      setTheme({
+        id: 'default',
+        shopId: shopId,
+        brandName: 'My Shop',
+        tagline: 'Quality service you can trust',
+        primaryColor: '#111827',
+        accentColor: '#f59e0b',
+        background: 'light',
+        logoUrl: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
       setError(err instanceof Error ? err.message : 'Unknown error');
-      console.error('Error fetching shop theme:', err);
     } finally {
       setIsLoading(false);
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useShopThemeContext } from '@/components/theme/ShopThemeProvider';
+import { useShopThemeContext } from '@/src/components/theme/ShopThemeProvider';
 
 export default function ThemeEditorPage() {
   const { theme, isLoading: themeLoading, refetch } = useShopThemeContext();

@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import { Puck } from '@measured/puck'
 import '@measured/puck/puck.css'
-import { ServicesSection } from '@/components/webbuilder/ServicesSection'
-import { BookingCtaSection } from '@/components/webbuilder/BookingCtaSection'
+import { ServicesSection } from '@/src/components/webbuilder/ServicesSection'
+import { BookingCtaSection } from '@/src/components/webbuilder/BookingCtaSection'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
 const SHOP_ID = process.env.NEXT_PUBLIC_SHOP_ID || 'default-shop-id'
@@ -187,6 +187,13 @@ export default function BuilderPage() {
     setMessage('')
 
     try {
+      // Validate required fields
+      if (!slug || !pageTitle) {
+        setMessage('Error: Slug and title are required')
+        setSaving(false)
+        return
+      }
+
       const htmlString = JSON.stringify(data)
 
       if (pageId) {

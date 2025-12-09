@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect } from 'react';
-import { useShopTheme, ShopTheme } from '@/hooks/useShopTheme';
+import { useShopTheme, ShopTheme } from '@/src/hooks/useShopTheme';
 
 interface ShopThemeContextValue {
   theme: ShopTheme | null;
