@@ -169,4 +169,35 @@ export class PageService {
       });
     });
   }
+
+  async getBuilderData(pageId: string) {
+    const page = await this.prisma.page.findUnique({
+      where: { id: pageId },
+      select: { id: true, puckJson: true },
+    });
+
+    if (!page) {
+      throw new NotFoundException(`Page with id "${pageId}" not found`);
+    }
+
+    return {
+      data: page.puckJson || null,
+    };
+  }
+
+  async updateBuilderData(pageId: string, puckData: any) {
+    const page = await this.prisma.page.findUnique({
+      where: { id: pageId },
+    });
+
+    if (!page) {
+      throw new NotFoundException(`Page with id "${pageId}" not found`);
+    }
+
+    return this.prisma.page.update({
+      where: { id: pageId },
+      data: { puckJson: puckData },
+      select: { id: true, puckJson: true },
+    });
+  }
 }
