@@ -292,3 +292,18 @@ model BarberTimeOff {
   @@index([shopId, barberId, startAt, endAt])
   @@map("barber_time_off")
 }
+
+model ShopTheme {
+  id           String   @id @default(uuid())
+  shopId       String   @unique
+  brandName    String?
+  tagline      String?
+  primaryColor String?  // e.g. "#111827"
+  accentColor  String?  // e.g. "#f59e0b"
+  background   String?  // e.g. "light" | "dark"
+  logoUrl      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("shop_themes")
+}

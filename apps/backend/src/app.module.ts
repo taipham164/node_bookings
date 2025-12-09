@@ -14,6 +14,7 @@ import { NoShowPolicyModule } from './no-show-policy/no-show-policy.module';
 import { PaymentModule } from './payment/payment.module';
 import { WebbuilderModule } from './webbuilder/webbuilder.module';
 import { AuthModule } from './auth/auth.module';
+import { ShopThemeModule } from './shop-theme/shop-theme.module';
 // TODO: Fix Prisma schema mismatches before re-enabling these modules
 // import { CatalogModule } from './catalog/catalog.module';
 // import { ScheduleModule } from './schedule/schedule.module';
@@ -34,6 +35,7 @@ import { AuthModule } from './auth/auth.module';
     PaymentModule,
     WebbuilderModule,
     AuthModule,
+    ShopThemeModule,
     // TODO: Fix Prisma schema mismatches before re-enabling these modules
     // CatalogModule,
     // ScheduleModule,

@@ -9,6 +9,9 @@ interface BookingCtaSectionProps {
   buttonLabel?: string
   bookingHref?: string
   scrollTargetId?: string
+  useThemeColors?: boolean
+  customPrimaryColor?: string
+  customAccentColor?: string
 }
 
 export function BookingCtaSection({
@@ -17,6 +20,9 @@ export function BookingCtaSection({
   buttonLabel = 'Book Now',
   bookingHref = '/booking',
   scrollTargetId,
+  useThemeColors = true,
+  customPrimaryColor,
+  customAccentColor,
 }: BookingCtaSectionProps) {
   const router = useRouter()
 
@@ -34,12 +40,23 @@ export function BookingCtaSection({
     router.push(bookingHref)
   }
 
+  const bgGradient =
+    useThemeColors && !customPrimaryColor && !customAccentColor
+      ? 'linear-gradient(135deg, var(--tp-primary), var(--tp-accent))'
+      : `linear-gradient(135deg, ${customPrimaryColor || '#9333ea'}, ${customAccentColor || '#2563eb'})`
+
+  const buttonBg =
+    useThemeColors && !customAccentColor ? 'var(--tp-accent)' : customAccentColor || '#f59e0b'
+
   return (
-    <section className="py-16 px-4 bg-gradient-to-br from-purple-600 to-blue-600">
+    <section
+      className="py-16 px-4"
+      style={{ background: bgGradient }}
+    >
       <div className="max-w-4xl mx-auto text-center">
         <h2 className="text-4xl font-bold text-white mb-4">{title}</h2>
         {subtitle && (
-          <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             {subtitle}
           </p>
         )}
@@ -47,13 +64,14 @@ export function BookingCtaSection({
           onClick={handleClick}
           className="
             inline-block px-8 py-4 
-            bg-white text-purple-600 
+            bg-white
             font-semibold rounded-lg 
-            hover:bg-purple-50 
+            hover:opacity-90
             transform hover:scale-105 
             transition-all duration-200
             shadow-lg hover:shadow-xl
           "
+          style={{ color: buttonBg }}
         >
           {buttonLabel}
         </button>

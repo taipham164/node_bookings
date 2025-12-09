@@ -81,6 +81,11 @@ const config = {
           { label: 'Yes', value: true },
           { label: 'No', value: false },
         ]},
+        useThemeColors: { type: 'radio', options: [
+          { label: 'Yes', value: true },
+          { label: 'No', value: false },
+        ]},
+        customAccentColor: { type: 'text' },
       },
       defaultProps: {
         title: 'Our Services',
@@ -89,6 +94,8 @@ const config = {
         limit: 6,
         showPrices: true,
         showDuration: true,
+        useThemeColors: true,
+        customAccentColor: '',
       },
       render: (props: any) => <ServicesSection {...props} />,
     },
@@ -99,6 +106,12 @@ const config = {
         buttonLabel: { type: 'text' },
         bookingHref: { type: 'text' },
         scrollTargetId: { type: 'text' },
+        useThemeColors: { type: 'radio', options: [
+          { label: 'Yes', value: true },
+          { label: 'No', value: false },
+        ]},
+        customPrimaryColor: { type: 'text' },
+        customAccentColor: { type: 'text' },
       },
       defaultProps: {
         title: 'Ready for a fresh cut?',
@@ -106,6 +119,9 @@ const config = {
         buttonLabel: 'Book Now',
         bookingHref: '/booking',
         scrollTargetId: '',
+        useThemeColors: true,
+        customPrimaryColor: '',
+        customAccentColor: '',
       },
       render: (props: any) => <BookingCtaSection {...props} />,
     },
@@ -313,7 +329,23 @@ export default function BuilderPage() {
             alignItems: 'center',
             boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
           }}>
-            <h1 style={{ margin: 0, fontSize: '1.5em' }}>Puck Page Builder</h1>
+            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+              <h1 style={{ margin: 0, fontSize: '1.5em' }}>Puck Page Builder</h1>
+              <a
+                href="/admin/theme"
+                style={{
+                  padding: '6px 12px',
+                  background: '#7c3aed',
+                  color: 'white',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                  fontSize: '0.85em',
+                  display: 'inline-block'
+                }}
+              >
+                Theme Settings
+              </a>
+            </div>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <button
                 onClick={() => handleSave(pageData, true)}
