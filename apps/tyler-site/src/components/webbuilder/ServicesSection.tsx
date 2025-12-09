@@ -17,6 +17,8 @@ interface ServicesSectionProps {
   limit?: number
   showPrices?: boolean
   showDuration?: boolean
+  useThemeColors?: boolean
+  customAccentColor?: string
 }
 
 export function ServicesSection({
@@ -26,6 +28,8 @@ export function ServicesSection({
   limit = 6,
   showPrices = true,
   showDuration = true,
+  useThemeColors = true,
+  customAccentColor,
 }: ServicesSectionProps) {
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
@@ -129,7 +133,15 @@ export function ServicesSection({
                   )}
                   <div className="flex flex-wrap gap-3 text-sm">
                     {showPrices && (
-                      <span className="text-green-600 font-semibold">
+                      <span
+                        className="font-semibold"
+                        style={{
+                          color:
+                            useThemeColors && !customAccentColor
+                              ? 'var(--tp-accent)'
+                              : customAccentColor || '#16a34a',
+                        }}
+                      >
                         {formatPrice(service.priceCents)}
                       </span>
                     )}

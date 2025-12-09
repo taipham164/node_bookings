@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ShopThemeProvider } from "@/components/theme/ShopThemeProvider";
 
 export const metadata: Metadata = {
   title: "Tyler's Barbershop",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ShopThemeProvider>{children}</ShopThemeProvider>
+      </body>
     </html>
   );
 }
