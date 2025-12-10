@@ -11,7 +11,7 @@ const SHOP_ID = process.env.NEXT_PUBLIC_SHOP_ID || 'default-shop-id'
 async function getPage(slug: string) {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/pages/${slug}?shopId=${SHOP_ID}`,
+      `${API_BASE_URL}/api/pages/slug/${SHOP_ID}/${slug}`,
       {
         next: { revalidate: 60 } // Revalidate every 60 seconds
       }
