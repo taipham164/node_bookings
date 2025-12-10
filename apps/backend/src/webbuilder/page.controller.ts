@@ -41,18 +41,33 @@ export class PageController {
     return this.pageService.findAll(shopId);
   }
 
-  @Get('home')
-  // TODO: Re-enable auth when frontend has JWT token handling
-  // @UseGuards(JwtAuthGuard, ShopOwnershipGuard)
-  async findHomePage(
-    @Query('shopId') shopId: string,
-    // @CurrentUser() user: AuthUser,
-  ) {
-    if (!shopId) {
-      throw new BadRequestException('shopId query parameter is required');
+  @Get(':id')
+  // Public endpoint to get page by ID
+  async findById(@Param('id') id: string) {
+    const page = await this.prisma.page.findUnique({
+      where: { id },
+    });
+    
+    if (!page) {
+      throw new BadRequestException('Page not found');
     }
-    // ShopOwnershipGuard already verifies user owns the shop
+    
+    return page;
+  }
+
+  @Get('home/:shopId')
+  // Public endpoint for home page
+  async findHomePage(@Param('shopId') shopId: string) {
     return this.pageService.findHomePage(shopId);
+  }
+
+  @Get('slug/:shopId/:slug')
+  // Public endpoint for page by slug
+  async findBySlugPublic(
+    @Param('shopId') shopId: string,
+    @Param('slug') slug: string,
+  ) {
+    return this.pageService.findBySlug(shopId, slug);
   }
 
   @Get('by-slug/:slug')
