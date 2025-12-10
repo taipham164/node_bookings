@@ -13,21 +13,32 @@ type Params = {
   id: string;
 };
 
-export default function BuilderPage({ params }: { params: Params }) {
+export default function BuilderPage({ params }: { params: Promise<Params> }) {
   const [initialData, setInitialData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [pageId, setPageId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchBuilderData();
-  }, [params.id]);
+    const initializeParams = async () => {
+      const resolvedParams = await params;
+      setPageId(resolvedParams.id);
+    };
+    initializeParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (pageId) {
+      fetchBuilderData();
+    }
+  }, [pageId]);
 
   const fetchBuilderData = async () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${API_BASE_URL}/api/pages/${params.id}/builder-data?shopId=${SHOP_ID}`
+        `${API_BASE_URL}/api/pages/${pageId}/builder-data?shopId=${SHOP_ID}`
       );
 
       if (response.ok) {
@@ -51,7 +62,7 @@ export default function BuilderPage({ params }: { params: Params }) {
     try {
       setSaveStatus('saving');
       const response = await fetch(
-        `${API_BASE_URL}/api/pages/${params.id}/builder-data?shopId=${SHOP_ID}`,
+        `${API_BASE_URL}/api/pages/${pageId}/builder-data?shopId=${SHOP_ID}`,
         {
           method: 'PUT',
           headers: {
@@ -116,7 +127,7 @@ export default function BuilderPage({ params }: { params: Params }) {
       <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold">Page Builder</h1>
-          <span className="text-sm text-gray-400">Page ID: {params.id}</span>
+          <span className="text-sm text-gray-400">Page ID: {pageId}</span>
         </div>
         <div className="flex items-center gap-4">
           {saveStatus === 'saving' && (

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useShopThemeContext } from '@/src/components/theme/ShopThemeProvider';
 
 export default function ThemeEditorPage() {
@@ -93,7 +94,7 @@ export default function ThemeEditorPage() {
               Shop Theme & Branding
             </h1>
             <p className="text-gray-600">
-              Customize your shop's visual identity and branding
+              Customize your shop&apos;s visual identity and branding
             </p>
           </div>
 
@@ -295,12 +296,12 @@ export default function ThemeEditorPage() {
 
           {/* Navigation */}
           <div className="mt-6 pt-6 border-t">
-            <a
+            <Link
               href="/admin/builder"
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
               ← Back to Page Builder
-            </a>
+            </Link>
           </div>
         </div>
       </div>

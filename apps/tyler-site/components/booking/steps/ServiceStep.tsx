@@ -55,7 +55,7 @@ export function ServiceStep({ shopId, selectedService, onSelectService, onNext }
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-gray-900">Select a Service</h2>
-      <p className="text-gray-600">Choose the service you'd like to book</p>
+      <p className="text-gray-600">Choose the service you&apos;d like to book</p>
 
       <div className="grid gap-4 mt-6">
         {services.map((service) => (
@@ -71,7 +71,7 @@ export function ServiceStep({ shopId, selectedService, onSelectService, onNext }
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
-                <p className="text-sm text-gray-600 mt-1">{service.durationMinutes} minutes</p>
+                <p className="text-sm text-gray-600 mt-1">{service.durationMins} minutes</p>
               </div>
               <div className="text-right">
                 <span className="text-xl font-bold text-gray-900">

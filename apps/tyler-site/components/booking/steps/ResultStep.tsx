@@ -11,7 +11,7 @@ export function ResultStep({ bookingResponse, onReset }: ResultStepProps) {
   const isSuccess = bookingResponse.success;
 
   const formatDateTime = (isoString: string | undefined) => {
-    if (!isoString) return '';
+    if (!isoString) return { date: '', time: '' };
     const date = new Date(isoString);
     return {
       date: date.toLocaleDateString('en-US', {
@@ -56,7 +56,7 @@ export function ResultStep({ bookingResponse, onReset }: ResultStepProps) {
           <div>
             <h3 className="font-semibold text-gray-900">Service</h3>
             <p className="text-gray-600">{appointment.service.name}</p>
-            <p className="text-sm text-gray-500">{appointment.service.durationMinutes} minutes</p>
+            <p className="text-sm text-gray-500">{appointment.service.durationMins} minutes</p>
           </div>
 
           <div className="border-t border-gray-200 pt-4">
@@ -137,7 +137,7 @@ export function ResultStep({ bookingResponse, onReset }: ResultStepProps) {
           </svg>
         </div>
         <h2 className="text-3xl font-bold text-gray-900">Booking Failed</h2>
-        <p className="text-gray-600 mt-2">We couldn't complete your booking</p>
+        <p className="text-gray-600 mt-2">We couldn&apos;t complete your booking</p>
       </div>
 
       {/* Error Message */}

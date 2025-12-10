@@ -936,8 +936,8 @@ function updateStaffPageSummary() {
       // Calculate total duration
       if (service.duration) {
         var durationMs = safeBigIntToNumber(service.duration);
-        var durationMinutes = Math.round(durationMs / 60000);
-        totalDuration += durationMinutes * (service.quantity || 1);
+        var durationMins = Math.round(durationMs / 60000);
+        totalDuration += durationMins * (service.quantity || 1);
       }
       
       // Calculate total price
@@ -1080,8 +1080,8 @@ function updateStaffBarAndSheet() {
       if (service.duration) {
         // Convert duration from milliseconds to minutes using safe conversion
         var durationMs = safeBigIntToNumber(service.duration);
-        var durationMinutes = Math.round(durationMs / 60000); // Convert milliseconds to minutes
-        totalDuration += durationMinutes * (service.quantity || 1);
+        var durationMins = Math.round(durationMs / 60000); // Convert milliseconds to minutes
+        totalDuration += durationMins * (service.quantity || 1);
       }
     });
     
@@ -1246,10 +1246,10 @@ function updateStaffBottomSheetContent() {
       // Duration
       if (service.duration) {
         var durationMs = safeBigIntToNumber(service.duration);
-        var durationMinutes = Math.round(durationMs / 60000);
-        var durationText = durationMinutes + 'm';
+        var durationMins = Math.round(durationMs / 60000);
+        var durationText = durationMins + 'm';
         serviceDetails.textContent = durationText;
-        totalDuration += durationMinutes * (service.quantity || 1);
+        totalDuration += durationMins * (service.quantity || 1);
       }
       
       leftInfo.appendChild(serviceName);
@@ -1527,9 +1527,9 @@ function updateContactPageSummary() {
       // Duration
       if (service.duration) {
         var durationMs = safeBigIntToNumber(service.duration);
-        var durationMinutes = Math.round(durationMs / 60000);
-        var hours = Math.floor(durationMinutes / 60);
-        var mins = durationMinutes % 60;
+        var durationMins = Math.round(durationMs / 60000);
+        var hours = Math.floor(durationMins / 60);
+        var mins = durationMins % 60;
         var durationText = '';
         
         if (hours > 0) {
@@ -1540,7 +1540,7 @@ function updateContactPageSummary() {
         }
         
         serviceDetails.innerHTML = '<i class="fas fa-clock" style="margin-right: 4px;"></i>' + durationText;
-        totalDuration += durationMinutes * (service.quantity || 1);
+        totalDuration += durationMins * (service.quantity || 1);
       }
       
       leftInfo.appendChild(serviceName);
@@ -1811,8 +1811,8 @@ function updateContactBarAndSheet() {
       }
       if (service.duration) {
         var durationMs = safeBigIntToNumber(service.duration);
-        var durationMinutes = Math.round(durationMs / 60000);
-        totalDuration += durationMinutes * (service.quantity || 1);
+        var durationMins = Math.round(durationMs / 60000);
+        totalDuration += durationMins * (service.quantity || 1);
       }
     });
     
@@ -1961,10 +1961,10 @@ function updateContactBottomSheetContent() {
       // Duration
       if (service.duration) {
         var durationMs = safeBigIntToNumber(service.duration);
-        var durationMinutes = Math.round(durationMs / 60000);
-        var durationText = durationMinutes + 'm';
+        var durationMins = Math.round(durationMs / 60000);
+        var durationText = durationMins + 'm';
         serviceDetails.textContent = durationText;
-        totalDuration += durationMinutes * (service.quantity || 1);
+        totalDuration += durationMins * (service.quantity || 1);
       }
       
       leftInfo.appendChild(serviceName);

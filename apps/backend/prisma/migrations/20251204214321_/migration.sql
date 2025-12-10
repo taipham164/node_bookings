@@ -30,7 +30,7 @@ CREATE TABLE "services" (
     "id" TEXT NOT NULL,
     "shopId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "durationMinutes" INTEGER NOT NULL,
+    "durationMins" INTEGER NOT NULL,
     "priceCents" INTEGER NOT NULL,
     "squareCatalogObjectId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -7,7 +7,7 @@ interface Service {
   name: string
   description?: string
   priceCents: number
-  durationMinutes: number
+  durationMins: number
 }
 
 interface ServicesSectionProps {
@@ -147,7 +147,7 @@ export function ServicesSection({
                     )}
                     {showDuration && (
                       <span className="text-gray-500">
-                        {formatDuration(service.durationMinutes)}
+                        {formatDuration(service.durationMins)}
                       </span>
                     )}
                   </div>

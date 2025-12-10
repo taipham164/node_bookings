@@ -1,6 +1,6 @@
 import React from 'react'
 import { notFound } from 'next/navigation'
-import BookingHydrator from '@/components/booking/BookingHydrator'
+import { BookingHydrator } from '@/components/booking/BookingHydrator'
 import PuckRenderer from '@/webbuilder/PuckRenderer'
 
 type Params = Promise<{ slug: string }>
@@ -40,7 +40,7 @@ export default async function Page({ params }: { params: Params }) {
     return (
       <>
         <PuckRenderer data={page.puckJson} />
-        <BookingHydrator />
+        <BookingHydrator html="" shopId={SHOP_ID} />
       </>
     )
   }
@@ -49,7 +49,7 @@ export default async function Page({ params }: { params: Params }) {
   return (
     <>
       <div dangerouslySetInnerHTML={{ __html: page.html }} />
-      <BookingHydrator />
+      <BookingHydrator html={page.html} shopId={SHOP_ID} />
     </>
   )
 }

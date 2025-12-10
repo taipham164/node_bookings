@@ -64,11 +64,11 @@ function convertBigIntToNumber(obj) {
  * Filter availability slots to only include those that have enough contiguous time
  * for the total duration of all selected services
  * @param {Array} availabilities - Array of availability objects from Square API
- * @param {Number} totalDurationMinutes - Total duration needed in minutes
+ * @param {Number} totaldurationMins - Total duration needed in minutes
  * @param {Array} segmentFilters - Array of segment filters used in the search
  * @return {Array} Filtered array of availability objects
  */
-function filterAvailabilitiesByTotalDuration(availabilities, totalDurationMinutes, segmentFilters) {
+function filterAvailabilitiesByTotalDuration(availabilities, totaldurationMins, segmentFilters) {
   if (!availabilities || availabilities.length === 0) {
     return [];
   }
@@ -79,7 +79,7 @@ function filterAvailabilitiesByTotalDuration(availabilities, totalDurationMinute
   }
   
   logger.debug('Filtering availabilities by total duration', { 
-    totalDurationMinutes, 
+    totaldurationMins, 
     segmentCount: segmentFilters.length 
   });
   
@@ -91,13 +91,13 @@ function filterAvailabilitiesByTotalDuration(availabilities, totalDurationMinute
     // Check if this slot can accommodate all segments consecutively
     // For now, we'll use a simple approach: if all segments are returned for the same start time,
     // Square has verified that they can be scheduled consecutively
-    const segmentDurations = availability.appointmentSegments.map(seg => seg.durationMinutes || 0);
+    const segmentDurations = availability.appointmentSegments.map(seg => seg.durationMins || 0);
     const availableSlotDuration = segmentDurations.reduce((sum, duration) => sum + duration, 0);
     
-    const hasEnoughTime = availableSlotDuration >= totalDurationMinutes;
+    const hasEnoughTime = availableSlotDuration >= totaldurationMins;
     
     if (!hasEnoughTime) {
-      logger.debug(`Rejecting slot ${availability.startAt}: available=${availableSlotDuration}min, needed=${totalDurationMinutes}min`);
+      logger.debug(`Rejecting slot ${availability.startAt}: available=${availableSlotDuration}min, needed=${totaldurationMins}min`);
     }
     
     return hasEnoughTime;
@@ -204,7 +204,7 @@ router.get("/:staffId/:serviceId", asyncHandler(async (req, res, next) => {
   // Build serviceDetails and segmentFilters for all selected services and their quantities
   const serviceDetails = [];
   const segmentFilters = [];
-  let totalDurationMinutes = 0;
+  let totaldurationMins = 0;
   
   // Check if selectedServices contains duplicates (expanded) or unique IDs
   const uniqueServices = [...new Set(selectedServices)];
@@ -244,16 +244,16 @@ router.get("/:staffId/:serviceId", asyncHandler(async (req, res, next) => {
       });
       
       // Calculate total duration for all services
-      const durationMinutes = Math.round(safeNumberConversion(duration) / 1000 / 60);
-      totalDurationMinutes += durationMinutes * quantity;
+      const durationMins = Math.round(safeNumberConversion(duration) / 1000 / 60);
+      totaldurationMins += durationMins * quantity;
       
       // For each quantity, push a segment with safe duration conversion
       for (let i = 0; i < quantity; i++) {
-        logger.debug(`availability - segment ${i+1} for service ${sid}: durationMinutes=${durationMinutes}`);
+        logger.debug(`availability - segment ${i+1} for service ${sid}: durationMins=${durationMins}`);
         
         const segment = {
           serviceVariationId: sid,
-          durationMinutes: durationMinutes
+          durationMins: durationMins
         };
         
         // Add service variation version if available for more precise matching
@@ -275,7 +275,7 @@ router.get("/:staffId/:serviceId", asyncHandler(async (req, res, next) => {
     }
   }
   
-  logger.debug(`availability - Total duration needed: ${totalDurationMinutes} minutes for ${segmentFilters.length} segments`);
+  logger.debug(`availability - Total duration needed: ${totaldurationMins} minutes for ${segmentFilters.length} segments`);
 
   // If no valid services found, redirect back
   if (segmentFilters.length === 0) {
@@ -302,7 +302,7 @@ router.get("/:staffId/:serviceId", asyncHandler(async (req, res, next) => {
   // Try with simpler segments for broader search
   const simplifiedSegments = segmentFilters.map(seg => ({
     serviceVariationId: seg.serviceVariationId,
-    // Remove durationMinutes to let Square determine optimal slots
+    // Remove durationMins to let Square determine optimal slots
   }));
   
   const simplifiedSearchRequest = {
@@ -577,8 +577,8 @@ router.get("/:staffId/:serviceId", asyncHandler(async (req, res, next) => {
     }
     
     // Filter availability slots to ensure they have enough total duration for all services
-    const filteredAvailabilities = filterAvailabilitiesByTotalDuration(allAvailabilities, totalDurationMinutes, segmentFilters);
-    logger.debug(`Filtered ${allAvailabilities.length} slots down to ${filteredAvailabilities.length} slots that have ${totalDurationMinutes} minutes available`);
+    const filteredAvailabilities = filterAvailabilitiesByTotalDuration(allAvailabilities, totaldurationMins, segmentFilters);
+    logger.debug(`Filtered ${allAvailabilities.length} slots down to ${filteredAvailabilities.length} slots that have ${totaldurationMins} minutes available`);
     
     // Debug the data being passed to template
     logger.debug('Template data being passed:', {

@@ -21,7 +21,7 @@ describe('BookingValidationService', () => {
     id: 'service-1',
     shopId: 'shop-1',
     name: 'Haircut',
-    durationMinutes: 30,
+    durationMins: 30,
     priceCents: 3000,
     squareCatalogObjectId: 'square-catalog-1',
     createdAt: new Date(),

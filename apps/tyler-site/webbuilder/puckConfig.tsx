@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Config } from '@measured/puck';
 import HeroSection, { HeroSectionProps } from './components/HeroSection';
 import TextImageSection, { TextImageSectionProps } from './components/TextImageSection';

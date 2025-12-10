@@ -59,7 +59,7 @@ export function ReviewStep({
           <div>
             <h3 className="font-semibold text-gray-900">Service</h3>
             <p className="text-gray-600">{service.name}</p>
-            <p className="text-sm text-gray-500">{service.durationMinutes} minutes</p>
+            <p className="text-sm text-gray-500">{service.durationMins} minutes</p>
           </div>
           <div className="text-right">
             <p className="font-semibold text-gray-900">

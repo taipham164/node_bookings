@@ -42,7 +42,7 @@ class DatePickerHandler {
         locationId: "location-id",
         appointmentSegments: [
           {
-            durationMinutes: 30,
+            durationMins: 30,
             teamMemberId: "team-id-1",
             serviceVariationId: "service-id",
             serviceVariationVersion: 1234
@@ -54,7 +54,7 @@ class DatePickerHandler {
         locationId: "location-id",
         appointmentSegments: [
           {
-            durationMinutes: 30,
+            durationMins: 30,
             teamMemberId: "team-id-2",
             serviceVariationId: "service-id",
             serviceVariationVersion: 1234
@@ -66,7 +66,7 @@ class DatePickerHandler {
         locationId: "location-id",
         appointmentSegments: [
           {
-            durationMinutes: 30,
+            durationMins: 30,
             teamMemberId: "team-id-2",
             serviceVariationId: "service-id",
             serviceVariationVersion: 1234

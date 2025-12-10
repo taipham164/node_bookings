@@ -13,7 +13,7 @@ export interface BookingHydratorProps {
  * BookingHydrator scans rendered HTML for elements with data-booking-widget="true"
  * and mounts BookingWidget components into those containers.
  *
- * This enables booking widgets to be embedded in GrapesJS-built pages or any
+ * This enables booking widgets to be embedded in Puck-built pages or any
  * custom HTML by simply adding: <div data-booking-widget="true"></div>
  */
 export function BookingHydrator({ html, shopId }: BookingHydratorProps) {

@@ -7,9 +7,9 @@ import { safeNumberConversion, monetaryAmountToCents, durationMsToMinutes } from
 interface SquareServiceItem {
   id: string;
   name: string;
-  durationMinutes: number;
+  durationMins: number;
   priceCents: number;
-  squareCatalogObjectId: string;
+  squareItemId: string;
   description?: string;
   variations: {
     id: string;
@@ -126,7 +126,7 @@ export class SquareService {
         if (!variationData) continue;
 
         // Extract duration from service duration or default to 60 minutes
-        const durationMinutes = durationMsToMinutes(variationData.serviceDuration);
+        const durationMins = durationMsToMinutes(variationData.serviceDuration);
 
         // Extract price in cents using safe BigInt conversion
         const priceCents = monetaryAmountToCents(variationData.priceMoney?.amount);
@@ -134,9 +134,9 @@ export class SquareService {
         services.push({
           id: item.id!,
           name: itemData.name || 'Unnamed Service',
-          durationMinutes,
+          durationMins,
           priceCents,
-          squareCatalogObjectId: item.id!,
+          squareItemId: item.id!,
           description: itemData.description,
           variations: bookableVariations.map((variation: any) => ({
             id: variation.id!,
@@ -324,10 +324,10 @@ export class SquareService {
 
       for (const squareService of squareServices) {
         try {
-          // Check if service already exists by squareCatalogObjectId
+          // Check if service already exists by squareItemId
           const existingService = await this.prismaService.service.findFirst({
             where: {
-              squareCatalogObjectId: squareService.squareCatalogObjectId,
+              squareItemId: squareService.squareItemId,
               shopId: shop.id,
             },
           });
@@ -338,7 +338,7 @@ export class SquareService {
               where: { id: existingService.id },
               data: {
                 name: squareService.name,
-                durationMinutes: squareService.durationMinutes,
+                durationMins: squareService.durationMins,
                 priceCents: squareService.priceCents,
                 updatedAt: new Date(),
               },
@@ -350,9 +350,9 @@ export class SquareService {
             await this.prismaService.service.create({
               data: {
                 name: squareService.name,
-                durationMinutes: squareService.durationMinutes,
+                durationMins: squareService.durationMins,
                 priceCents: squareService.priceCents,
-                squareCatalogObjectId: squareService.squareCatalogObjectId,
+                squareItemId: squareService.squareItemId,
                 shopId: shop.id,
               },
             });

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Puck } from '@measured/puck'
 import '@measured/puck/puck.css'
 import { ServicesSection } from '@/src/components/webbuilder/ServicesSection'
@@ -247,7 +248,9 @@ export default function BuilderPage() {
 
   const handlePreview = () => {
     const previewUrl = slug === 'home' ? '/' : `/${slug}`
-    window.open(previewUrl, '_blank')
+    if (typeof window !== 'undefined') {
+      window.open(previewUrl, '_blank')
+    }
   }
 
   if (!pageData) {
@@ -338,7 +341,7 @@ export default function BuilderPage() {
           }}>
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
               <h1 style={{ margin: 0, fontSize: '1.5em' }}>Puck Page Builder</h1>
-              <a
+              <Link
                 href="/admin/theme"
                 style={{
                   padding: '6px 12px',
@@ -351,7 +354,7 @@ export default function BuilderPage() {
                 }}
               >
                 Theme Settings
-              </a>
+              </Link>
             </div>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <button

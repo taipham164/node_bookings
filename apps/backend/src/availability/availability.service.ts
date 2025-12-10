@@ -59,7 +59,7 @@ export class AvailabilityService {
       }
 
       // Validate service has Square catalog object ID
-      if (!service.squareCatalogObjectId) {
+      if (!service.squareItemId) {
         throw new BadRequestException('Service is not linked to Square catalog');
       }
 
@@ -71,7 +71,7 @@ export class AvailabilityService {
       // Call Square availability API
       const availabilities = await this.squareService.searchAvailability({
         locationId: shop.squareLocationId,
-        serviceVariationId: service.squareCatalogObjectId,
+        serviceVariationId: service.squareItemId,
         teamMemberId: barber?.squareTeamMemberId || undefined,
         date: params.date,
       });
@@ -80,7 +80,7 @@ export class AvailabilityService {
       const slots: AvailabilitySlot[] = await Promise.all(
         availabilities.map(async (availability: any) => ({
           startAt: availability.startAt,
-          endAt: this.calculateEndTime(availability.startAt, service.durationMinutes),
+          endAt: this.calculateEndTime(availability.startAt, service.durationMins),
           barberId: await this.findBarberIdBySquareTeamMemberId(availability.appointmentSegments?.[0]?.teamMemberId),
         }))
       );
@@ -96,9 +96,9 @@ export class AvailabilityService {
     }
   }
 
-  private calculateEndTime(startAt: string, durationMinutes: number): string {
+  private calculateEndTime(startAt: string, durationMins: number): string {
     const startTime = new Date(startAt);
-    const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
+    const endTime = new Date(startTime.getTime() + durationMins * 60 * 1000);
     return endTime.toISOString();
   }
 

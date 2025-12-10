@@ -13,7 +13,7 @@ export class CreateServiceDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  durationMinutes!: number;
+  durationMins!: number;
 
   @Type(() => Number)
   @IsInt()
@@ -21,6 +21,6 @@ export class CreateServiceDto {
   priceCents!: number;
 
   @IsString()
-  @IsOptional()
-  squareCatalogObjectId?: string;
+  @IsNotEmpty()
+  squareItemId!: string;
 }

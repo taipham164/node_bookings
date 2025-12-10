@@ -139,7 +139,7 @@ export default function NewPagePage() {
                 />
               </div>
               <p className="mt-1 text-sm text-gray-500">
-                This will be the URL: {window.location.origin}/{formData.slug || 'your-slug'}
+                This will be the URL: {typeof window !== 'undefined' ? window.location.origin : ''}/{formData.slug || 'your-slug'}
               </p>
             </div>
 

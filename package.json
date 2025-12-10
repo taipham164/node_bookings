@@ -22,5 +22,11 @@
     "node": ">=10",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@10.12.4"
+  "packageManager": "pnpm@10.25.0",
+  "devDependencies": {
+    "prisma": "^7.1.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.1.0"
+  }
 }

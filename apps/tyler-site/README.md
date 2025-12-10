@@ -87,7 +87,7 @@ tyler-site/
 ├── app/                          # Next.js App Router
 │   ├── page.tsx                  # Home page (fetches from backend)
 │   ├── [slug]/page.tsx           # Dynamic pages
-│   ├── admin/builder/            # GrapesJS page builder
+│   ├── admin/builder/            # Puck page builder
 │   │   └── page.tsx
 │   ├── layout.tsx                # Root layout
 │   └── globals.css               # Global styles with Tailwind

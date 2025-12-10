@@ -198,7 +198,7 @@
                     <%= new Date(apt.startAt).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) %>
                   </div>
                   <div class="apt-duration">
-                    <%= formatDuration(apt.appointmentSegments?.[0]?.durationMinutes * 60000 || 0) %>
+                    <%= formatDuration(apt.appointmentSegments?.[0]?.durationMins * 60000 || 0) %>
                   </div>
                   <div class="apt-info">
                     <div class="apt-customer">Customer: <%= apt.customerId || 'Unknown' %></div>

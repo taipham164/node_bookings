@@ -89,11 +89,11 @@ router.post("/create", asyncHandler(async (req, res, next) => {
   for (const serviceId of serviceIds) {
     logApiCall("catalogApi.retrieveCatalogObject", "GET", { serviceId });
     const { result: { object: catalogItemVariation } } = await catalogApi.retrieveCatalogObject(serviceId);
-    const durationMinutes = convertMsToMins(catalogItemVariation.itemVariationData.serviceDuration);
+    const durationMins = convertMsToMins(catalogItemVariation.itemVariationData.serviceDuration);
     const version = convertVersion(catalogItemVariation.version);
 
     appointmentSegments.push({
-      durationMinutes,
+      durationMins,
       serviceVariationId: serviceId,
       serviceVariationVersion: version,
       teamMemberId: staffId

@@ -44,7 +44,7 @@ export class AppointmentService {
           select: {
             id: true,
             name: true,
-            durationMinutes: true,
+            durationMins: true,
             priceCents: true,
           },
         },
@@ -87,9 +87,9 @@ export class AppointmentService {
           select: {
             id: true,
             name: true,
-            durationMinutes: true,
+            durationMins: true,
             priceCents: true,
-            squareCatalogObjectId: true,
+            squareItemId: true,
           },
         },
         customer: {
@@ -168,7 +168,7 @@ export class AppointmentService {
           select: {
             id: true,
             name: true,
-            durationMinutes: true,
+            durationMins: true,
             priceCents: true,
           },
         },
@@ -269,7 +269,7 @@ export class AppointmentService {
           select: {
             id: true,
             name: true,
-            durationMinutes: true,
+            durationMins: true,
             priceCents: true,
           },
         },
@@ -462,7 +462,7 @@ export class AppointmentService {
       if (!shop.squareLocationId) {
         throw new BadRequestException('Shop is not linked to Square location');
       }
-      if (!service.squareCatalogObjectId) {
+      if (!service.squareItemId) {
         throw new BadRequestException('Service is not linked to Square catalog');
       }
       if (createBookingDto.barberId && barber && !barber.squareTeamMemberId) {
@@ -491,7 +491,7 @@ export class AppointmentService {
       this.logger.warn('Square booking creation not implemented yet');
 
       // Calculate end time
-      const endAt = new Date(startAt.getTime() + service.durationMinutes * 60 * 1000);
+      const endAt = new Date(startAt.getTime() + service.durationMins * 60 * 1000);
 
       // 4. Create local appointment with squareBookingId
       this.logger.log(`Creating local appointment with Square booking ID: ${bookingId}`);
@@ -525,7 +525,7 @@ export class AppointmentService {
             select: {
               id: true,
               name: true,
-              durationMinutes: true,
+              durationMins: true,
               priceCents: true,
             },
           },
@@ -703,7 +703,7 @@ export class AppointmentService {
       if (!shop.squareLocationId) {
         throw new BadRequestException('Shop is not linked to Square location');
       }
-      if (!service.squareCatalogObjectId) {
+      if (!service.squareItemId) {
         throw new BadRequestException('Service is not linked to Square catalog');
       }
       if (dto.barberId && barber && !barber.squareTeamMemberId) {
@@ -778,7 +778,7 @@ export class AppointmentService {
         const bookingResult = await this.squareService.createSquareBooking({
           locationId: shop.squareLocationId,
           customerId: squareCustomerId,
-          serviceVariationId: service.squareCatalogObjectId,
+          serviceVariationId: service.squareItemId,
           teamMemberId: barber?.squareTeamMemberId ?? undefined,
           startAt: dto.startAt,
         });
@@ -793,7 +793,7 @@ export class AppointmentService {
       }
 
       // 7. Create local appointment
-      const endAt = new Date(startAt.getTime() + service.durationMinutes * 60 * 1000);
+      const endAt = new Date(startAt.getTime() + service.durationMins * 60 * 1000);
       this.logger.log(`Creating local appointment with Square booking ID: ${squareBookingId}`);
 
       const appointment = await this.prisma.appointment.create({
@@ -826,7 +826,7 @@ export class AppointmentService {
             select: {
               id: true,
               name: true,
-              durationMinutes: true,
+              durationMins: true,
               priceCents: true,
             },
           },

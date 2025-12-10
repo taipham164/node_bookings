@@ -4,9 +4,17 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function EditPagePage({ params }: { params: { id: string } }) {
+export default function EditPagePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const pageId = params.id;
+  const [pageId, setPageId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const initializeParams = async () => {
+      const resolvedParams = await params;
+      setPageId(resolvedParams.id);
+    };
+    initializeParams();
+  }, [params]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -22,7 +30,9 @@ export default function EditPagePage({ params }: { params: { id: string } }) {
     process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
 
   useEffect(() => {
-    fetchPage();
+    if (pageId) {
+      fetchPage();
+    }
   }, [pageId]);
 
   const fetchPage = async () => {

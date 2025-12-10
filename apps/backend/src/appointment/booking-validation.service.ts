@@ -67,7 +67,7 @@ export class BookingValidationService {
 
     // Step 4: Calculate end time based on service duration
     const startAtDate = new Date(startAt);
-    const endAtDate = new Date(startAtDate.getTime() + service.durationMinutes * 60 * 1000);
+    const endAtDate = new Date(startAtDate.getTime() + service.durationMins * 60 * 1000);
 
     // Step 5: Check for barber double-booking
     if (barberId) {
@@ -182,14 +182,14 @@ export class BookingValidationService {
     const { shop, service, barber, startAt } = options;
 
     // Only validate if we have the necessary Square IDs
-    if (!shop.squareLocationId || !service.squareCatalogObjectId) {
+    if (!shop.squareLocationId || !service.squareItemId) {
       // Skip Square validation if Square IDs are not set
       return;
     }
 
     const isAvailable = await this.squareService.verifySlotIsAvailable({
       locationId: shop.squareLocationId,
-      serviceVariationId: service.squareCatalogObjectId,
+      serviceVariationId: service.squareItemId,
       teamMemberId: barber?.squareTeamMemberId,
       startAt: startAt.toISOString(),
     });

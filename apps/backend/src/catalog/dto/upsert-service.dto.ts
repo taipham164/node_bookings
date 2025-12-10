@@ -6,10 +6,10 @@ export class UpsertServiceDto {
   id?: string;
 
   @IsString()
-  shopId: string;
+  shopId!: string;
 
   @IsString()
-  name: string;
+  name!: string;
 
   @IsString()
   @IsOptional()
@@ -17,14 +17,14 @@ export class UpsertServiceDto {
 
   @IsInt()
   @Min(1)
-  durationMins: number;
+  durationMins!: number;
 
   @IsInt()
   @Min(0)
-  priceCents: number;
+  priceCents!: number;
 
   @IsString()
-  squareItemId: string;
+  squareItemId!: string;
 
   @IsBoolean()
   @IsOptional()

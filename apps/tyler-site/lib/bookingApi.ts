@@ -8,7 +8,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3
 export interface Service {
   id: string;
   name: string;
-  durationMinutes: number;
+  durationMins: number;
   priceCents: number;
   squareCatalogObjectId: string;
   shopId: string;
@@ -24,7 +24,7 @@ export interface Barber {
 
 export interface AvailabilitySlot {
   startAt: string; // ISO datetime
-  durationMinutes: number;
+  durationMins: number;
 }
 
 export interface CustomerInfo {
@@ -59,7 +59,7 @@ export interface BookingWithPaymentResponse {
     service: {
       id: string;
       name: string;
-      durationMinutes: number;
+      durationMins: number;
       priceCents: number;
     };
     barber: {

@@ -48,7 +48,7 @@ export class CustomerService {
               select: {
                 id: true,
                 name: true,
-                durationMinutes: true,
+                durationMins: true,
                 priceCents: true,
               },
             },
